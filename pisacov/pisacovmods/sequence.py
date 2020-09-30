@@ -104,51 +104,52 @@ def renumberpdbs(PDBINT_PATH, fastaseq,itisbio=False,outdir=output_tmpdir("pisac
             for chain in model:
                 if len(chain) > n_resmax:
                     n_resmax = len(chain)
-            delres = [[False for j in range(n_resmax)] for i in range(n_chains)]
-            n_chains = 0
-            for model in pdb_structure:
-                for chain in model:
-                    r=0
-                    newresnum=1
-                    fastaends=biochain_ends('fasta')
-                    for residue in chain:
-                        if residue.seqid.num < fastaends[0]:
-                            delres[n_chains][r] = True
-                        elif residue.seqid.num > fastaends[1]:
-                            delres[n_chains][r] = True
-                        elif residue.seqid.num == fastaends[0]:
+        delres = [[False for j in range(n_resmax)] for i in range(n_chains)]
+        n_chains = 0
+        for model in pdb_structure:
+            for chain in model:
+                r=0
+                newresnum=1
+                fastaends=biochain_ends('fasta')
+                for residue in chain:
+                    if residue.seqid.num < fastaends[0]:
+                        delres[n_chains][r] = True
+                    elif residue.seqid.num > fastaends[1]:
+                        delres[n_chains][r] = True
+                    elif residue.seqid.num == fastaends[0]:
+                        prev_res_num = residue.seqid.num
+                        residue.seqid.num = 1
+                    else:
+                        if residue == chain[0]:
                             prev_res_num = residue.seqid.num
-                            residue.seqid.num = 1
+                            residue.seqid.num = residue.seqid.num - fastaends[0] + 1
                         else:
-                            if residue == chain[0]:
+                            if (residue.seqid.num - prev_res_num == 0 ): # SEQUENCE NUMBERS INSERTED (1A, 1B, 1C, ...)
+                                newresnum += 1
                                 prev_res_num = residue.seqid.num
-                                residue.seqid.num = residue.seqid.num - fastaends[0] + 1
+                                residue.seqid.num = newresnum
+                            elif (residue.seqid.num - prev_res_num == 1 ): # SEQUENCE NUMBERS ARE CONSECUTIVE
+                                newresnum += 1
+                                prev_res_num = residue.seqid.num
+                                residue.seqid.num = newresnum
+                            elif (residue.seqid.num - prev_res_num > 1 ): # SEQUENCE NUMBERS SHOW GAPS
+                                newresnum += residue.seqid.num- prev_res_num
+                                prev_res_num = residue.seqid.num
+                                residue.seqid.num = newresnum
                             else:
-                                if (residue.seqid.num - prev_res_num == 0 ): # SEQUENCE NUMBERS INSERTED (1A, 1B, 1C, ...)
-                                    newresnum += 1
-                                    prev_res_num = residue.seqid.num
-                                    residue.seqid.num = newresnum
-                                elif (residue.seqid.num - prev_res_num == 1 ): # SEQUENCE NUMBERS ARE CONSECUTIVE
-                                    newresnum += 1
-                                    prev_res_num = residue.seqid.num
-                                    residue.seqid.num = newresnum
-                                elif (residue.seqid.num - prev_res_num > 1 ): # SEQUENCE NUMBERS SHOW GAPS
-                                    newresnum += residue.seqid.num- prev_res_num
-                                    prev_res_num = residue.seqid.num
-                                    residue.seqid.num = newresnum
-                                else:
-                                    print('residue : ' + str(residue.seqid.num))
-                                    print('previous: ' + str(prev_res_num))
-                                    printout(' ERROR: Sequence numbers not sorted',extraline=True, errorlog=True)
-                        r += 1
-                    n_chains += 1
+                                print('residue : ' + str(residue.seqid.num))
+                                print('previous: ' + str(prev_res_num))
+                                printout(' ERROR: Sequence numbers not sorted',extraline=True, errorlog=True)
+                    r += 1
+                n_chains += 1
 
-            n_chains = 0
-            for model in pdb_structure:
-                for chain in model:
-                    for res in reversed(range(len(chain))):
-                        if delres[n_chains][res]:
-                            del chain[res]
+        n_chains = 0
+        for model in pdb_structure:
+            for chain in model:
+                for res in reversed(range(len(chain))):
+                    if delres[n_chains][res]:
+                        del chain[res]
+                n_chains += 1
 
         pdb_structure.write_pdb(PDBINT_PATH_OUT)
 
