@@ -16,7 +16,7 @@ from .output import printout
 ##### SEQUENCE-RELATED FUNCTIONS ########################
 
 # INTERFACE PDB CROPPING AND RENUMBERING
-def renumberpdbs(PDBINT_PATH, fastaseq,itisbio=False,outdir=output_tmpdir("pisacov")):
+def renumberpdbs(PDBINT_PATH, fastaseq,itisbio=False,outdir=output_tmpdir("pisacov")): # CROPS
     """
     INTERFACE PDB CROPPING AND RENUMBERING
 
@@ -24,7 +24,7 @@ def renumberpdbs(PDBINT_PATH, fastaseq,itisbio=False,outdir=output_tmpdir("pisac
     ----------
     PDBINT_PATH : str
         Input path.
-    fastaseq : ConKit sequence
+    fastaseq : ConKit sequence # CROPS
         Full fasta sequence from PDB database
     itisbio : bool
         Use limits given by SIFTS (True) or whole sequence (False) (def: False)
@@ -61,7 +61,7 @@ def renumberpdbs(PDBINT_PATH, fastaseq,itisbio=False,outdir=output_tmpdir("pisac
                 newseq += '-'*shift
                 for residue in chain:
                     if residue == chain[0]:
-                        if ressymbol(residue.name) == fastaseq.seq[shift]:
+                        if ressymbol(residue.name) == fastaseq.seq[shift]:# CROPS
                             score += 1
                             pos[n_chains][cnt]=1+shift
                             newseq += ressymbol(residue.name)
@@ -70,17 +70,17 @@ def renumberpdbs(PDBINT_PATH, fastaseq,itisbio=False,outdir=output_tmpdir("pisac
                             gap += (chain[cnt].seqid.num-chain[cnt-1].seqid.num-1)
                             newseq += '-'*(chain[cnt].seqid.num-chain[cnt-1].seqid.num-1)
                         pos[n_chains][cnt]=cnt+1+gap+shift
-                        if ressymbol(residue.name) == fastaseq.seq[cnt+gap+shift]:
+                        if ressymbol(residue.name) == fastaseq.seq[cnt+gap+shift]:# CROPS
                             score += 1
                             newseq += ressymbol(residue.name)
                         if residue==chain[-1]:
-                            if cnt+gap+shift+1 < len(fastaseq.seq):
-                                newseq += '-'*(len(fastaseq.seq)-(cnt+gap+shift+1))
+                            if cnt+gap+shift+1 < len(fastaseq.seq):# CROPS
+                                newseq += '-'*(len(fastaseq.seq)-(cnt+gap+shift+1))# CROPS
                     cnt += 1
                 if score == len(chain):
                     solved = True
                     printout('ALIGNMENT OF CHAIN ' + str(n_chains+1))
-                    printout(fastaseq.seq)
+                    printout(fastaseq.seq)# CROPS
                     printout(newseq, extraline=True)
                     break
             if solved:
@@ -153,7 +153,7 @@ def renumberpdbs(PDBINT_PATH, fastaseq,itisbio=False,outdir=output_tmpdir("pisac
 
         pdb_structure.write_pdb(PDBINT_PATH_OUT)
 
-def biochain_ends(which):
+def biochain_ends(which): # CROPS
     """
     RETRIEVE SEQUENCE POSITION OF BIOLOGICAL PROTEIN CHAIN ENDS FROM CSV FILE (SIFTS)
 
@@ -187,13 +187,13 @@ def biochain_ends(which):
     return resends
 
 
-def crop_fasta(fastaseq, outdir=output_tmpdir()):
+def crop_fasta(fastaseq, outdir=output_tmpdir()): # CROPS
     """
     FASTA SEQUENCE CROPPING
 
     Parameters
     ----------
-    seqpath : ConKit Sequence
+    seqpath : ConKit Sequence# CROPS
         Source fasta sequence
     outdir : str, optional
         Directory where results biological sequence will be printed out. The default is output_tmpdir().
@@ -210,37 +210,37 @@ def crop_fasta(fastaseq, outdir=output_tmpdir()):
     fastaends = biochain_ends('fasta')
 
     # Check that the sequence is consistent with the limits retrieved from the database
-    if fastaends[1]-fastaends[0] + 1 > fastaseq.seq_len:
+    if fastaends[1]-fastaends[0] + 1 > fastaseq.seq_len:# CROPS
         isitbio=False
         printout('WARNING: The biological sequence limits include a section greater than the input sequence.', errorlog=True)
         printout('         Skipping cropping. Returning input values.', errorlog=True,extraline=True)
-        bioseq = fastaseq
+        bioseq = fastaseq# CROPS
         newseqfile = pdbid() + '.fasta'
         newseqpath = os.path.join(outdir, newseqfile)
-    elif fastaends[1]-fastaends[0] + 1 == fastaseq.seq_len:
+    elif fastaends[1]-fastaends[0] + 1 == fastaseq.seq_len:# CROPS
         isitbio=True
         printout('         Biological and input sequences have the same length. Skipping cropping. Returning input values.',extraline=True)
-        bioseq = fastaseq
+        bioseq = fastaseq# CROPS
         newseqfile = pdbid() + '.bio.fasta'
         newseqpath = os.path.join(outdir, newseqfile)
         ckio.write(newseqpath,"fasta",hierarchy=bioseq)
     else:
-        if fastaends[0] > fastaseq.seq_len:
+        if fastaends[0] > fastaseq.seq_len:# CROPS
             isitbio=False
             printout('WARNING: The sequence upper limit imported from the database is higher than the upper limit from the fasta file.',errorlog=True) #LOGGING
             printout('         Skipping cropping. Returning input values.', errorlog=True,extraline=True)
-            bioseq = fastaseq
+            bioseq = fastaseq# CROPS
             newseqfile = pdbid() + '.fasta'
             newseqpath = os.path.join(outdir, newseqfile)
         else:
             isitbio=True
             # Append new info to sequence
-            newid=fastaseq.id
+            newid=fastaseq.id# CROPS
             newid = newid +"|NO_CLONING_ARTIFACTS"
 
             # Create new sequence
-            newseq=fastaseq.seq[fastaends[0]-1:fastaends[1]-1]
-            bioseq=ckc.Sequence(newid, newseq)
+            newseq=fastaseq.seq[fastaends[0]-1:fastaends[1]-1]# CROPS
+            bioseq=ckc.Sequence(newid, newseq) # CROPS
 
             # Write new sequence to file
             #locpdbid=os.path.splitext(os.path.basename(PDB_PATH))[0]
