@@ -20,7 +20,7 @@ def pdbid():
         PDB ID (lower case).
 
     """
-    locpdbid=os.path.splitext(os.path.basename(PDB_PATH))[0]
+    locpdbid=os.path.splitext(os.path.basename(PDB_PATH))[0] #CHANGE TO GEMMI OBTENTION
 
     return locpdbid
 
@@ -72,7 +72,7 @@ def readabletime(inputtime):
 
     return outstring
 
-def ressymbol(name):
+def ressymbol(name): # USE CROPS TABLE
     """
     Dictionary containing conversion from residue 3-letter symbol to 1-letter symbol
 

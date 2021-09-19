@@ -13,17 +13,78 @@ import pisacovmods.pisacovmod as pmp
 import pisacovmods.sequence as pms
 import pisacovmods.contacts as pmc
 
-import about
+from pisacov.about import __prog__, __description__, __version__
+from pisacov.about import  __author__, __date__, __copyright__
 
+from pisacov import command_line as pcl
+
+import argparse
 import conkit
 import os
 import shutil
 import matplotlib.pyplot as plt
-#from string import format
+# from string import format
+
+import time
+
+logger = None
+
+def create_argument_parser():
+    """Create a parser for the command line arguments used in crops-renumber"""
+    parser = argparse.ArgumentParser(prog=__prog__, formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     description=__description__+' ('+__prog__+')  v.'+__version__+'\n'+__doc__)
+    parser.add_argument("input_seqpath",nargs=1, metavar="Original_RCSB_Sequence_filepath",
+                        help="Input sequence filepath as downloaded from RCSB.")
+    parser.add_argument("input_strpath",nargs=1, metavar="Original_RCSB_Structure_filepath",
+                        help="Input structure filepath or dir as downloaded from RCSB. If a directory is inserted, it will act on all structure files in such directory.")
+
+    parser.add_argument("-o","--outdir",nargs=1,metavar="Output_Directory",
+                        help="Set output directory path. If not supplied, default is the one containing the input sequence.")
+
+    parser.add_argument("-i","--intervals",nargs=1, metavar="Intervals_database",
+                        help="Override input intervals database filepath from installation file.")
+
+
+    sections=parser.add_mutually_exclusive_group(required=False)
+    sections.add_argument("-t","--terminals",action='store_true',default=False,
+                          help="Ignore interval discontinuities and only crop the ends off.")
+    sections.add_argument("-u","--uniprot_threshold", nargs=2, metavar=("Uniprot_ratio_threshold","Sequence_database"),
+                          help='Act if SIFTS database is used as intervals source AND %% residues from single Uniprot sequence is above threshold. [MIN,MAX)=[0,100) uniprot_sprot.fasta-path')
+
+    parser.add_argument('--version', action='version', version='%(prog)s '+ __version__)
 
 def main():
-#####################################################################
-##### INITIALISATION ################################################
+
+    starttime=time.time()
+    parser = create_argument_parser()
+    args = parser.parse_args()
+
+    global logger
+    logger = pcl.crops_logger(level="info")
+    logger.info(pcl.welcome())
+
+    inseq=check_path(args.input_seqpath[0],'file')
+    indb=check_path(args.input_database[0],'file')
+    insprot=check_path(args.uniprot_threshold[1]) if args.uniprot_threshold is not None else None
+
+    minlen=float(args.uniprot_threshold[0]) if args.uniprot_threshold is not None else 0.0
+    targetlbl=ctg.target_format(indb,terms=args.terminals, th=minlen)
+    infixlbl=ctg.infix_gen(indb,terms=args.terminals)
+
+    if args.outdir is None:
+        outdir=check_path(os.path.dirname(inseq),'dir')
+    else:
+        outdir=check_path(os.path.join(args.outdir[0],''),'dir')
+
+    if args.sort is not None:
+        if (args.sort[0].lower()!='ncrops' and args.sort[0].lower()!='percent' and
+            args.sort[0].lower()!='ncropsin' and args.sort[0].lower()!='percentin'):
+            raise ValueError("Arguments for sorting option can only be either 'ncrops' or 'percent'.")
+        else:
+            sorter=args.sort[0].lower()
+
+#############################################################
+
     sources=["deepmetapsicov", "psicov"]
     confiledir=["deepmetapsicov", "deepmetapsicov"]
     confilesuffix=["deepmetapsicov.con","psicov"]
@@ -166,7 +227,7 @@ def main():
 
     for n in range(n_sources):
         conpredfile=pmi2.pdbid()+pms.biofile(bio)+"."+confilesuffix[n]
-    
+
         conpredpath.append(os.path.join(pmo.output_tmpdir(confiledir[n]), conpredfile))
 
         conpred.append(conkit.io.read(conpredpath[n], 'psicov')[0])
@@ -399,7 +460,7 @@ def main():
                 out.write('\n')
                 out.write(outformat.format('      Total number of intermolecular contacts (pdb): ', str(n_contacts_all[nif][0][1])))
                 out.write('\n')
-                for n in range(n_sources):  
+                for n in range(n_sources):
                     extral='\n\n' if n==n_sources-1 else '\n'
                     out.write('      + '+sources[n]+' Scores +\n')
                     out.write(outformat.format('        Number of True Positives : ', str(n_contacts_all[nif][n][2]) ))

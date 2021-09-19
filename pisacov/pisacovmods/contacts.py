@@ -38,7 +38,7 @@ def filter_contacts(contactlist, source):
         contactlist.remove_neighbors(min_distance=minneigh(), inplace=True)
 
     contactlist.sort("raw_score", reverse=True, inplace=True)
-    
+
     if scorethreshold(source) > 0.0:
         cnt=0
         cntprev=1
