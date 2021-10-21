@@ -143,7 +143,7 @@ def main():
             except:
                 bio=False
                 tmpfile = pmi2.pdbid() + '.fasta'
-                seqpath = os.path.join(pmo.output_tmpdir("deepmetapsicov"), tmpfile)
+                seqpath = os.path.no encuentro el pavo, pero soy poco hallador yo como demostré ayer con el cable. Sigo buscandojoin(pmo.output_tmpdir("deepmetapsicov"), tmpfile)
                 biological_seq=conkit.io.read(seqpath,"fasta")[0]
         seq=biological_seq
         tmpfile = pmi2.pdbid() + pms.biofile(bio)+ '.fasta'

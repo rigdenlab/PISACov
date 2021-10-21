@@ -18,9 +18,15 @@ from pisacov import command_line as pcl
 from pisacov import io as pio
 
 from crops.elements import sequence as csq
+from crops import io as cio
+from crops.io import parsers as cps
+from crops.core import ops as cops
+
+from conkit import io as ckio
+from conkit import core as ckc
+from conkit import plot as ckplot
 
 import argparse
-import conkit
 import os
 import shutil
 import matplotlib.pyplot as plt
@@ -112,8 +118,19 @@ def main():
     n_sources = len(sources)
 
     # Parse sequence and structure files
+    logger.info('Parsing sequence file...')
+    seq = cps.parseseqfile(inseq)
+    if len(seq)==1:
+        for key in seq.keys():
+            pdbid=key.lower()
+    else:
+        raise Exception('More than one pdbid in sequence set.')
 
+    logger.info('Parsing structure file...')
+    structure = cps.parsestrfile(instr)[0][pdbid]
 
+    logger.info('Parsing SIFTS database file...')
+    sifts = cps.import_db(indb, pdb_in=pdbid)
 
     # MSA GENERATOR (ONLY FOR NON-DEFAULT VALUES??)
     if hhparameters != 'dmp' and not skipexec:
