@@ -16,6 +16,7 @@ from pisacov.about import  __author__, __date__, __copyright__
 
 from pisacov import command_line as pcl
 from pisacov import io as pio
+from pisacov import sys as psys
 
 from crops.elements import sequence as csq
 from crops import io as cio
@@ -46,10 +47,10 @@ def create_argument_parser():
     main_args.add_argument("-i", "--initialise", nargs=2, metavar="Initial_files",
                            help="Input sequence and structure filepaths.")
     main_args.add_argument("-s", "--skip_conpred", nargs=2, metavar="Initial_files",
-                           help="If HHBLITS and DMP files have already been generated in pdbid/deepmetapsicov, they will be read and those processeses bypassed.")
+                           help="If HHBLITS and DMP files have already been generated in pdbid/deepmetapsicov, they will be read and those processeses bypassed. Input sequence and structure filepaths.")
 
     parser.add_argument("-o","--outdir", nargs=1, metavar="Output_Directory",
-                        help="Set output directory path. If not supplied, default is the one containing the input sequence. If -p option is used, be aware that this directory must already contain the pdbid/deepmetapsicov directory and its files.")
+                        help="Set output directory path. If not supplied, default is the one containing the input sequence. If -s option is used, be aware that this directory must already contain the pdbid/deepmetapsicov directory and its files.")
     parser.add_argument("-c","--collection_file", nargs=1, metavar="Collection_File",
                         help="Path to CSV file where pisacov signals will be appended. Default: oudir/pisacov_data.csv.")
 
@@ -77,15 +78,10 @@ def main():
         inseq = pio.check_path(args.initialise[0], 'file')
         instr = pio.check_path(args.initialise[1], 'file')
         indb = pio.check_path(pio.conf.CSV_CHAIN_PATH, 'file')
-        if args.uniprot_threshold is not None:
-            thuprot, dbuprot = pio.check_uniprot(args.uniprot_threshold[0])
-        else:
-            thuprot = 0.0
-            dbuprot = None
         skipexec = False
     elif args.skip_conpred is not None:
-        inseq = pio.check_path(args.initialise[0], 'file')
-        instr = pio.check_path(args.initialise[1], 'file')
+        inseq = pio.check_path(args.skip_conpred[0], 'file')
+        instr = pio.check_path(args.skip_conpred[1], 'file')
         skipexec = True
 
     if args.outdir is None:
@@ -103,18 +99,22 @@ def main():
     except:
         csvexists = False
 
+    if args.uniprot_threshold is not None:
+        thuprot, dbuprot = pio.check_uniprot(args.uniprot_threshold[0])
+    else:
+        thuprot = 0.0
+        dbuprot = None
+
     if args.hhparams is not None:
         hhparameters = pio.check_hhparams(args.hhparams)
     else:
         try:
             hhparameters = pio.check_hhparams(pio.conf.HHBLITS_PARAMETERS)
         except:
-            hhparameters = 'dmp'
+            hhparameters = pio.check_hhparams('dmp')
 
     # Define formats used
-    sources = ["deepmetapsicov", "psicov"]
-    confiledir = ["deepmetapsicov", "deepmetapsicov"]
-    confilesuffix = ["deepmetapsicov.con", "psicov"]
+    sources = pio.paths.sources()
     n_sources = len(sources)
 
     # Parse sequence and structure files
@@ -132,13 +132,41 @@ def main():
     logger.info('Parsing SIFTS database file...')
     sifts = cps.import_db(indb, pdb_in=pdbid)
 
-    # MSA GENERATOR (ONLY FOR NON-DEFAULT VALUES??)
-    if hhparameters != 'dmp' and not skipexec:
-        logger.info('Generating Multiple Sequence Alignment using custom parameters...')
+    # CROPPING AND RENUMBERING
+    if not skipexec:
+        logger.info('Cropping and renumbering sequences, structures according to SIFTS database.')
+        psys.crops(inseq, instr, indb, thuprot, dbuprot, outrootdir)
+
+
+
+    # MSA GENERATOR
+    if not skipexec:
+        if hhparameters == 'dmp':
+            logger.info('Generating Multiple Sequence Alignment using DeepMetaPSICOV default parameters... [AS RECOMMENDED]')
+        elif hhparameters == [2, 0.001, 1000, 0, 90]:
+            logger.info('Generating Multiple Sequence Alignment using HHBlits default parameters...')
+        else:
+            logger.info('Generating Multiple Sequence Alignment using user-custom parameters...')
+
+    path=os.path.join(os.getcwd(),pdbid,pdbid+'.crops.oldids.to_uniprot.a3m')
+    seqalign=ckio.read(os.path.join(os.getcwd(),pdbid,pdbid+'.crops.oldids.to_uniprot.a3m'),'a3m')
+    neff=seqalign.meff
+
+    if not skipexec:
+        fig = ckplot.SequenceCoverageFigure(seqalign)
+        fig.savefig(path+".png", overwrite=True)
 
     # DEEP META PSICOV RUN
 
+    try:
+        inxml=cio.check_path(args.input_interfaces[0],'file')
+        xml=ET.parse(inxml)
+    except:
+        raise argparse.ArgumentError()
+
     # CONTACT ANALYSIS AND MATCH
+
+
 
     # OUTPUT
 

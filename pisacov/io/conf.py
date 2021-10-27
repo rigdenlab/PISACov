@@ -1,5 +1,5 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+PISACov is a PISA extension to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
@@ -26,7 +26,7 @@ HHBLITS_DATABASE_DIR = '/media/javier/databases/uniclust30_2018_08_hhblits/'
 ## DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]
 ## HHBLITS DEFAULT: [2, 0.001, 1000, 0, 90]
 ## Uncomment to use non-DeepMetaPSICOV-default values
-#HHBLITS_PARAMETERS=[ 2 , 0.001, 'inf', 50, 99 ]
+#HHBLITS_PARAMETERS=[3, 0.001, 'inf', 50, 99]
 
 ## Path to DeepMetaPsicov script
 DMP_PATH='/home/javier/Programs/DeepMetaPSICOV/run_DMP.sh'

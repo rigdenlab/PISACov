@@ -1,5 +1,7 @@
 """About PISACov. Package information is recorded here."""
 
+import datetime
+
 __prog__ = "PISACov"
 __description__ = "Evolutionary Covariance Contact Prediction extension for CCP4's PISA."
 __author__ = "J. Javier Burgos-Mármol"
