@@ -29,8 +29,9 @@ from conkit import plot as ckplot
 
 import argparse
 import os
-import shutil
+from shutil import copyfile
 import matplotlib.pyplot as plt
+import xml.etree.ElementTree as ET
 # from string import format
 
 import time
@@ -48,6 +49,9 @@ def create_argument_parser():
                            help="Input sequence and structure filepaths.")
     main_args.add_argument("-s", "--skip_conpred", nargs=2, metavar="Initial_files",
                            help="If HHBLITS and DMP files have already been generated in pdbid/deepmetapsicov, they will be read and those processeses bypassed. Input sequence and structure filepaths.")
+
+    parser.add_argument("-a","--add_noncropped", action='store_true', default=False,
+                        help="Include results for original sequence even if cropped version exists..")
 
     parser.add_argument("-o","--outdir", nargs=1, metavar="Output_Directory",
                         help="Set output directory path. If not supplied, default is the one containing the input sequence. If -s option is used, be aware that this directory must already contain the pdbid/deepmetapsicov directory and its files.")
@@ -83,6 +87,8 @@ def main():
         inseq = pio.check_path(args.skip_conpred[0], 'file')
         instr = pio.check_path(args.skip_conpred[1], 'file')
         skipexec = True
+
+    duplicate = True if args.add_noncropped else False
 
     if args.outdir is None:
         outrootdir = pio.check_path(os.path.dirname(inseq))
@@ -129,35 +135,47 @@ def main():
     logger.info('Parsing structure file...')
     structure = cps.parsestrfile(instr)[0][pdbid]
 
-    logger.info('Parsing SIFTS database file...')
-    sifts = cps.import_db(indb, pdb_in=pdbid)
+    #logger.info('Parsing SIFTS database file...')
+    #sifts = cps.import_db(indb, pdb_in=pdbid)
 
     # CROPPING AND RENUMBERING
     if not skipexec:
         logger.info('Cropping and renumbering sequences, structures according to SIFTS database.')
-        psys.crops(inseq, instr, indb, thuprot, dbuprot, outrootdir)
+        psys.crops.runcrops(inseq, instr, indb, thuprot, dbuprot, outrootdir)
 
-
+        inseqc = os.path.join(outrootdir, pdbid, os.path.basename(inseq))
+        instrc = os.path.join(outrootdir, pdbid, os.path.basename(instr))
+        if not os.path.isdir(os.path.join(outrootdir,pdbid,"")):
+            os.mkdir(os.path.join(outrootdir,pdbid,""))
+        copyfile(inseq, inseqc)
+        copyfile(instr, instrc)
 
     # MSA GENERATOR
+    cseqpath = os.path.join(outrootdir, pdbid, pdbid+'.crops.to_uniprot.fasta')
+    hhdir = os.path.join(outrootdir, pdbid, 'hhblits','')
+    neff = [None, None]
     if not skipexec:
-        if hhparameters == 'dmp':
+        if hhparameters == ['3', '0.001', 'inf', '50', '99']:
             logger.info('Generating Multiple Sequence Alignment using DeepMetaPSICOV default parameters... [AS RECOMMENDED]')
-        elif hhparameters == [2, 0.001, 1000, 0, 90]:
+        elif hhparameters == ['2', '0.001', '1000', '0', '90']:
             logger.info('Generating Multiple Sequence Alignment using HHBlits default parameters...')
         else:
             logger.info('Generating Multiple Sequence Alignment using user-custom parameters...')
 
-    path=os.path.join(os.getcwd(),pdbid,pdbid+'.crops.oldids.to_uniprot.a3m')
-    seqalign=ckio.read(os.path.join(os.getcwd(),pdbid,pdbid+'.crops.oldids.to_uniprot.a3m'),'a3m')
-    neff=seqalign.meff
+        if not os.path.isfile(cseqpath) or duplicate:
+            psys.msagen.runhhblits(inseq, hhparameters, hhdir)
+            msaa3mfile= os.path.splitext(os.path.basename(inseq))[0] +".msa.a3m"
+            msaa3mpath = os.path.join(hhdir, msaa3mfile)
+            neff[1] = psys.msagen.msafilesgen(msaa3mpath)
+            logger.info('    Repeating process for cropped sequence...')
 
-    if not skipexec:
-        fig = ckplot.SequenceCoverageFigure(seqalign)
-        fig.savefig(path+".png", overwrite=True)
+        psys.msagen.runhhblits(cseqpath, hhparameters, hhdir)
+        msaa3mfile = os.path.splitext(os.path.basename(cseqpath))[0] +".msa.a3m"
+        msaa3mpath = os.path.join(hhdir, msaa3mfile)
+        neff[0] = psys.msagen.msafilesgen(msaa3mpath)
 
     # DEEP META PSICOV RUN
-
+    logger.info('Generating Multiple Sequence Alignment using HHBlits default parameters...')
     try:
         inxml=cio.check_path(args.input_interfaces[0],'file')
         xml=ET.parse(inxml)
