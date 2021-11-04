@@ -9,7 +9,7 @@ from pisacov.about import  __author__, __date__, __copyright__
 import os
 
 from pisacov.io.conf import PISA_PATH
-
+from pisacov import io as pio
 
 def runpisa(isitbio, outdir=output_tmpdir("pisa")):
     """

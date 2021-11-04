@@ -15,6 +15,7 @@ from conkit import plot as ckplot
 from pisacov.io.conf import HHSUITE_PATH
 from pisacov.io.conf import HHBLITS_DATABASE_DIR
 from pisacov.io.conf import HHBLITS_DATABASE_NAME
+from pisacov import io as pio
 
 def runhhblits(spath, hhparam, outdirmsa):
     """
@@ -30,26 +31,26 @@ def runhhblits(spath, hhparam, outdirmsa):
     :rtype: str
 
     """
-    hhsuite_exec='"'+HHSUITE_PATH+'"'
+    hhsuite_exec='"'+pio.check_path(HHSUITE_PATH, 'file')+'"'
 
     msaa3mfile= os.path.splitext(os.path.basename(spath))[0] +".msa.a3m"
     msaa3mpath = os.path.join(outdirmsa, msaa3mfile)
 
     try:
         os.system(hhsuite_exec + ' -i '+ spath +
-                  ' -d ' + HHBLITS_DATABASE_DIR + HHBLITS_DATABASE_NAME +
-                 ' -n ' + hhparam[0] + ' -e ' + hhparam[1] +
-                 ' -diff ' + hhparam[2] + ' -cov ' + hhparam[3] +
-                 ' -id ' + hhparam[4] +
-                 ' -oa3m ' + msaa3mpath)
+                  ' -d ' + pio.check_path(HHBLITS_DATABASE_DIR, 'dir') +
+                  HHBLITS_DATABASE_NAME + ' -n ' + hhparam[0] +
+                  ' -e ' + hhparam[1] + ' -diff ' + hhparam[2] +
+                  ' -cov ' + hhparam[3] + ' -id ' + hhparam[4] +
+                  ' -oa3m ' + msaa3mpath)
     except:
         try:
             os.system(hhsuite_exec + ' -i '+ spath +
-                      ' -d ' + HHBLITS_DATABASE_DIR + HHBLITS_DATABASE_NAME +
-                     ' -n ' + hhparam[0] + ' -e ' + hhparam[1] +
-                     ' -diff ' + hhparam[2] + ' -cov ' + hhparam[3] +
-                     ' -id ' + hhparam[4] +
-                     ' -oa3m ' + msaa3mpath)
+                      ' -d ' + pio.check_path(HHBLITS_DATABASE_DIR, 'dir') +
+                      HHBLITS_DATABASE_NAME + ' -n ' + hhparam[0] +
+                      ' -e ' + hhparam[1] + ' -diff ' + hhparam[2] +
+                      ' -cov ' + hhparam[3] + ' -id ' + hhparam[4] +
+                      ' -oa3m ' + msaa3mpath)
         except:
             logging.critical('        An error occurred while executing HHBLITS.')
 
@@ -60,8 +61,7 @@ def runhhblits(spath, hhparam, outdirmsa):
     return parsedmsa, msajonespath
 
 def msafilesgen(inpath_a3m):
-    """
-    Convert a3m format alignment to "jones" format (.aln) and print msa coverage graph
+    """Convert a3m format alignment to "jones" format (.aln) and print msa coverage graph.
 
     :param inpath_a3m: Multiple Sequence Alignment (.a3m) path
     :type inpath_a3m: str

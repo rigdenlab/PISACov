@@ -39,8 +39,7 @@ import time
 logger = None
 
 def create_argument_parser():
-    """Create a parser for the command line arguments used in crops-renumber"""
-
+    """Create a parser for the command line arguments used in crops-renumber."""
     parser = argparse.ArgumentParser(prog=__prog__, formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description=__description__+' ('+__prog__+')  v.'+__version__+'\n'+__doc__)
     # MUTUALLY EXCLUSIVE: PDBID or FASTA path + STR path
@@ -49,9 +48,11 @@ def create_argument_parser():
                            help="Input sequence and structure filepaths.")
     main_args.add_argument("-s", "--skip_conpred", nargs=2, metavar="Initial_files",
                            help="If HHBLITS and DMP files have already been generated in pdbid/deepmetapsicov, they will be read and those processeses bypassed. Input sequence and structure filepaths.")
+    main_args.add_argument("-d", "--skip_default_conpred", nargs=2, metavar="Initial_files",
+                           help="If combined with --add_noncropped, non-default sequences will run through HHBLITS and DMP while default ones will not. If --add_noncropped not used, this function is equivalent to --skip_conpred. Input sequence and structure filepaths.")
 
-    parser.add_argument("-a","--add_noncropped", action='store_true', default=False,
-                        help="Include results for original sequence even if cropped version exists..")
+    parser.add_argument("-a","--add_nondefault", action='store_true', default=False,
+                        help="Provide results for non-default sequences too. Default sequences are cropped if possible. Non-default sequences are the original sequences if and only if a cropped version exists.")
 
     parser.add_argument("-o","--outdir", nargs=1, metavar="Output_Directory",
                         help="Set output directory path. If not supplied, default is the one containing the input sequence. If -s option is used, be aware that this directory must already contain the pdbid/deepmetapsicov directory and its files.")
@@ -82,13 +83,18 @@ def main():
         inseq = pio.check_path(args.initialise[0], 'file')
         instr = pio.check_path(args.initialise[1], 'file')
         indb = pio.check_path(pio.conf.CSV_CHAIN_PATH, 'file')
-        skipexec = False
+        skipexec = [False, True] if not args.add_noncropped else [False, False]
+        scoring = [True, False] if not args.add_noncropped else [True, True]
     elif args.skip_conpred is not None:
         inseq = pio.check_path(args.skip_conpred[0], 'file')
         instr = pio.check_path(args.skip_conpred[1], 'file')
-        skipexec = True
-
-    duplicate = True if args.add_noncropped else False
+        skipexec = [True, True]
+        scoring = [True, False] if not args.add_noncropped else [True, True]
+    elif args.skip_default_conpred is not None:
+        inseq = pio.check_path(args.skip_default_conpred[0], 'file')
+        instr = pio.check_path(args.skip_default_conpred[1], 'file')
+        skipexec = [True, True] if not args.add_noncropped else [True, False]
+        scoring = [True, False] if not args.add_noncropped else [True, True]
 
     if args.outdir is None:
         outrootdir = pio.check_path(os.path.dirname(inseq))
@@ -139,7 +145,7 @@ def main():
     #sifts = cps.import_db(indb, pdb_in=pdbid)
 
     # CROPPING AND RENUMBERING
-    if not skipexec:
+    if not skipexec[0]:
         logger.info('Cropping and renumbering sequences, structures according to SIFTS database.')
         psys.crops.runcrops(inseq, instr, indb, thuprot, dbuprot, outrootdir)
 
@@ -154,7 +160,7 @@ def main():
     cseqpath = os.path.join(outrootdir, pdbid, pdbid+'.crops.to_uniprot.fasta')
     hhdir = os.path.join(outrootdir, pdbid, 'hhblits','')
     neff = [None, None]
-    if not skipexec:
+    if not skipexec[0] or not skipexec[1]:
         if hhparameters == ['3', '0.001', 'inf', '50', '99']:
             logger.info('Generating Multiple Sequence Alignment using DeepMetaPSICOV default parameters... [AS RECOMMENDED]')
         elif hhparameters == ['2', '0.001', '1000', '0', '90']:
@@ -162,31 +168,67 @@ def main():
         else:
             logger.info('Generating Multiple Sequence Alignment using user-custom parameters...')
 
-        if not os.path.isfile(cseqpath) or duplicate:
+        if os.path.isfile(cseqpath) and not skipexec[0]:
+            psys.msagen.runhhblits(cseqpath, hhparameters, hhdir)
+            cmsaa3mfile = os.path.splitext(os.path.basename(cseqpath))[0] +".msa.a3m"
+            cmsaa3mpath = os.path.join(hhdir, cmsaa3mfile)
+            neff[0] = psys.msagen.msafilesgen(cmsaa3mpath)
+            if not skipexec[1]:
+                logger.info('    Repeating process for non-default sequence...')
+        else:
+            logger.info('    No cropped sequence found, using original sequence instead...')
+
+        if not os.path.isfile(cseqpath) or not skipexec[1]:
             psys.msagen.runhhblits(inseq, hhparameters, hhdir)
-            msaa3mfile= os.path.splitext(os.path.basename(inseq))[0] +".msa.a3m"
+            msaa3mfile = os.path.splitext(os.path.basename(inseq))[0] +".msa.a3m"
             msaa3mpath = os.path.join(hhdir, msaa3mfile)
             neff[1] = psys.msagen.msafilesgen(msaa3mpath)
-            logger.info('    Repeating process for cropped sequence...')
-
-        psys.msagen.runhhblits(cseqpath, hhparameters, hhdir)
-        msaa3mfile = os.path.splitext(os.path.basename(cseqpath))[0] +".msa.a3m"
-        msaa3mpath = os.path.join(hhdir, msaa3mfile)
-        neff[0] = psys.msagen.msafilesgen(msaa3mpath)
 
     # DEEP META PSICOV RUN
-    logger.info('Generating Multiple Sequence Alignment using HHBlits default parameters...')
+    if not skipexec[0] or not skipexec[1]:
+        logger.info('Generating contact prediction lists via DeepMetaPSICOV...')
+
+        if os.path.isfile(cseqpath) and not skipexec[0]:
+            psys.dmp.rundmp(cseqpath, cmsaa3mpath)
+            if not skipexec[1]:
+                logger.info('    Repeating process for non-default sequence...')
+        else:
+            logger.info('    No cropped sequence found, using original sequence instead...')
+
+        if not os.path.isfile(cseqpath) or not skipexec[1]:
+            psys.dmp.rundmp(inseq, msaa3mpath)
+
     try:
         inxml=cio.check_path(args.input_interfaces[0],'file')
         xml=ET.parse(inxml)
     except:
         raise argparse.ArgumentError()
 
+    # INTERFACE GENERATION, PISA
+    cstrpath = os.path.join(outrootdir, pdbid, pdbid+'.oldids.crops.to_uniprot.pdb')
+    if not skipexec[0] or not skipexec[1]:
+        logger.info('Generating interface files via PISA...')
+
+        if os.path.isfile(cseqpath) and not skipexec[0]:
+
     # CONTACT ANALYSIS AND MATCH
 
 
 
+
     # OUTPUT
+
+
+# CODE TO PRINT NON-REPEATED LINES
+#    import csv
+#    rows = csv.reader(open("file.csv", "rb"))
+#    newrows = []
+#    for row in rows:
+#        if row not in newrows:
+#            newrows.append(row)
+#    writer = csv.writer(open("file.csv", "wb"))
+#    writer.writerows(newrows)
+
 
 
     return
