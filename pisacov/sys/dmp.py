@@ -14,7 +14,7 @@ import crops
 import sys
 import logging
 
-def rundmp(spath, msapath):
+def rundmp(spath, msapath, outdir):
     """
     Run DeepMetaPSICOV to produce contact prediction lists.
 
@@ -22,9 +22,6 @@ def rundmp(spath, msapath):
     :type seqpath: str
     :param msapath: Input MSA filepath.
     :type msapath: str
-    :return: DESCRIPTION
-    :rtype: TYPE
-
     """
     dmp_exec = '"'+pio.check_path(DMP_PATH, 'file')+'"'
     try:

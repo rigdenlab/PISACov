@@ -100,6 +100,7 @@ def main():
         outrootdir = pio.check_path(os.path.dirname(inseq))
     else:
         outrootdir = pio.check_path(os.path.join(args.outdir[0], ''))
+    pio.mdir(outrootdir)
 
     if args.collection_file is None:
         outcsv = pio.check_path(os.path.join(outrootdir,"pisacov_data.csv"))
@@ -149,16 +150,19 @@ def main():
         logger.info('Cropping and renumbering sequences, structures according to SIFTS database.')
         psys.crops.runcrops(inseq, instr, indb, thuprot, dbuprot, outrootdir)
 
-        inseqc = os.path.join(outrootdir, pdbid, os.path.basename(inseq))
-        instrc = os.path.join(outrootdir, pdbid, os.path.basename(instr))
-        if not os.path.isdir(os.path.join(outrootdir,pdbid,"")):
-            os.mkdir(os.path.join(outrootdir,pdbid,""))
+        outpdbdir = os.path.join(outrootdir,pdbid,"")
+        pio.mdir(outpdbdir)
+
+        inseqc = os.path.join(outpdbdir, os.path.basename(inseq))
+        instrc = os.path.join(outpdbdir, os.path.basename(instr))
+
         copyfile(inseq, inseqc)
         copyfile(instr, instrc)
 
     # MSA GENERATOR
-    cseqpath = os.path.join(outrootdir, pdbid, pdbid+'.crops.to_uniprot.fasta')
-    hhdir = os.path.join(outrootdir, pdbid, 'hhblits','')
+    cseqpath = os.path.join(outpdbdir, pdbid+'.crops.to_uniprot.fasta')
+    hhdir = os.path.join(outpdbdir, 'hhblits','')
+    pio.mdir(hhdir)
     neff = [None, None]
     if not skipexec[0] or not skipexec[1]:
         if hhparameters == ['3', '0.001', 'inf', '50', '99']:
@@ -187,16 +191,17 @@ def main():
     # DEEP META PSICOV RUN
     if not skipexec[0] or not skipexec[1]:
         logger.info('Generating contact prediction lists via DeepMetaPSICOV...')
-
+        dmpdir = os.path.join(outpdbdir, 'dmp','')
+        pio.mdir(dmpdir)
         if os.path.isfile(cseqpath) and not skipexec[0]:
-            psys.dmp.rundmp(cseqpath, cmsaa3mpath)
+            psys.dmp.rundmp(cseqpath, cmsaa3mpath, dmpdir)
             if not skipexec[1]:
                 logger.info('    Repeating process for non-default sequence...')
         else:
             logger.info('    No cropped sequence found, using original sequence instead...')
 
         if not os.path.isfile(cseqpath) or not skipexec[1]:
-            psys.dmp.rundmp(inseq, msaa3mpath)
+            psys.dmp.rundmp(inseq, msaa3mpath, dmpdir)
 
     try:
         inxml=cio.check_path(args.input_interfaces[0],'file')
@@ -205,11 +210,20 @@ def main():
         raise argparse.ArgumentError()
 
     # INTERFACE GENERATION, PISA
-    cstrpath = os.path.join(outrootdir, pdbid, pdbid+'.oldids.crops.to_uniprot.pdb')
+    cstrpath = os.path.join(outpdbdir, pdbid+'.oldids.crops.to_uniprot.pdb')
+    pisadir = os.path.join(outpdbdir, 'pisa','')
     if not skipexec[0] or not skipexec[1]:
         logger.info('Generating interface files via PISA...')
 
         if os.path.isfile(cseqpath) and not skipexec[0]:
+            psys.pisa.runpisa(cstrpath, pisadir)
+            if not skipexec[1]:
+                logger.info('    Repeating process for non-default sequence...')
+        else:
+            logger.info('    No cropped sequence found, using original sequence instead...')
+
+        if not os.path.isfile(cseqpath) or not skipexec[1]:
+            psys.pisa.runpisa(inseq, pisadir)
 
     # CONTACT ANALYSIS AND MATCH
 

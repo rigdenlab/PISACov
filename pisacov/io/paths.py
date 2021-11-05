@@ -42,6 +42,17 @@ def check_path(path, typeofpath=None):
     else:
         raise argparse.ArgumentTypeError(f"readable_dir:{path} is not a valid path")
 
+def mdir(dirpath):
+    """Create directory recursively if not existent.
+
+    :param dirpath: Path to directory to be created.
+    :type dirpath: str
+    """
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+    return
+
 def check_hhparams(paramlist):
     """Return a list with the validated HHBLITS input arguments.
 
