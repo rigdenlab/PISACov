@@ -29,7 +29,7 @@ def runpisa(instr, outdir):
     pisa_exec='"'+PISA_PATH+'"'
     # ANALYSE PDB STRUCTURE
     try:
-        os.system(pisa_exec + ' pisacov '+ instr + ' -analyse ' + instr)
+        os.system(pisa_exec + ' pisacov -analyse ' + instr)
     except:
         logging.critical('        An error occurred while executing PISA.')
 
@@ -46,12 +46,16 @@ def runpisa(instr, outdir):
     logging.info("        Generating interface PDB files...")
     for nif in range(1,n_int+1):
         #Write pdb files
-        pdbfile = os.path.splitext(instr)[0]+".interface."+str(nif)+".pdb"
+        pdbfile = (os.path.splitext(os.path.basename(instr))[0] +
+                   ".interface."+str(nif)+".pdb")
         try:
-            os.system(pisa_exec + ' pisacov -pdb interface '+ str(nif)+' > ' + pdbfile)
+            os.system(pisa_exec + ' pisacov -pdb interface '+ str(nif)+
+                      ' > ' + os.path.join(outdir,pdbfile))
         except:
             logging.critical("ERROR: An error occurred during the execution of PISA (interface pdb files production).")
             raise OSError
+
+    logging.info('    Done\n')
 
     return n_int
 

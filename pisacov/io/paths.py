@@ -203,9 +203,10 @@ def sources():
     sources = ["deepmetapsicov", "psicov", "ccmpred"]
     confiledir = ["deepmetapsicov", "deepmetapsicov", "deepmetapsicov"]
     confilesuffix = ["deepmetapsicov.con", "psicov", "ccmpred"]
+    conkittype = ["psicov", "psicov", "ccmpred"]
 
     outsinfo = {}
     for n in range(len(sources)):
-        outsinfo[sources[n]] = [confiledir[n], confilesuffix[n]]
+        outsinfo[sources[n]] = [confiledir[n], confilesuffix[n], conkittype[n]]
 
     return outsinfo

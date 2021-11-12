@@ -57,6 +57,7 @@ def runhhblits(spath, hhparam, outdirmsa):
 
     # Convert A3M MSA file to Jones format (DMP standard input format)
     parsedmsa, msajonespath = msafilesgen(msaa3mpath)
+    logging.info('    Done\n')
 
     return parsedmsa, msajonespath
 

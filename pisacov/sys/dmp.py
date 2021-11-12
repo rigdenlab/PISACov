@@ -28,3 +28,5 @@ def rundmp(spath, msapath, outdir):
         os.system(dmp_exec + ' -i '+ spath + ' -a ' + msapath)
     except:
         logging.critical('        An error occurred while executing DeepMetaPSICOV.')
+
+    logging.info('    Done\n')
