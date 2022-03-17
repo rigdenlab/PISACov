@@ -1,0 +1,18 @@
+# Spyder project
+/pisacov/.spyproject/
+.spyproject/
+
+# Sphinx docs
+#/docs/source/
+#/docs/_build/
+#/docs/api/generated/
+
+#Compiled
+/__pychache__/
+/pisacov/__pycache__/
+/pisacov/command_line/__pycache__/
+/pisacov/core/__pycache__/
+/pisacov/io/__pycache__/
+/pisacov/pisacovmods/__pycache__/
+/pisacov/sys/__pycache__/
+*.pyc
