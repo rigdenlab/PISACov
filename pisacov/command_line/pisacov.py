@@ -49,7 +49,7 @@ def create_argument_parser():
     main_args.add_argument("-s", "--skip_conpred", nargs=2, metavar="Initial_files",
                            help="If HHBLITS and DMP files have already been generated in pdbid/deepmetapsicov, they will be read and those processeses bypassed. Input sequence and structure filepaths.")
     main_args.add_argument("-d", "--skip_default_conpred", nargs=2, metavar="Initial_files",
-                           help="If combined with --add_noncropped, non-default sequences will run through HHBLITS and DMP while default ones will not. If --add_noncropped not used, this function is equivalent to --skip_conpred. Input sequence and structure filepaths.")
+                           help="If combined with --add_nondefault, non-default sequences will run through HHBLITS and DMP while default ones will not. If --add_noncropped not used, this function is equivalent to --skip_conpred. Input sequence and structure filepaths.")
 
     parser.add_argument("-a","--add_nondefault", action='store_true', default=False,
                         help="Provide results for non-default sequences too. Default sequences are cropped if possible. Non-default sequences are the original sequences if and only if a cropped version exists.")
@@ -137,7 +137,7 @@ def main():
         for key in seq.keys():
             pdbid=key.lower()
             if len(seq[key].imer) == 1:
-                for key2 in seq[key].imer[key2]:
+                for key2 in seq[key].imer[key]:
                     chid=key2
             else:
                 raise Exception('More than one pdbid in sequence set.')
@@ -214,8 +214,8 @@ def main():
 
     # INTERFACE GENERATION, PISA
     cstrpath = os.path.join(outpdbdir, pdbid+'.oldids.crops.to_uniprot.pdb')
-    pisadir = os.path.join(outpdbdir, 'pisa','')
-    n_ifaces={}
+    pisadir = os.path.join(outpdbdir, 'pisa', '')
+    n_ifaces = {}
     if not skipexec[0] or not skipexec[1]:
         logger.info('Generating interface files via PISA...')
 
