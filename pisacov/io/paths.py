@@ -2,6 +2,8 @@
 This is PISACov, a PISA extension to infer quaternary structure
 of proteins from evolutionary covariance.
 """
+from pisacov import __prog__, __description__, __version__
+from pisacov import __author__, __date__, __copyright__
 
 from pisacov.io import conf as pcnf
 
@@ -25,19 +27,22 @@ def check_path(path, typeofpath=None):
     pathok = False
     if typeofpath == 'dir' or typeofpath == 'either':
         path = os.path.abspath(path)
-        if os.path.isdir(os.path.join(path, '')):
+        if os.path.isdir(os.path.join(path, '')) is True:
             path = os.path.abspath(os.path.join(path, ''))
             pathok = True
-    elif typeofpath == 'file' or typeofpath == 'either':
+        else:
+            if os.path.isfile(path) is True:
+                pathok = True
+    elif typeofpath == 'file':
         path = os.path.abspath(path)
-        if os.path.isfile(path):
+        if os.path.isfile(path) is True:
             pathok = True
     elif typeofpath is None:
         path = os.path.abspath(path)
         pathok = True
     else:
         raise ValueError("Input string 'typeofpath' should be either 'dir' or 'file'.")
-    if pathok:
+    if pathok is True:
         return path
     else:
         raise argparse.ArgumentTypeError(f"readable_dir:{path} is not a valid path")

@@ -3,43 +3,71 @@ This is PISACov, a PISA extension to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
-from pisacov.about import __prog__, __description__, __version__
-from pisacov.about import  __author__, __date__, __copyright__
+from pisacov import __prog__, __description__, __version__
+from pisacov import __author__, __date__, __copyright__
+
+from pisacov import io as pio
+from pisacov import command_line as pcl
+from pisacov.io import conf as pconf
 
 import argparse
-
-from pisacov import command_line as pcl
-#from pisacov import io as pio
+import urllib3
+import gzip
+import shutil
+import os
 
 def create_argument_parser():
     """Customise PISACov's configuration options"""
 
     parser = argparse.ArgumentParser(prog=__prog__, formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     description=__description__+' ('+__prog__+')  v.'+__version__+'\n'+__doc__)
+                                     description='Configuration script of '+__prog__+' v.'+__version__+'\n'+__doc__)
 
-    parser.add_argument("-s", "--sifts", nargs=1, metavar="SIFTS_database_path",
-                        help="Path to the SIFTS pdb_chain_uniprot.csv")
+    main_args = parser.add_mutually_exclusive_group(required=True)
 
-    # MUTUALLY EXCLUSIVE: PDBID or FASTA path + STR path
-    parser.add_argument("input_seqpath",nargs=1, metavar="Sequence_filepath",
-                        help="Input sequence filepath.")
-    parser.add_argument("input_strpath", nargs=1, metavar="Structure_filepath",
-                        help="Input structure filepath or dir. If a directory is inserted, it will act on all structure files in such directory.")
-    parser.add_argument("input_database", nargs=1, metavar="Intervals_database",
-                        help="Input intervals database filepath.")
-
-    parser.add_argument("-o","--outdir", nargs=1, metavar="Output_Directory",
-                        help="Set output directory path. If not supplied, default is the one containing the input sequence.")
-
-    parser.add_argument("-s","--sort", nargs=1, metavar="Sort_type",
-                        help="Sort output sequences in descending order by criteria provided - 'ncrops' or 'percent'. Add 'T' ('ncropsIN', 'percentIN') to ignore numbers from terminals. Only for multiple ID fasta inputs.")
-
-    parser.add_argument("-u","--uniprot_threshold", nargs=2, metavar=("Uniprot_ratio_threshold","Sequence_database"),
-                          help='Act if SIFTS database is used as intervals source AND %% residues from single Uniprot sequence is above threshold. [MIN,MAX)=[0,100) uniclust##_yyyy_mm_consensus.fasta-path')
+    main_args.add_argument("-U", "--update_sifts_database", nargs=1, metavar="SIFTS_update",
+                           help="Update the SIFTS database. Include path to save the SIFTS file pdb_chain_uniprot.csv.")
+    main_args.add_argument("-C", "--conf_file",  action='store_true', default=False,
+                           help="Update all options in the configuration file.")
+    main_args.add_argument("-G", "--get_confpath", action='store_true', default=False,
+                           help="If you prefer to edit the configuration file " +
+                           "manually, this option will return the absolute path. " +
+                           "Be aware that wrong editing the configuration file " +
+                           "will affect the correct execution of PISACov.")
+    main_args.add_argument("-V", "--view_configuration", action='store_true', default=False,
+                           help="It reproduces the current contents of the configuration file.")
+    main_args.add_argument("-s", "--sifts_path", nargs=1, metavar="New_sifts_path",
+                           help="Update path to SIFTS database.")
+    main_args.add_argument("-p", "--pisa_path", nargs=1, metavar="PISA_executable_path",
+                           help="Update path to PISA executable.")
+    main_args.add_argument("-h", "--hhblits_path", nargs=1, metavar="HHBLITS_executable_path",
+                           help="Update path to HHBLITS executable.")
+    main_args.add_argument("-l", "--hhblits_location", nargs=2, metavar=('HHBLITS_name', 'HHBLITS_dir'),
+                           help="Update HHBLITS database's name and location.")
+    main_args.add_argument("-d", "--dmp_path", nargs=1, metavar="DMP_executable_path",
+                           help="Update path to DeepMetaPSICOV executable.")
+    main_args.add_argument("-a", "--hhblits_arguments", nargs=5, metavar="HHblits_arguments",
+                           help="#iterations, E-value cutoff, Non-redundant seqs to keep, MinimumCoverageWithMasterSeq(%), MaxPairwiseSequenceIdentity\n" +
+                           "DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]. " +
+                           "HHBlits DEEFAULT: [2, 0.001, 1000, 0, 90]")
+    main_args.add_argument("-r", "--reset_hhblits_arguments", action='store_true', default=False,
+                           help="Reset to DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99].")
+    main_args.add_argument("-i", "--intramolecular", action='store_true', default=False,
+                           help="Pairs of residues that appear as intermolecular " +
+                           "contacts and intramolecular contacts too are removed " +
+                           "with NEIGHBOURS_MINDISTANCE set to 2; " +
+                           "Intramolecular contacts determine this threshold.")
+    main_args.add_argument("-n", "--neighbours", nargs=1, metavar="NEIGHBOURS_MINDISTANCE",
+                           help="Set the minimum sequence distance for contacts " +
+                           "to be considered. Intramolecular contacts will " +
+                           "now not be considered.")
+    main_args.add_argument("-u", "--uniclust_path", nargs='?', const="",
+                           default=None, metavar="UNICLUST_fasta_path",
+                           help="Update path to UniClust database fasta file.")
 
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
     return parser
+
 
 def main():
     parser = create_argument_parser()
@@ -48,6 +76,112 @@ def main():
     global logger
     logger = pcl.pisacov_logger(level="info")
     logger.info(pcl.welcome())
+
+    if args.update_sifts_database is not None:
+        surl = 'ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/flatfiles/csv/pdb_chain_uniprot.csv.gz'
+        handle = urllib3.urlopen(surl)
+        outpath = pio.paths.check_path(args.update_sifts_database[0], 'either')
+        if os.path.isdir(outpath) is True:
+            outpath = os.path.join(outpath, 'pdb_chain_uniprot.csv')
+        with gzip.open(handle, 'rb') as f_in:
+            with open('pdb_chain_uniprot.csv', 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+        return
+    else:
+        pass
+
+    if args.view_configuration is True:
+        with open(pconf.__file__) as f:
+            print(f.read())
+        return
+    else:
+        pass
+
+    if args.get_confpath is True:
+        print(pconf.__file__)
+        return
+    else:
+        pass
+
+    if args.conf_file is False:
+        current = pio._parse_conf()
+        newconf = current.deepcopy()
+    else:
+        newconf = {}
+
+    configin = {'SIFTS_PATH': args.sifts_path,
+                'PISA_PATH': args.pisa_path,
+                'HHBLITS_PATH': args.hhblits_path,
+                'DMP_PATH': args.dmp_path,
+                'UNICLUST_FASTA_PATH': args.uniclust_path,
+                'HHBLITS_PARAMETERS': args.hhblits_parameters,
+                'NEIGHBOURS_MINDISTANCE': args.neighbours}
+    if isinstance(args.name_dir_hhblits, list) is True:
+        configin['HHBLITS_DATABASE_NAME'] = args.hhblits_location[0]
+        configin['HHBLITS_DATABASE_DIR'] = args.hhblits_location[1]
+    if isinstance(args.intramolecular) is False:
+        if (args.neighbours) is None:
+            configin['REMOVE_INTRA_CONTACTS'] = None
+    elif isinstance(args.intramolecular) is True:
+        configin['REMOVE_INTRA_CONTACTS'] = args.intramolecular
+
+    compmsg = {'SIFTS_PATH': "Please, enter the path to the SIFTS csv file:\n",
+               'PISA_PATH': "Please, enter the path to the PISA executable:\n",
+               'HHBLITS_PATH': "Please, enter the path to the HHBLITS executable:\n",
+               'HHBLITS_DATABASE_NAME': ("Please, enter the name of the HHBLITS database name\n" +
+                                         "as requested by DeepMetaPSICOV (e.g. uniclust30_2018_08):\n"),
+               'HHBLITS_DATABASE_DIR': "Please, enter the directory of the HHBLITS database:\n",
+               'DMP_PATH': "Please, enter the path to the DeepMetaPSICOV executable:\n",
+               'HHBLITS_PARAMETERS': ("Please, enter the 5 HHBLITS parameters.\n" +
+                                      "#iterations, E-value cutoff, Non-redundant seqs to keep, " +
+                                      " MinimumCoverageWithMasterSeq(%), and MaxPairwiseSequenceIdentity.\n" +
+                                      "Leave empty for DMP default (3, 0.001, 'inf', 50, 99).\n"),
+               'UNICLUST_FASTA_PATH': ("Please, enter the path to the UniClust fasta file.\n"
+                                       "An empty input will deactivate this option.\n"),
+               'NEIGHBOURS_MINDISTANCE': ("Leave blank for intramolecular contacts " +
+                                          "to be removed from intermolecular contact lists.\n" +
+                                          "Otherwise, enter the minimum distance to be cosidered "+
+                                          "between neighbours. This will override the removal of" +
+                                          "intramolecular contacts that will be now ignored.\n")}
+
+    kwlist = ['SIFTS_PATH', 'PISA_PATH', 'DMP_PATH', 'HHBLITS_PATH',
+             'HHBLITS_DATABASE_NAME', 'HHBLITS_DATABASE_DIR', 'HHBLITS_PARAMETERS',
+             'UNICLUST_FASTA_PATH', 'NEIGHBOURS_MINDISTANCE', 'REMOVE_INTRA_CONTACTS']
+
+    if args.reset_hhblits_arguments is True:
+        newconf['HHBLITS_PARAMETERS'] = pio._default_values('HHBLITS_PARAMETERS')
+    else:
+        pass
+
+    for keystr in kwlist[:-1]:
+        if configin[keystr] is not None or args.conf_file is True:
+            if args.conf_file is True:
+                while True:
+                    newval = input(compmsg[keystr])
+                    try:
+                        newconf[keystr] = pio._check_input(newval, keystr)
+                        if keystr == 'NEIGHBOURS_MINDISTANCE':
+                            if newval is None or newval == "":
+                                newconf['REMOVE_INTRA_CONTACTS'] = True
+                            else:
+                                newconf['REMOVE_INTRA_CONTACTS'] = False
+                    except Exception:
+                        print("Not a valid input. Please, try again:")
+                    else:
+                        break
+            else:
+                newconf[keystr] = pio._check_input(configin[keystr], keystr)
+
+    if configin['REMOVE_INTRA_CONTACTS'] is not None:
+        newconf['REMOVE_INTRA_CONTACTS'] = pio._check_input(configin['REMOVE_INTRA_CONTACTS'],
+                                                            'REMOVE_INTRA_CONTACTS')
+        if newconf['REMOVE_INTRA_CONTACTS'] is True:
+            newconf['NEIGHBOURS_MINDISTANCE'] == 2
+        else:
+            pass
+    else:
+        pass
+
 
 
 if __name__ == "__main__":

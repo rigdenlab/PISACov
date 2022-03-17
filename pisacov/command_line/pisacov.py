@@ -3,22 +3,22 @@ This is PISACov, a PISA extension to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
-#import pisacovmods.inputvalues as pmin
-#import pisacovmods.init1 as pmi1
-#import pisacovmods.init2 as pmi2
-#import pisacovmods.output as pmo
-#import pisacovmods.pisacovmod as pmp
-#import pisacovmods.sequence as pms
-#import pisacovmods.contacts as pmc
+# import pisacovmods.inputvalues as pmin
+# import pisacovmods.init1 as pmi1
+# import pisacovmods.init2 as pmi2
+# import pisacovmods.output as pmo
+# import pisacovmods.pisacovmod as pmp
+# import pisacovmods.sequence as pms
+# import pisacovmods.contacts as pmc
 
-from pisacov.about import __prog__, __description__, __version__
-from pisacov.about import  __author__, __date__, __copyright__
+from pisacov import __prog__, __description__, __version__
+from pisacov import __author__, __date__, __copyright__
 
 from pisacov import command_line as pcl
 from pisacov import io as pio
 from pisacov import sys as psys
 
-from crops.elements import sequence as csq
+from crops.elements import sequences as csq
 from crops import io as cio
 from crops.io import parsers as cps
 from crops.core import ops as cops
@@ -38,6 +38,7 @@ import time
 
 logger = None
 
+
 def create_argument_parser():
     """Create a parser for the command line arguments used in crops-renumber."""
     parser = argparse.ArgumentParser(prog=__prog__, formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -49,28 +50,29 @@ def create_argument_parser():
     main_args.add_argument("-s", "--skip_conpred", nargs=2, metavar="Initial_files",
                            help="If HHBLITS and DMP files have already been generated in pdbid/deepmetapsicov, they will be read and those processeses bypassed. Input sequence and structure filepaths.")
     main_args.add_argument("-d", "--skip_default_conpred", nargs=2, metavar="Initial_files",
-                           help="If combined with --add_nondefault, non-default sequences will run through HHBLITS and DMP while default ones will not. If --add_noncropped not used, this function is equivalent to --skip_conpred. Input sequence and structure filepaths.")
+                           help="If combined with --add_noncropped, non-default sequences will run through HHBLITS and DMP while default ones will not. If --add_noncropped not used, this function is equivalent to --skip_conpred. Input sequence and structure filepaths.")
 
-    parser.add_argument("-a","--add_nondefault", action='store_true', default=False,
+    parser.add_argument("-a", "--add_nondefault", action='store_true', default=False,
                         help="Provide results for non-default sequences too. Default sequences are cropped if possible. Non-default sequences are the original sequences if and only if a cropped version exists.")
 
-    parser.add_argument("-o","--outdir", nargs=1, metavar="Output_Directory",
+    parser.add_argument("-o", "--outdir", nargs=1, metavar="Output_Directory",
                         help="Set output directory path. If not supplied, default is the one containing the input sequence. If -s option is used, be aware that this directory must already contain the pdbid/deepmetapsicov directory and its files.")
-    parser.add_argument("-c","--collection_file", nargs=1, metavar="Collection_File",
+    parser.add_argument("-c", "--collection_file", nargs=1, metavar="Collection_File",
                         help="Path to CSV file where pisacov signals will be appended. Default: outdir/pisacov_data.csv.")
 
-    parser.add_argument("-u","--uniprot_threshold", nargs=1, metavar=("Uniprot_ratio_threshold"),
+    parser.add_argument("-u", "--uniprot_threshold", nargs=1, metavar=("Uniprot_ratio_threshold"),
                           help='Act if SIFTS database is used as intervals source AND %% residues from single Uniprot sequence is above threshold. [MIN,MAX)=[0,100).')
 
-    parser.add_argument("-h","--hhparams", nargs=5, metavar=("hhblits_new_parameters"),
+    parser.add_argument("-h", "--hhparams", nargs=5, metavar=("hhblits_new_parameters"),
                           help='Override default HHBLITS parameters in config file by introducing new ones: #iterations, E-value cutoff, Non-redundant seqs to keep, MinimumCoverageWithMasterSeq(%), MaxPairwiseSequenceIdentity.')
 
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
     return parser
 
+
 def main():
-    starttime=time.time()
+    starttime = time.time()
     parser = create_argument_parser()
     args = parser.parse_args()
 
@@ -83,18 +85,18 @@ def main():
         inseq = pio.check_path(args.initialise[0], 'file')
         instr = pio.check_path(args.initialise[1], 'file')
         indb = pio.check_path(pio.conf.CSV_CHAIN_PATH, 'file')
-        skipexec = [False, True] if not args.add_noncropped else [False, False]
-        scoring = [True, False] if not args.add_noncropped else [True, True]
+        skipexec = [False, True] if args.add_nondefault is False else [False, False]
+        scoring = [True, False] if args.add_nondefaul is False else [True, True]
     elif args.skip_conpred is not None:
         inseq = pio.check_path(args.skip_conpred[0], 'file')
         instr = pio.check_path(args.skip_conpred[1], 'file')
         skipexec = [True, True]
-        scoring = [True, False] if not args.add_noncropped else [True, True]
+        scoring = [True, False] if args.add_nondefault is False else [True, True]
     elif args.skip_default_conpred is not None:
         inseq = pio.check_path(args.skip_default_conpred[0], 'file')
         instr = pio.check_path(args.skip_default_conpred[1], 'file')
-        skipexec = [True, True] if not args.add_noncropped else [True, False]
-        scoring = [True, False] if not args.add_noncropped else [True, True]
+        skipexec = [True, True] if args.add_nondefault is False else [True, False]
+        scoring = [True, False] if args.add_nondefault is False else [True, True]
 
     if args.outdir is None:
         outrootdir = pio.check_path(os.path.dirname(inseq))
@@ -103,14 +105,12 @@ def main():
     pio.mdir(outrootdir)
 
     if args.collection_file is None:
-        outcsvfile = pio.check_path(os.path.join(outrootdir,"pisacov_data.csv"))
+        outcsvfile = pio.check_path(os.path.join(outrootdir, "pisacov_data.csv"))
     else:
         outcsvfile = pio.check_path(args.collection_file[0])
-    try:
-        pio.check_path(outcsvfile, 'file')
-        csvexists = True
-    except:
-        csvexists = False
+
+    if os.path.isfile(outcsvfile) is False:
+        pio.outcsv.csvheader(outcsvfile)
 
     if args.uniprot_threshold is not None:
         thuprot, dbuprot = pio.check_uniprot(args.uniprot_threshold[0])
@@ -137,7 +137,7 @@ def main():
         for key in seq.keys():
             pdbid=key.lower()
             if len(seq[key].imer) == 1:
-                for key2 in seq[key].imer[key]:
+                for key2 in seq[key].imer:
                     chid=key2
             else:
                 raise Exception('More than one pdbid in sequence set.')
@@ -214,8 +214,8 @@ def main():
 
     # INTERFACE GENERATION, PISA
     cstrpath = os.path.join(outpdbdir, pdbid+'.oldids.crops.to_uniprot.pdb')
-    pisadir = os.path.join(outpdbdir, 'pisa', '')
-    n_ifaces = {}
+    pisadir = os.path.join(outpdbdir, 'pisa','')
+    n_ifaces={}
     if not skipexec[0] or not skipexec[1]:
         logger.info('Generating interface files via PISA...')
 
@@ -296,6 +296,7 @@ def main():
 
 
     return
+
 
 if __name__ == "__main__":
     import sys

@@ -1,4 +1,4 @@
-"""About PISACov. Package information is recorded here."""
+"""This is PISACov, a software that provides an Evolutionary Covariance analysis of CCP4 PISA interfaces."""
 
 import datetime
 

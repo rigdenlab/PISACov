@@ -3,8 +3,8 @@ This is PISACov, a PISA extension to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
-from pisacov.about import __prog__, __description__, __version__
-from pisacov.about import  __author__, __date__, __copyright__
+from pisacov import __prog__, __description__, __version__
+from pisacov import __author__, __date__, __copyright__
 
 import os
 import crops
@@ -29,12 +29,12 @@ def runcrops(seqin, strin, dbin, thin, upin, outdirin):#, loggingfile):
     cropsdir = os.path.dirname(crops.__file__)
     pythonexec = '"'+sys.executable+'"'
 
-    #CROP SEQUENCE
+    # CROP SEQUENCE
     logging.info('    Running crops-cropseq...')
     cropspy = os.path.join(cropsdir, 'crops', 'command_line', 'crops-cropseq.py')
     try:
         os.system(pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + dbin + ' ' +
-                  '-u ' + thin + ' ' + upin + ' -o ' + outdirin)# + ' > ' + loggingfile)
+                  '-u ' + thin + ' ' + upin + ' -o ' + outdirin)  # + ' > ' + loggingfile)
     except:
         logging.critical('        An error occurred while executing Crops-cropseq')
 
@@ -45,7 +45,7 @@ def runcrops(seqin, strin, dbin, thin, upin, outdirin):#, loggingfile):
     cropspy = os.path.join(cropsdir, 'crops', 'command_line', 'crops-cropstr.py')
     try:
         os.system(pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + strin + ' ' +
-                  dbin + ' ' + '-u ' + thin + ' ' + upin + ' -o ' + outdirin)# + ' > ' + loggingfile)
+                  dbin + ' ' + '-u ' + thin + ' ' + upin + ' -o ' + outdirin)  # + ' > ' + loggingfile)
     except:
         logging.critical('        An error occurred while executing Crops-cropstr')
 

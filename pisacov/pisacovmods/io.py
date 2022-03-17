@@ -5,9 +5,10 @@ of proteins from evolutionary covariance.
 
 import os
 import sys
+import argparse
 
 
-def check_path(path,typeofpath=None):
+def check_path(path, typeofpath=None):
     """Returns full path if correct.
     :param path: Input (local) path.
     :type path: str
@@ -18,24 +19,24 @@ def check_path(path,typeofpath=None):
     :return: Complete checked path.
     :rtype: str
     """
-    pathok=False
-    if typeofpath=='dir':
-        path=os.path.abspath(path)
-        if os.path.isdir(os.path.join(path,'')):
-            path=os.path.abspath(os.path.join(path,''))
-            pathok=True
-    elif typeofpath=='file':
-        path=os.path.abspath(path)
-        if os.path.isfile(path):
-            pathok=True
+    pathok = False
+    if typeofpath == 'dir':
+        path = os.path.abspath(path)
+        if os.path.isdir(os.path.join(path, '')) is True:
+            path = os.path.abspath(os.path.join(path, ''))
+            pathok = True
+    elif typeofpath == 'file':
+        path = os.path.abspath(path)
+        if os.path.isfile(path) is True:
+            pathok = True
     elif typeofpath is None:
-        if os.path.isdir(os.path.abspath(os.path.join(path,''))):
-            path=os.path.abspath(os.path.join(path,''))
-            pathok=True
+        if os.path.isdir(os.path.abspath(os.path.join(path, ''))) is True:
+            path = os.path.abspath(os.path.join(path, ''))
+            pathok = True
         else:
-            path=os.path.abspath(path)
-            if os.path.isfile(path):
-                pathok=True
+            path = os.path.abspath(path)
+            if os.path.isfile(path) is True:
+                pathok = True
     else:
         raise ValueError("Input string 'typeofpath' should be either 'dir' or 'file'.")
     if pathok:

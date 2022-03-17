@@ -13,8 +13,8 @@ import pisacovmods.pisacovmod as pmp
 import pisacovmods.sequence as pms
 import pisacovmods.contacts as pmc
 
-from pisacov.about import __prog__, __description__, __version__
-from pisacov.about import  __author__, __date__, __copyright__
+from pisacov import __prog__, __description__, __version__
+from pisacov import __author__, __date__, __copyright__
 
 from pisacov import command_line as pcl
 

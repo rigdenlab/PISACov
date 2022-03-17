@@ -3,8 +3,8 @@ This is PISACov, a PISA extension to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
-from pisacov.about import __prog__, __description__, __version__
-from pisacov.about import  __author__, __date__, __copyright__
+from pisacov import __prog__, __description__, __version__
+from pisacov import __author__, __date__, __copyright__
 
 import os
 import logging
@@ -54,11 +54,6 @@ def runpisa(instr, outdir):
         except:
             logging.critical("ERROR: An error occurred during the execution of PISA (interface pdb files production).")
             raise OSError
-        logging.info("        Generating PDB structure's monomer list...")
-        listfile = (os.path.splitext(os.path.basename(instr))[0] +
-                   ".monomerlist.dat")
-        os.system(pisa_exec + ' pisacov -list monomers '+
-                  ' > ' + os.path.join(outdir,listfile))
 
     logging.info('    Done\n')
 
