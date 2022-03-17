@@ -19,8 +19,7 @@ HHBLITS_DATABASE_DIR = '/media/javier/databases/uniclust30_2018_08_hhblits/'
 ## Path to DeepMetaPsicov script
 DMP_PATH='/home/javier/Programs/DeepMetaPSICOV/run_DMP.sh'
 
-## Input parameters for HHBLITS search. Uncomment if not using DeepMetaPSICOV default.
-
+## Input parameters for HHBLITS search.
 ## (#iterations, E-value cutoff, Non-redundant seqs to keep, MinimumCoverageWithMasterSeq(%),MaxPairwiseSequenceIdentity)
 ## DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]
 ## HHBLITS DEFAULT: [2, 0.001, 1000, 0, 90]

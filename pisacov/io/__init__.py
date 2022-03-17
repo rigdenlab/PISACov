@@ -19,6 +19,14 @@ def _default_values(key):
 
     return defaultvals[key]
 
+def _default_keys():
+
+    defaultkeys = ['SIFTS_PATH', 'PISA_PATH', 'DMP_PATH', 'HHBLITS_PATH',
+                 'HHBLITS_DATABASE_NAME', 'HHBLITS_DATABASE_DIR', 'HHBLITS_PARAMETERS',
+                 'UNICLUST_FASTA_PATH', 'NEIGHBOURS_MINDISTANCE', 'REMOVE_INTRA_CONTACTS']
+
+    return defaultkeys
+
 def _check_input(val, key):
 
     compmsg = {'SIFTS_PATH': "SIFTS_PATH file not found.",
@@ -133,17 +141,12 @@ def _parse_conf():
         configfile['UNICLUST_FASTA_PATH'] = None
 
     try:
-        configfile['HHBLITS_PARAMETERS'] = pconf.UNICLUST_FASTA_PATH
+        configfile['HHBLITS_PARAMETERS'] = pconf.HHBLITS_PARAMETERS
     except Exception:
         configfile['HHBLITS_PARAMETERS'] = None
 
     try:
-        configfile['HHBLITS_PARAMETERS'] = pconf.UNICLUST_FASTA_PATH
-    except Exception:
-        configfile['HHBLITS_PARAMETERS'] = None
-
-    try:
-        configfile['NEIGHBOURS_MINDISTANCE'] = pconf.UNICLUST_FASTA_PATH
+        configfile['NEIGHBOURS_MINDISTANCE'] = pconf.NEIGHBOURS_MINDISTANCE
         configfile['REMOVE_INTRA_CONTACTS'] = False
     except Exception:
         configfile['NEIGHBOURS_MINDISTANCE'] = None

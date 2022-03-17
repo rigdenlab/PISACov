@@ -51,7 +51,7 @@ def create_argument_parser():
                            "HHBlits DEEFAULT: [2, 0.001, 1000, 0, 90]")
     main_args.add_argument("-r", "--reset_hhblits_arguments", action='store_true', default=False,
                            help="Reset to DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99].")
-    main_args.add_argument("-i", "--intramolecular", action='store_true', default=False,
+    main_args.add_argument("-i", "--intramolecular", action='store_true', default=None,
                            help="Pairs of residues that appear as intermolecular " +
                            "contacts and intramolecular contacts too are removed " +
                            "with NEIGHBOURS_MINDISTANCE set to 2; " +
@@ -69,6 +69,61 @@ def create_argument_parser():
     return parser
 
 
+def _outconffile(aconf):
+    with open(pconf.__file__, 'w') as f:
+        f.write("## Full path to pdb_chain_uniprot.csv SIFTS database.\n")
+        f.write("SIFTS_PATH = "+ aconf["SIFTS_PATH"] + "\n")
+        f.write("\n")
+        f.write("## Uncomment if Uniprot fasta database is to be read locally.\n")
+        f.write("## Full path to Uniprot fasta database.\n")
+        if aconf['UNICLUST_FASTA_PATH'] is None:
+            f.write("#UNICLUST_FASTA_PATH = ''")
+        else:
+            f.write("UNICLUST_FASTA_PATH = " + aconf['UNICLUST_FASTA_PATH'])
+        f.write("\n")
+        f.write("## Full path to PISA script\n")
+        f.write("PISA_PATH = "+ aconf["PISA_PATH"] + "\n")
+        f.write("\n")
+        f.write("## NOTE: HHBLITS paths below should be the same provided in DMP_run.sh\n")
+        f.write("## Full path to hhblits script\n")
+        f.write("HHBLITS_PATH = "+ aconf["HHBLITS_PATH"] + "\n")
+        f.write("## Name of sequence database to be used by HHBLITS (as requested by DeepMetaPSICOV)\n")
+        f.write("HHBLITS_DATABASE_NAME = "+ aconf["HHBLITS_DATABASE_NAME"] +
+                "  # e.g. uniclust30_2018_08\n")
+        f.write("## Full path to directory containing sequence database to be used by HHBLITS\n")
+        f.write("HHBLITS_DATABASE_DIR = "+ aconf["HHBLITS_DATABASE_DIR"] + "\n")
+        f.write("\n")
+        f.write("## Path to DeepMetaPsicov script\n")
+        f.write("DMP_PATH = " + aconf["DMP_PATH"] + "\n")
+        f.write("\n")
+        f.write("## Input parameters for HHBLITS search.\n")
+        f.write("## (#iterations, E-value cutoff, Non-redundant seqs to keep, MinimumCoverageWithMasterSeq(%),MaxPairwiseSequenceIdentity)\n")
+        f.write("## DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]\n")
+        f.write("## HHBLITS DEFAULT: [2, 0.001, 1000, 0, 90]\n")
+        f.write("## Uncomment next line to use non-DeepMetaPSICOV-default values\n")
+        if aconf['HHBLITS_PARAMETERS'] is None:
+            f.write("#HHBLITS_PARAMETERS = [3, 0.001, 'inf', 50, 99]\n")
+        else:
+            f.write("HHBLITS_PARAMETERS = " + str(aconf['HHBLITS_PARAMETERS']))
+        f.write("\n")
+        f.write("## CONTACT PARAMETERS")
+        f.write("\n")
+        f.write("## By default, pairs of residues that appear as intermolecular contacts\n")
+        f.write("## and intramolecular contacts too are removed with NEIGHBOURS_MINDISTANCE set to 2;\n")
+        f.write("## Intramolecular contacts determine this threshold\n")
+        f.write("\n")
+        f.write("## Minimum distance within the sequence for neighbours to be accounted for (int)\n")
+        f.write("## |pos_res1-pos_res2|>=MinDistance; Minimum value: 2; Default: 2\n")
+        f.write("## Uncomment next line if you want to bypass the default behaviour and fix a custom minimum distance while ignoring intramolecular contacts.\n")
+        if aconf['REMOVE_INTRA_CONTACTS'] is True:
+            f.write("#NEIGHBOURS_MINDISTANCE = 2\n")
+        else:
+            f.write("NEIGHBOURS_MINDISTANCE = " + str(aconf['NEIGHBOURS_MINDISTANCE']) +"\n")
+        f.write("\n")
+
+    return
+
+
 def main():
     parser = create_argument_parser()
     args = parser.parse_args()
@@ -76,6 +131,8 @@ def main():
     global logger
     logger = pcl.pisacov_logger(level="info")
     logger.info(pcl.welcome())
+
+    kwlist = pio._default_keys()
 
     if args.update_sifts_database is not None:
         surl = 'ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/flatfiles/csv/pdb_chain_uniprot.csv.gz'
@@ -104,26 +161,36 @@ def main():
         pass
 
     if args.conf_file is False:
-        current = pio._parse_conf()
-        newconf = current.deepcopy()
+        newconf = pio._parse_conf()
     else:
         newconf = {}
 
-    configin = {'SIFTS_PATH': args.sifts_path,
-                'PISA_PATH': args.pisa_path,
-                'HHBLITS_PATH': args.hhblits_path,
-                'DMP_PATH': args.dmp_path,
-                'UNICLUST_FASTA_PATH': args.uniclust_path,
-                'HHBLITS_PARAMETERS': args.hhblits_parameters,
-                'NEIGHBOURS_MINDISTANCE': args.neighbours}
+    if args.reset_hhblits_arguments is True:
+        newconf['HHBLITS_PARAMETERS'] = pio._default_values('HHBLITS_PARAMETERS')
+    else:
+        pass
+
+    configin = {}
+
+    if args.sifts_path is not None:
+        configin['SIFTS_PATH'] = args.sifts_path[0]
+    if args.pisa_path is not None:
+        configin['PISA_PATH'] = args.pisa_path[0]
+    if args.args.hhblits_path is not None:
+        configin['HHBLITS_PATH'] = args.hhblits_path[0]
+    if args.dmp_path is not None:
+        configin['DMP_PATH'] = args.dmp_path[0]
+    if args.uniclust_path is not None:
+        configin['UNICLUST_FASTA_PATH'] = args.uniclust_path[0]
+    if args.hhblits_parameters is not None:
+        configin['HHBLITS_PARAMETERS'] = args.hhblits_parameters[0]
+    if args.neighbours is not None:
+        configin['NEIGHBOURS_MINDISTANCE'] = args.neighbours[0]
+        configin['REMOVE_INTRA_CONTACTS'] = False
     if isinstance(args.name_dir_hhblits, list) is True:
         configin['HHBLITS_DATABASE_NAME'] = args.hhblits_location[0]
         configin['HHBLITS_DATABASE_DIR'] = args.hhblits_location[1]
-    if isinstance(args.intramolecular) is False:
-        if (args.neighbours) is None:
-            configin['REMOVE_INTRA_CONTACTS'] = None
-    elif isinstance(args.intramolecular) is True:
-        configin['REMOVE_INTRA_CONTACTS'] = args.intramolecular
+
 
     compmsg = {'SIFTS_PATH': "Please, enter the path to the SIFTS csv file:\n",
                'PISA_PATH': "Please, enter the path to the PISA executable:\n",
@@ -138,23 +205,14 @@ def main():
                                       "Leave empty for DMP default (3, 0.001, 'inf', 50, 99).\n"),
                'UNICLUST_FASTA_PATH': ("Please, enter the path to the UniClust fasta file.\n"
                                        "An empty input will deactivate this option.\n"),
-               'NEIGHBOURS_MINDISTANCE': ("Leave blank for intramolecular contacts " +
+               'NEIGHBOURS_MINDISTANCE': ("Press ENTER for intramolecular contacts " +
                                           "to be removed from intermolecular contact lists.\n" +
                                           "Otherwise, enter the minimum distance to be cosidered "+
                                           "between neighbours. This will override the removal of" +
                                           "intramolecular contacts that will be now ignored.\n")}
 
-    kwlist = ['SIFTS_PATH', 'PISA_PATH', 'DMP_PATH', 'HHBLITS_PATH',
-             'HHBLITS_DATABASE_NAME', 'HHBLITS_DATABASE_DIR', 'HHBLITS_PARAMETERS',
-             'UNICLUST_FASTA_PATH', 'NEIGHBOURS_MINDISTANCE', 'REMOVE_INTRA_CONTACTS']
-
-    if args.reset_hhblits_arguments is True:
-        newconf['HHBLITS_PARAMETERS'] = pio._default_values('HHBLITS_PARAMETERS')
-    else:
-        pass
-
     for keystr in kwlist[:-1]:
-        if configin[keystr] is not None or args.conf_file is True:
+        if keystr in configin or args.conf_file is True:
             if args.conf_file is True:
                 while True:
                     newval = input(compmsg[keystr])
@@ -171,8 +229,13 @@ def main():
                         break
             else:
                 newconf[keystr] = pio._check_input(configin[keystr], keystr)
+                if keystr == 'NEIGHBOURS_MINDISTANCE':
+                    newconf['REMOVE_INTRA_CONTACTS'] = pio._check_input(configin['REMOVE_INTRA_CONTACTS'],
+                                                            'REMOVE_INTRA_CONTACTS')
+                else:
+                    pass
 
-    if configin['REMOVE_INTRA_CONTACTS'] is not None:
+    if 'REMOVE_INTRA_CONTACTS' in configin:
         newconf['REMOVE_INTRA_CONTACTS'] = pio._check_input(configin['REMOVE_INTRA_CONTACTS'],
                                                             'REMOVE_INTRA_CONTACTS')
         if newconf['REMOVE_INTRA_CONTACTS'] is True:
@@ -182,7 +245,9 @@ def main():
     else:
         pass
 
+    _outconffile(newconf)
 
+    return
 
 if __name__ == "__main__":
     import sys
