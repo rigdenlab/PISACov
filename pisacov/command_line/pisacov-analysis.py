@@ -63,7 +63,7 @@ def create_argument_parser():
     parser.add_argument("-u", "--uniprot_threshold", nargs=1, metavar=("Uniprot_ratio_threshold"),
                           help='Act if SIFTS database is used as intervals source AND %% residues from single Uniprot sequence is above threshold. [MIN,MAX)=[0,100).')
 
-    parser.add_argument("-h", "--hhparams", nargs=5, metavar=("hhblits_new_parameters"),
+    parser.add_argument("-p", "--hhparams", nargs=5, metavar=("hhblits_new_parameters"),
                           help='Override default HHBLITS parameters in config file by introducing new ones: #iterations, E-value cutoff, Non-redundant seqs to keep, MinimumCoverageWithMasterSeq(%), MaxPairwiseSequenceIdentity.')
 
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)

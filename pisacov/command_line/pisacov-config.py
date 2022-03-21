@@ -15,6 +15,9 @@ import urllib3
 import gzip
 import shutil
 import os
+import logging
+
+logger = None
 
 def create_argument_parser():
     """Customise PISACov's configuration options"""
@@ -39,16 +42,19 @@ def create_argument_parser():
                            help="Update path to SIFTS database.")
     main_args.add_argument("-p", "--pisa_path", nargs=1, metavar="PISA_executable_path",
                            help="Update path to PISA executable.")
-    main_args.add_argument("-h", "--hhblits_path", nargs=1, metavar="HHBLITS_executable_path",
+    main_args.add_argument("-b", "--hhblits_path", nargs=1, metavar="HHBLITS_executable_path",
                            help="Update path to HHBLITS executable.")
     main_args.add_argument("-l", "--hhblits_location", nargs=2, metavar=('HHBLITS_name', 'HHBLITS_dir'),
                            help="Update HHBLITS database's name and location.")
     main_args.add_argument("-d", "--dmp_path", nargs=1, metavar="DMP_executable_path",
                            help="Update path to DeepMetaPSICOV executable.")
-    main_args.add_argument("-a", "--hhblits_arguments", nargs=5, metavar="HHblits_arguments",
-                           help="#iterations, E-value cutoff, Non-redundant seqs to keep, MinimumCoverageWithMasterSeq(%), MaxPairwiseSequenceIdentity\n" +
+    main_args.add_argument("-a", "--hhblits_arguments", nargs=5,
+                           metavar=("n_iterations", "evalue_cutoff",
+                                    "n_nonreduntant", "mincoverage",
+                                    "maxpairwaise_seqidentity"),
+                           help=("Introduce HHBLITS arguments." + os.linesep +
                            "DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]. " +
-                           "HHBlits DEEFAULT: [2, 0.001, 1000, 0, 90]")
+                           "HHBlits DEEFAULT: [2, 0.001, 1000, 0, 90]"))
     main_args.add_argument("-r", "--reset_hhblits_arguments", action='store_true', default=False,
                            help="Reset to DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99].")
     main_args.add_argument("-i", "--intramolecular", action='store_true', default=None,
@@ -72,32 +78,32 @@ def create_argument_parser():
 def _outconffile(aconf):
     with open(pconf.__file__, 'w') as f:
         f.write("## Full path to pdb_chain_uniprot.csv SIFTS database.\n")
-        f.write("SIFTS_PATH = "+ aconf["SIFTS_PATH"] + "\n")
+        f.write("SIFTS_PATH = '"+ aconf["SIFTS_PATH"] + "'\n")
         f.write("\n")
         f.write("## Uncomment if Uniprot fasta database is to be read locally.\n")
         f.write("## Full path to Uniprot fasta database.\n")
         if aconf['UNICLUST_FASTA_PATH'] is None:
             f.write("#UNICLUST_FASTA_PATH = ''")
         else:
-            f.write("UNICLUST_FASTA_PATH = " + aconf['UNICLUST_FASTA_PATH'])
+            f.write("UNICLUST_FASTA_PATH = '" + aconf['UNICLUST_FASTA_PATH']+"'")
         f.write("\n")
         f.write("## Full path to PISA script\n")
-        f.write("PISA_PATH = "+ aconf["PISA_PATH"] + "\n")
+        f.write("PISA_PATH = '"+ aconf["PISA_PATH"] + "'\n")
         f.write("\n")
         f.write("## NOTE: HHBLITS paths below should be the same provided in DMP_run.sh\n")
         f.write("## Full path to hhblits script\n")
-        f.write("HHBLITS_PATH = "+ aconf["HHBLITS_PATH"] + "\n")
+        f.write("HHBLITS_PATH = '"+ aconf["HHBLITS_PATH"] + "'\n")
         f.write("## Name of sequence database to be used by HHBLITS (as requested by DeepMetaPSICOV)\n")
-        f.write("HHBLITS_DATABASE_NAME = "+ aconf["HHBLITS_DATABASE_NAME"] +
-                "  # e.g. uniclust30_2018_08\n")
+        f.write("HHBLITS_DATABASE_NAME = '"+ aconf["HHBLITS_DATABASE_NAME"] +
+                "'  # e.g. uniclust30_2018_08\n")
         f.write("## Full path to directory containing sequence database to be used by HHBLITS\n")
-        f.write("HHBLITS_DATABASE_DIR = "+ aconf["HHBLITS_DATABASE_DIR"] + "\n")
+        f.write("HHBLITS_DATABASE_DIR = '"+ aconf["HHBLITS_DATABASE_DIR"] + "'\n")
         f.write("\n")
         f.write("## Path to DeepMetaPsicov script\n")
-        f.write("DMP_PATH = " + aconf["DMP_PATH"] + "\n")
+        f.write("DMP_PATH = '" + aconf["DMP_PATH"] + "'\n")
         f.write("\n")
         f.write("## Input parameters for HHBLITS search.\n")
-        f.write("## (#iterations, E-value cutoff, Non-redundant seqs to keep, MinimumCoverageWithMasterSeq(%),MaxPairwiseSequenceIdentity)\n")
+        f.write("## (#iterations, E-value cutoff, Non-redundant seqs to keep, MinimumCoverageWithMasterSeq(%%),MaxPairwiseSequenceIdentity)\n")
         f.write("## DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]\n")
         f.write("## HHBLITS DEFAULT: [2, 0.001, 1000, 0, 90]\n")
         f.write("## Uncomment next line to use non-DeepMetaPSICOV-default values\n")
@@ -124,13 +130,31 @@ def _outconffile(aconf):
     return
 
 
+def _lineformat(string):
+
+    if string.startswith('#'):
+        string = '\u001b[34m' + string + '\u001b[0m'
+    else:
+        stringlist = string.split('#')
+        if len(stringlist) == 1:
+            string = '\u001b[36m' + string + '\u001b[0m'
+        else:
+            string = '\u001b[36m' + stringlist[0]
+            for n in range(1, len(stringlist)):
+                string += '\u001b[34m' + '#' + stringlist[n]
+            string += '\u001b[0m'
+
+    return string
+
+
 def main():
+
     parser = create_argument_parser()
     args = parser.parse_args()
 
     global logger
     logger = pcl.pisacov_logger(level="info")
-    logger.info(pcl.welcome())
+    # logger.info(pcl.welcome())
 
     kwlist = pio._default_keys()
 
@@ -148,8 +172,13 @@ def main():
         pass
 
     if args.view_configuration is True:
+        print('** ' + __prog__+" v."+__version__+' configuration file **' + os.linesep)
         with open(pconf.__file__) as f:
-            print(f.read())
+            for line in f:
+                line = _lineformat(line)
+                print(line, end='')
+
+        print(os.linesep + '** End of configuration file **' + os.linesep)
         return
     else:
         pass
@@ -176,18 +205,18 @@ def main():
         configin['SIFTS_PATH'] = args.sifts_path[0]
     if args.pisa_path is not None:
         configin['PISA_PATH'] = args.pisa_path[0]
-    if args.args.hhblits_path is not None:
+    if args.hhblits_path is not None:
         configin['HHBLITS_PATH'] = args.hhblits_path[0]
     if args.dmp_path is not None:
         configin['DMP_PATH'] = args.dmp_path[0]
     if args.uniclust_path is not None:
         configin['UNICLUST_FASTA_PATH'] = args.uniclust_path[0]
-    if args.hhblits_parameters is not None:
-        configin['HHBLITS_PARAMETERS'] = args.hhblits_parameters[0]
+    if args.hhblits_arguments is not None:
+        configin['HHBLITS_PARAMETERS'] = args.hhblits_arguments[0]
     if args.neighbours is not None:
         configin['NEIGHBOURS_MINDISTANCE'] = args.neighbours[0]
         configin['REMOVE_INTRA_CONTACTS'] = False
-    if isinstance(args.name_dir_hhblits, list) is True:
+    if isinstance(args.hhblits_location, list) is True:
         configin['HHBLITS_DATABASE_NAME'] = args.hhblits_location[0]
         configin['HHBLITS_DATABASE_DIR'] = args.hhblits_location[1]
 
@@ -255,7 +284,7 @@ if __name__ == "__main__":
 
     try:
         main()
-        logger.info(pcl.ok())
+        # logger.info(pcl.ok())
         sys.exit(0)
     except Exception as e:
         if not isinstance(e, SystemExit):

@@ -39,7 +39,7 @@ def _check_input(val, key):
                'UNICLUST_FASTA_PATH': "UNICLUST_FASTA_PATH file not found.",
                'NEIGHBOURS_MINDISTANCE': "NEIGHBOURS_MINDISTANCE should be an integer.",
                'REMOVE_INTRA_CONTACTS': "REMOVE_INTRA_CONTACTS should be a boolean."}
-    errormsg = compmsg + ' Please, update the configuration file using pisaconf.'
+    errormsg = compmsg[key] + ' Please, update the configuration file using pisaconf.'
 
     if (key == 'SIFTS_PATH' or key == 'PISA_PATH' or
             key == 'HHBLITS_PATH' or key == 'DMP_PATH'):
