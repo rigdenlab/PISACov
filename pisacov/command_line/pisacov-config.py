@@ -11,7 +11,8 @@ from pisacov import command_line as pcl
 from pisacov.io import conf as pconf
 
 import argparse
-import urllib3
+from urllib import request as request
+from contextlib import closing
 import gzip
 import shutil
 import os
@@ -158,16 +159,18 @@ def main():
 
     kwlist = pio._default_keys()
 
+    configin = {}
+
     if args.update_sifts_database is not None:
-        surl = 'ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/flatfiles/csv/pdb_chain_uniprot.csv.gz'
-        handle = urllib3.urlopen(surl)
         outpath = pio.paths.check_path(args.update_sifts_database[0], 'either')
         if os.path.isdir(outpath) is True:
             outpath = os.path.join(outpath, 'pdb_chain_uniprot.csv')
-        with gzip.open(handle, 'rb') as f_in:
-            with open('pdb_chain_uniprot.csv', 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
-        return
+        surl = 'ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/flatfiles/csv/pdb_chain_uniprot.csv.gz'
+        with closing(request.urlopen(surl)) as handle:
+            with gzip.open(handle, 'rb') as f_in:
+                with open(outpath, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+        configin['SIFTS_PATH'] = outpath
     else:
         pass
 
@@ -177,8 +180,7 @@ def main():
             for line in f:
                 line = _lineformat(line)
                 print(line, end='')
-
-        print(os.linesep + '** End of configuration file **' + os.linesep)
+        print('** End of configuration file **' + os.linesep)
         return
     else:
         pass
@@ -198,8 +200,6 @@ def main():
         newconf['HHBLITS_PARAMETERS'] = pio._default_values('HHBLITS_PARAMETERS')
     else:
         pass
-
-    configin = {}
 
     if args.sifts_path is not None:
         configin['SIFTS_PATH'] = args.sifts_path[0]

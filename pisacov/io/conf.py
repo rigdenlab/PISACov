@@ -1,5 +1,5 @@
 ## Full path to pdb_chain_uniprot.csv SIFTS database.
-SIFTS_PATH = '/media/javier/databases/pdb_chain_uniprot.csv'
+SIFTS_PATH = '/home/javier/pdb_chain_uniprot.csv'
 
 ## Uncomment if Uniprot fasta database is to be read locally.
 ## Full path to Uniprot fasta database.
