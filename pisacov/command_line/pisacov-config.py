@@ -6,9 +6,11 @@ of proteins from evolutionary covariance.
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
-from pisacov import io as pio
 from pisacov import command_line as pcl
+from pisacov import io as pio
 from pisacov.io import conf as pconf
+from pisacov.io import online as pol
+from pisacov.io import paths as ppaths
 
 import argparse
 import os
@@ -158,10 +160,10 @@ def main():
     configin = {}
 
     if args.update_sifts_database is not None:
-        outpath = pio.paths.check_path(args.update_sifts_database[0], 'either')
+        outpath = ppaths.check_path(args.update_sifts_database[0], 'either')
         if os.path.isdir(outpath) is True:
             outpath = os.path.join(outpath, 'pdb_chain_uniprot.csv')
-        pio.online.getsifts(outpath)
+        pol.getsifts(outpath)
         configin['SIFTS_PATH'] = outpath
     else:
         pass
