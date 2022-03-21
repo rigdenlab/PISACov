@@ -10,6 +10,8 @@ from pisacov.io import conf as pconf
 from pisacov.io.paths import check_path
 import logging
 
+_surl = 'ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/flatfiles/csv/pdb_chain_uniprot.csv.gz'
+
 def _default_values(key):
     defaultvals = {}
     defaultvals['HHBLITS_PARAMETERS'] = [3, 0.001, 'inf', 50, 99]

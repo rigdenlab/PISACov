@@ -11,10 +11,6 @@ from pisacov import command_line as pcl
 from pisacov.io import conf as pconf
 
 import argparse
-from urllib import request as request
-from contextlib import closing
-import gzip
-import shutil
 import os
 import logging
 
@@ -165,11 +161,7 @@ def main():
         outpath = pio.paths.check_path(args.update_sifts_database[0], 'either')
         if os.path.isdir(outpath) is True:
             outpath = os.path.join(outpath, 'pdb_chain_uniprot.csv')
-        surl = 'ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/flatfiles/csv/pdb_chain_uniprot.csv.gz'
-        with closing(request.urlopen(surl)) as handle:
-            with gzip.open(handle, 'rb') as f_in:
-                with open(outpath, 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
+        pio.online.getsifts(outpath)
         configin['SIFTS_PATH'] = outpath
     else:
         pass
