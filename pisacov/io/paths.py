@@ -58,61 +58,6 @@ def mdir(dirpath):
 
     return
 
-def check_hhparams(paramlist):
-    """Return a list with the validated HHBLITS input arguments.
-
-    :param paramlist: User-provided list of HHBLITS arguments.
-    :type paramlist: list of str
-    :raises ValueError: Arguments are not valid.
-    :return: Complete and checked list of HHBLITS parameters
-    :rtype: list of (int, float, str)
-    """
-    if (paramlist == 'dmp' or paramlist == [3, 0.001, 'inf', 50, 99] or
-        paramlist == ['3', '0.001', 'inf', '50', '99']):
-        outparams = ['3', '0.001', 'inf', '50', '99']
-    elif (paramlist == 'hhblits' or paramlist == [2, 0.001, 1000, 0, 90] or
-        paramlist == ['2', '0.001', '1000', '0', '90']):
-        outparams = ['2', '0.001', '1000', '0', '90']
-    else:
-        try:
-            int(float(paramlist[0]))
-            float(paramlist[1])
-            if paramlist[2] != 'inf':
-                int(float(paramlist[2]))
-            float(paramlist[4])
-            float(paramlist[5])
-        except:
-            raise ValueError('One or more of HHblits arguments given are not valid')
-
-        outparams=[str(int(float(paramlist[0]))), str(float(paramlist[1])),
-            paramlist[2], str(float(paramlist[4])), str(float(paramlist[5]))]
-        if paramlist[2] != 'inf':
-            outparams = str(int(float(paramlist[2])))
-
-    return outparams
-
-def check_uniprot(inuniprot):
-    """Return Uniprot segment threshold value and Uniprot database path.
-
-    :param inuniprot: Initial argument for Uniprot threshold
-    :type inuniprot: str
-    :raises ValueError: Argument is not valid.
-    :return: Threshold value and database path.
-    :rtype: float, str
-
-    """
-    try:
-        float(inuniprot)
-    except:
-        raise ValueError('Uniprot threshold given not valid.')
-
-    try:
-        dbpath = check_path(pcnf.UNICLUST_FASTA_PATH, 'file')
-    except:
-        dbpath = 'https://www.uniprot.org/uniprot/'
-
-    return float(inuniprot), dbpath
-
 def output_dir(root,baseid):
     """Return path to output directory.
 
@@ -197,21 +142,3 @@ def mkdirout(root,baseid=None):
             outpaths['dmp'] = check_path(os.path.join(outpaths['pdbid'], 'dmp_predictions', ""), 'dir')
 
     return outpaths
-
-def sources():
-    """Return the subdir name and extension of each of the contact prediction types.
-
-    :return: Contact prediction types and location.
-    :rtype: dict of list of str
-
-    """
-    sources = ["deepmetapsicov", "psicov", "ccmpred"]
-    confiledir = ["deepmetapsicov", "deepmetapsicov", "deepmetapsicov"]
-    confilesuffix = ["deepmetapsicov.con", "psicov", "ccmpred"]
-    conkittype = ["psicov", "psicov", "ccmpred"]
-
-    outsinfo = {}
-    for n in range(len(sources)):
-        outsinfo[sources[n]] = [confiledir[n], confilesuffix[n], conkittype[n]]
-
-    return outsinfo

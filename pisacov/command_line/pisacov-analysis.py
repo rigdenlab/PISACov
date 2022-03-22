@@ -16,6 +16,8 @@ from pisacov import __author__, __date__, __copyright__
 
 from pisacov import command_line as pcl
 from pisacov import io as pio
+from pisacov.io import paths as ppaths
+from pisacov.io import conf as pco
 from pisacov import sys as psys
 
 from crops.elements import sequences as csq
@@ -45,11 +47,14 @@ def create_argument_parser():
                                      description=__description__+' ('+__prog__+')  v.'+__version__+'\n'+__doc__)
     # MUTUALLY EXCLUSIVE: PDBID or FASTA path + STR path
     main_args = parser.add_mutually_exclusive_group(required=True)
-    main_args.add_argument("-i", "--initialise", nargs=2, metavar="Initial_files",
+    main_args.add_argument("-i", "--initialise", nargs=2,
+                           metavar=("Seqfile", "Structure"),
                            help="Input sequence and structure filepaths.")
-    main_args.add_argument("-s", "--skip_conpred", nargs=2, metavar="Initial_files",
+    main_args.add_argument("-s", "--skip_conpred", nargs=2,
+                           metavar=("Seqfile", "Structure"),
                            help="If HHBLITS and DMP files have already been generated in pdbid/deepmetapsicov, they will be read and those processeses bypassed. Input sequence and structure filepaths.")
-    main_args.add_argument("-d", "--skip_default_conpred", nargs=2, metavar="Initial_files",
+    main_args.add_argument("-d", "--skip_default_conpred", nargs=2,
+                           metavar=("Seqfile", "Structure"),
                            help="If combined with --add_noncropped, non-default sequences will run through HHBLITS and DMP while default ones will not. If --add_noncropped not used, this function is equivalent to --skip_conpred. Input sequence and structure filepaths.")
 
     parser.add_argument("-a", "--add_nondefault", action='store_true', default=False,
@@ -63,8 +68,13 @@ def create_argument_parser():
     parser.add_argument("-u", "--uniprot_threshold", nargs=1, metavar=("Uniprot_ratio_threshold"),
                           help='Act if SIFTS database is used as intervals source AND %% residues from single Uniprot sequence is above threshold. [MIN,MAX)=[0,100).')
 
-    parser.add_argument("-p", "--hhparams", nargs=5, metavar=("hhblits_new_parameters"),
-                          help='Override default HHBLITS parameters in config file by introducing new ones: #iterations, E-value cutoff, Non-redundant seqs to keep, MinimumCoverageWithMasterSeq(%), MaxPairwiseSequenceIdentity.')
+    main_args.add_argument("-a", "--hhblits_arguments", nargs=5,
+                           metavar=("n_iterations", "evalue_cutoff",
+                                    "n_nonreduntant", "mincoverage",
+                                    "maxpairwaise_seqidentity"),
+                           help=("Introduce HHBLITS arguments." + os.linesep +
+                           "DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]. " +
+                           "HHBlits DEEFAULT: [2, 0.001, 1000, 0, 90]"))
 
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
@@ -80,94 +90,117 @@ def main():
     logger = pcl.pisacov_logger(level="info")
     logger.info(pcl.welcome())
 
+    # PARSE CONFIGURATION FILE:
+    invals = pco._initialise_inputs()
+
+    invals['INSEQ'] = None
+    invals['INSTR'] = None
+    invals['ALTDB'] = None
+    invals['OUTROOT'] = None
+    invals['OUTCSVPATH'] = None
+    invals['UPTHRESHOLD'] = None
+
     # READ INPUT ARGUMENTS
     if args.initialise is not None:
-        inseq = pio.check_path(args.initialise[0], 'file')
-        instr = pio.check_path(args.initialise[1], 'file')
-        indb = pio.check_path(pio.conf.CSV_CHAIN_PATH, 'file')
+        invals['INSEQ'] = ppaths.check_path(args.initialise[0], 'file')
+        invals['INSTR'] = ppaths.check_path(args.initialise[1], 'file')
         skipexec = [False, True] if args.add_nondefault is False else [False, False]
         scoring = [True, False] if args.add_nondefaul is False else [True, True]
     elif args.skip_conpred is not None:
-        inseq = pio.check_path(args.skip_conpred[0], 'file')
-        instr = pio.check_path(args.skip_conpred[1], 'file')
+        invals['INSEQ'] = ppaths.check_path(args.skip_conpred[0], 'file')
+        invals['INSTR'] = ppaths.check_path(args.skip_conpred[1], 'file')
         skipexec = [True, True]
         scoring = [True, False] if args.add_nondefault is False else [True, True]
     elif args.skip_default_conpred is not None:
-        inseq = pio.check_path(args.skip_default_conpred[0], 'file')
-        instr = pio.check_path(args.skip_default_conpred[1], 'file')
+        invals['INSEQ'] = ppaths.check_path(args.skip_default_conpred[0], 'file')
+        invals['INSTR'] = ppaths.check_path(args.skip_default_conpred[1], 'file')
         skipexec = [True, True] if args.add_nondefault is False else [True, False]
         scoring = [True, False] if args.add_nondefault is False else [True, True]
 
     if args.outdir is None:
-        outrootdir = pio.check_path(os.path.dirname(inseq))
+        invals['OUTROOT'] = ppaths.check_path(os.path.dirname(invals['INSEQ']))
     else:
-        outrootdir = pio.check_path(os.path.join(args.outdir[0], ''))
-    pio.mdir(outrootdir)
+        invals['OUTROOT'] = ppaths.check_path(os.path.join(args.outdir[0], ''))
+    ppaths.mdir(invals['OUTROOT'])
 
     if args.collection_file is None:
-        outcsvfile = pio.check_path(os.path.join(outrootdir, "pisacov_data.csv"))
+        invals['OUTCSVPATH'] = ppaths.check_path(os.path.join(
+                                        invals['OUTROOT'], "pisacov_data.csv"))
     else:
-        outcsvfile = pio.check_path(args.collection_file[0])
+        invals['OUTCSVPATH'] = ppaths.check_path(args.collection_file[0])
 
-    if os.path.isfile(outcsvfile) is False:
-        pio.outcsv.csvheader(outcsvfile)
+    if os.path.isfile(invals['OUTCSVPATH']) is False:
+        pio.outcsv.csvheader(invals['OUTCSVPATH'])
 
     if args.uniprot_threshold is not None:
-        thuprot, dbuprot = pio.check_uniprot(args.uniprot_threshold[0])
+        try:
+            invals['UPTHRESHOLD'] = float(args.uniprot_threshold)
+        except ValueError:
+            logger.critical('Uniprot threshold given not valid.')
+        if invals['UNICLUST_FASTA_PATH'] is None:
+            invals['UNICLUST_FASTA_PATH'] = pco._uniurl
     else:
-        thuprot = 0.0
-        dbuprot = None
+        pass
 
     if args.hhparams is not None:
-        hhparameters = pio.check_hhparams(args.hhparams)
+        invals['HHBLITS_PARAMETERS'] = pco._check_hhparams(args.hhparams)
     else:
-        try:
-            hhparameters = pio.check_hhparams(pio.conf.HHBLITS_PARAMETERS)
-        except:
-            hhparameters = pio.check_hhparams('dmp')
+        pass
 
     # Define formats used
-    sources = pio.paths.sources()
+    sources = pco._sources()
     n_sources = len(sources)
 
     # Parse sequence and structure files
     logger.info('Parsing sequence file...')
-    seq = cps.parseseqfile(inseq)
-    if len(seq)==1:
-        for key in seq.keys():
-            pdbid=key.lower()
-            if len(seq[key].imer) == 1:
-                for key2 in seq[key].imer:
-                    chid=key2
-            else:
-                raise Exception('More than one pdbid in sequence set.')
-    else:
-        raise Exception('More than one pdbid in sequence set.')
+    seqs = cps.parseseqfile(invals['INSEQ'])
 
     logger.info('Parsing structure file...')
-    structure = cps.parsestrfile(instr)[0][pdbid]
+    strs, filestrs = cps.parsestrfile(invals['INSTR'])
 
-    #logger.info('Parsing SIFTS database file...')
-    #sifts = cps.import_db(indb, pdb_in=pdbid)
+    if len(seqs) == 1 or len(strs) == 1:
+        if len(seqs) == 1:
+            for key in seqs:
+                pdbid = key.lower()
+        elif len(seqs) > 1 and len(strs) == 1:
+            for key in strs:
+                pdbid = key.lower()
+    else:
+        raise Exception('More than one pdbid in sequence and/or structure set.')
+
+    seq = seqs[pdbid]
+    structure = strs[pdbid]
+
+    # logger.info('Parsing SIFTS database file...')
+    # sifts = cps.import_db(indb, pdb_in=pdbid)
 
     # CROPPING AND RENUMBERING
-    if not skipexec[0]:
-        logger.info('Cropping and renumbering sequences, structures according to SIFTS database.')
-        psys.crops.runcrops(inseq, instr, indb, thuprot, dbuprot, outrootdir)
+    if skipexec[0] is False:
+        logger.info('Cropping and renumbering sequences, ' +
+                    'structures according to SIFTS database.')
+        psys.crops.runcrops(invals['INSEQ'],
+                            invals['INSTR'],
+                            invals['SIFTS_PATH'],
+                            invals['UPTHRESHOLD'],
+                            invals['UNICLUST_FASTA_PATH'],
+                            invals['OUTROOT'])
 
-        outpdbdir = os.path.join(outrootdir,pdbid,"")
+        outpdbdir = os.path.join(invals['OUTROOT'], pdbid, "")
         pio.mdir(outpdbdir)
 
-        inseqc = os.path.join(outpdbdir, os.path.basename(inseq))
-        instrc = os.path.join(outpdbdir, os.path.basename(instr))
+        inseqc = os.path.join(invals['OUTROOT'],
+                              os.path.basename(invals['INSEQ']))
+        instrc = os.path.join(invals['OUTROOT'],
+                              os.path.basename(invals['INSTR']))
 
-        copyfile(inseq, inseqc)
-        copyfile(instr, instrc)
+        copyfile(invals['INSEQ'], inseqc)
+        copyfile(invals['INSTR'], instrc)
 
         cmappath = os.path.join(os.path.splitext(inseqc), '.cropmap')
 
-    # MSA GENERATOR
-    cseqpath = os.path.join(outpdbdir, pdbid+'.crops.to_uniprot.fasta')
+    # MSA GENERATOR # ALL THIS MUST CHANGE
+    setch = set()
+    cseqpath = os.path.join(outpdbdir, pdbid + '.crops.to_uniprot.fasta')
     hhdir = os.path.join(outpdbdir, 'hhblits','')
     pio.mdir(hhdir)
     neff = {}

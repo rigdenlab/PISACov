@@ -7,7 +7,7 @@ from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
 from pisacov import command_line as pcl
-from pisacov import io as pio
+from pisacov.io import _conf_ops as pco
 from pisacov.io import conf as pconf
 from pisacov.io import online as pol
 from pisacov.io import paths as ppaths
@@ -155,7 +155,7 @@ def main():
     logger = pcl.pisacov_logger(level="info")
     # logger.info(pcl.welcome())
 
-    kwlist = pio._default_keys()
+    kwlist = pco._default_keys()
 
     configin = {}
 
@@ -186,12 +186,12 @@ def main():
         pass
 
     if args.conf_file is False:
-        newconf = pio._parse_conf()
+        newconf = pco._parse_conf()
     else:
         newconf = {}
 
     if args.reset_hhblits_arguments is True:
-        newconf['HHBLITS_PARAMETERS'] = pio._default_values('HHBLITS_PARAMETERS')
+        newconf['HHBLITS_PARAMETERS'] = pco._default_values('HHBLITS_PARAMETERS')
     else:
         pass
 
@@ -240,7 +240,7 @@ def main():
                 while True:
                     newval = input(compmsg[keystr])
                     try:
-                        newconf[keystr] = pio._check_input(newval, keystr)
+                        newconf[keystr] = pco._check_input(newval, keystr)
                         if keystr == 'NEIGHBOURS_MINDISTANCE':
                             if newval is None or newval == "":
                                 newconf['REMOVE_INTRA_CONTACTS'] = True
@@ -251,15 +251,15 @@ def main():
                     else:
                         break
             else:
-                newconf[keystr] = pio._check_input(configin[keystr], keystr)
+                newconf[keystr] = pco._check_input(configin[keystr], keystr)
                 if keystr == 'NEIGHBOURS_MINDISTANCE':
-                    newconf['REMOVE_INTRA_CONTACTS'] = pio._check_input(configin['REMOVE_INTRA_CONTACTS'],
+                    newconf['REMOVE_INTRA_CONTACTS'] = pco._check_input(configin['REMOVE_INTRA_CONTACTS'],
                                                             'REMOVE_INTRA_CONTACTS')
                 else:
                     pass
 
     if 'REMOVE_INTRA_CONTACTS' in configin:
-        newconf['REMOVE_INTRA_CONTACTS'] = pio._check_input(configin['REMOVE_INTRA_CONTACTS'],
+        newconf['REMOVE_INTRA_CONTACTS'] = pco._check_input(configin['REMOVE_INTRA_CONTACTS'],
                                                             'REMOVE_INTRA_CONTACTS')
         if newconf['REMOVE_INTRA_CONTACTS'] is True:
             newconf['NEIGHBOURS_MINDISTANCE'] == 2
