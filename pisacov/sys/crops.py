@@ -7,7 +7,7 @@ from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
 import os
-import crops
+# import crops
 import importlib
 import sys
 import logging
@@ -34,26 +34,7 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
     #cropsdir = os.path.dirname(crops.__file__)
     pythonexec = '"'+sys.executable+'"'
 
-    # CROP SEQUENCE
-    logging.info('    Running crops-cropseq...')
-
-    csq = importlib.import_module('crops.command_line.crops-cropseq')
-    cropspy = (csq.__file__)
-
-    command = pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + dbin
-    if thin is not None:
-        command += ' -u ' + thin + ' ' + upin
-    if outdirin is None:
-        outdirin = os.path.dirname(seqin)
-    command += ' -o ' + outdirin
-    try:
-        os.system(command)  # + ' > ' + loggingfile)
-    except:
-        logging.critical('        An error occurred while executing Crops-cropseq')
-
-    logging.info('    Done' + os.linesep)
-
-    #CROP STRUCTURE
+    #CROP SEQUENCE AND STRUCTURE
     logging.info('    Running crops-cropstr...')
 
     cst = importlib.import_module('crops.command_line.crops-cropstr')
@@ -62,7 +43,7 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
     command = pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + strin + ' ' + dbin
     if thin is not None:
         command += ' -u ' + thin + ' ' + upin
-    command += ' -o ' + outdirin
+    command += ' -o ' + outdirin + ' -i'
     try:
         os.system(command)  # + ' > ' + loggingfile)
     except:

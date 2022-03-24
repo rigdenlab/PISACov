@@ -27,39 +27,38 @@ def runhhblits(spath, hhparam, outdirmsa):
     :type hhparam: list [str], dim=5
     :param outdirmsa: Output path
     :type outdirmsa: str
-    :return: MSA filepath
+    :return: MSA
     :rtype: str
 
     """
-    hhsuite_exec='"'+pio.check_path(HHSUITE_PATH, 'file')+'"'
+    hhsuite_exec = '"' + pio.check_path(HHSUITE_PATH, 'file') + '"'
 
-    msaa3mfile= os.path.splitext(os.path.basename(spath))[0] +".msa.a3m"
+    msaa3mfile = os.path.splitext(os.path.basename(spath))[0] + ".msa.a3m"
     msaa3mpath = os.path.join(outdirmsa, msaa3mfile)
 
     try:
-        os.system(hhsuite_exec + ' -i '+ spath +
+        os.system(hhsuite_exec + ' -i ' + spath +
                   ' -d ' + pio.check_path(HHBLITS_DATABASE_DIR, 'dir') +
                   HHBLITS_DATABASE_NAME + ' -n ' + hhparam[0] +
                   ' -e ' + hhparam[1] + ' -diff ' + hhparam[2] +
                   ' -cov ' + hhparam[3] + ' -id ' + hhparam[4] +
                   ' -oa3m ' + msaa3mpath)
-    except:
+    except Exception:
         try:
-            os.system(hhsuite_exec + ' -i '+ spath +
+            os.system(hhsuite_exec + ' -i ' + spath +
                       ' -d ' + pio.check_path(HHBLITS_DATABASE_DIR, 'dir') +
                       HHBLITS_DATABASE_NAME + ' -n ' + hhparam[0] +
                       ' -e ' + hhparam[1] + ' -diff ' + hhparam[2] +
                       ' -cov ' + hhparam[3] + ' -id ' + hhparam[4] +
                       ' -oa3m ' + msaa3mpath)
-        except:
+        except Exception:
             logging.critical('        An error occurred while executing HHBLITS.')
 
-
     # Convert A3M MSA file to Jones format (DMP standard input format)
-    parsedmsa, msajonespath = msafilesgen(msaa3mpath)
+    parsedmsa = msafilesgen(msaa3mpath)
     logging.info('    Done\n')
 
-    return parsedmsa, msajonespath
+    return parsedmsa
 
 def msafilesgen(inpath_a3m):
     """Convert a3m format alignment to "jones" format (.aln) and print msa coverage graph.
@@ -70,17 +69,16 @@ def msafilesgen(inpath_a3m):
     :rtype: :obj:`~conkit.core.sequencefile.SequenceFile`
 
     """
-    parsedmsa=ckio.read(inpath_a3m,'a3m')
+    parsedmsa = ckio.read(inpath_a3m, 'a3m')
 
     # Convert to 'jones' format
-    outpath_aln = os.path.join(os.path.splitext(inpath_a3m)[0],".aln")
-    ckio.write(outpath_aln,'jones',parsedmsa)
+    outpath_aln = os.path.join(os.path.splitext(inpath_a3m)[0], ".aln")
+    ckio.write(outpath_aln, 'jones', parsedmsa)
 
     # Plot Coverage
-    msacoveragepath = os.path.join(os.path.splitext(inpath_a3m)[0],".coverage.png")
+    msacoveragepath = os.path.join(os.path.splitext(inpath_a3m)[0],
+                                   ".coverage.png")
     fig = ckplot.SequenceCoverageFigure(parsedmsa)
     fig.savefig(msacoveragepath, overwrite=True)
 
-    neff=parsedmsa.meff
-
-    return neff
+    return parsedmsa

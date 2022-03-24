@@ -58,7 +58,7 @@ def create_argument_parser():
                            help="If combined with --add_noncropped, non-default sequences will run through HHBLITS and DMP while default ones will not. If --add_noncropped not used, this function is equivalent to --skip_conpred. Input sequence and structure filepaths.")
 
     parser.add_argument("-a", "--add_nondefault", action='store_true', default=False,
-                        help="Provide results for non-default sequences too. Default sequences are cropped if possible. Non-default sequences are the original sequences if and only if a cropped version exists.")
+                        help="Provide results for non-default sequences too. Default sequences are cropped if possible. Non-default sequences are the original sequences in the case that a cropped version exists.")
 
     parser.add_argument("-o", "--outdir", nargs=1, metavar="Output_Directory",
                         help="Set output directory path. If not supplied, default is the one containing the input sequence. If -s option is used, be aware that this directory must already contain the pdbid/deepmetapsicov directory and its files.")
@@ -171,10 +171,13 @@ def main():
     seq = seqs[pdbid]
     structure = strs[pdbid]
 
-    # logger.info('Parsing SIFTS database file...')
-    # sifts = cps.import_db(indb, pdb_in=pdbid)
-
     # CROPPING AND RENUMBERING
+    outpdbdir = os.path.join(invals['OUTROOT'], pdbid, "")
+    instrc = os.path.join(invals['OUTROOT'],
+                          os.path.basename(invals['INSTR']))
+
+    fseq = {}
+    fmsa = {}
     if skipexec[0] is False:
         logger.info('Cropping and renumbering sequences, ' +
                     'structures according to SIFTS database.')
@@ -185,85 +188,128 @@ def main():
                             invals['UNICLUST_FASTA_PATH'],
                             invals['OUTROOT'])
 
-        outpdbdir = os.path.join(invals['OUTROOT'], pdbid, "")
         pio.mdir(outpdbdir)
-
-        inseqc = os.path.join(invals['OUTROOT'],
-                              os.path.basename(invals['INSEQ']))
-        instrc = os.path.join(invals['OUTROOT'],
-                              os.path.basename(invals['INSTR']))
-
-        copyfile(invals['INSEQ'], inseqc)
         copyfile(invals['INSTR'], instrc)
 
-        cmappath = os.path.join(os.path.splitext(inseqc), '.cropmap')
+    for i, iseq in seq.imer.items():
+        fiseq = pdbid + '_' + i + '.fasta'
+        fseq[i] = os.path.join(invals['OUTROOT'], pdbid, fiseq)
+        fiseq = pdbid + '_' + i + '.msa.aln'
+        fmsa[i] = os.path.join(invals['OUTROOT'], pdbid, 'hhblits', fiseq)
+        if skipexec[0] is False:
+            iseq.dump(fseq[i])
 
-    # MSA GENERATOR # ALL THIS MUST CHANGE
-    setch = set()
-    cseqpath = os.path.join(outpdbdir, pdbid + '.crops.to_uniprot.fasta')
-    hhdir = os.path.join(outpdbdir, 'hhblits','')
-    pio.mdir(hhdir)
-    neff = {}
-    if not skipexec[0] or not skipexec[1]:
-        if hhparameters == ['3', '0.001', 'inf', '50', '99']:
+    # Parse cropped sequences and maps
+    amap = {}
+    fcropseq = {}
+    fcropmsa = {}
+    for i, iseq in seq.imer.items():
+        fmap = pdbid + '_' + i + '.crops.to_uniprot'
+        fmap = os.path.join(invals['OUTROOT'], pdbid, fmap + '.cropmap')
+        amap.update(cps.parsemapfile(fmap)[pdbid])
+        fcropseq[i] = os.path.join(invals['OUTROOT'], pdbid, fmap + '.fasta')
+        fcropmsa[i] = os.path.join(invals['OUTROOT'], pdbid,
+                                   'hhblits', fmap + '.msa.aln')
+    seq.set_cropmaps(amap, cropmain=True)
+
+    # EXECUTION OF EXTERNAL PROGRAMS
+    hhdir = os.path.join(invals['OUTROOT'], pdbid, 'hhblits', '')
+    dmpdir = os.path.join(invals['OUTROOT'], pdbid, 'dmp', '')
+    pisadir = os.path.join(invals['OUTROOT'], pdbid, 'pisa', '')
+    fstr = os.path.join(invals['OUTROOT'], pdbid + '.crops.seq.pdb')
+    fcropstr = os.path.join(invals['OUTROOT'],
+                            pdbid + '.crops.oldids.crops.to_uniprot.pdb')
+    n_ifaces=[]
+    if skipexec[0] is False or skipexec[1] is False:
+        # MSA GENERATOR
+        ppaths.mdir(hhdir)
+
+        if invals['HHBLITS_PARAMETERS'] == ['3', '0.001', 'inf', '50', '99']:
             logger.info('Generating Multiple Sequence Alignment using DeepMetaPSICOV default parameters... [AS RECOMMENDED]')
-        elif hhparameters == ['2', '0.001', '1000', '0', '90']:
+        elif invals['HHBLITS_PARAMETERS'] == ['2', '0.001', '1000', '0', '90']:
             logger.info('Generating Multiple Sequence Alignment using HHBlits default parameters...')
         else:
             logger.info('Generating Multiple Sequence Alignment using user-custom parameters...')
 
-        if os.path.isfile(cmappath) and not skipexec[0]:
-            psys.msagen.runhhblits(cseqpath, hhparameters, hhdir)
-            cmsaa3mfile = os.path.splitext(os.path.basename(cseqpath))[0] +".msa.a3m"
-            cmsaa3mpath = os.path.join(hhdir, cmsaa3mfile)
-            neff['cropped'] = psys.msagen.msafilesgen(cmsaa3mpath)
-            neff['original'] = None
-            if not skipexec[1]:
-                logger.info('    Repeating process for non-default sequence...')
-                neff['cropped'] = None
-        else:
-            logger.info('    No cropped sequence found, using original sequence instead...')
-
-        if not os.path.isfile(cmappath) or not skipexec[1]:
-            psys.msagen.runhhblits(inseq, hhparameters, hhdir)
-            msaa3mfile = os.path.splitext(os.path.basename(inseq))[0] +".msa.a3m"
-            msaa3mpath = os.path.join(hhdir, msaa3mfile)
-            neff['original'] = psys.msagen.msafilesgen(msaa3mpath)
+        for i, iseq in seq.imer.items():
+            for n in range(2):
+                if skipexec[n] is False:
+                    sfile = fcropseq[i] if n == 0 else fseq[i]
+                    afile = fcropmsa[i] if n == 0 else fmsa[i]
+                    themsa = psys.msagen.runhhblits(sfile,
+                                           invals['HHBLITS_PARAMETERS'],
+                                           hhdir)
+                    if n == 0:
+                        iseq.cropmsa = themsa
+                    else:
+                        iseq.msa = themsa
+                    if skipexec[1] is False and n == 0:
+                        if iseq.seqs['mainseq'] == iseq.seqs['fullseq']:
+                            iseq.msa = iseq.cropmsa
+                            logger.info('    No cropping was performed for ' +
+                                        iseq.oligomer_id + '_' + iseq.name +
+                                        ', only original sequence considered.')
+                            break
+                        else:
+                            logger.info('    Repeating process for non-default sequence...')
 
     # DEEP META PSICOV RUN
-    if not skipexec[0] or not skipexec[1]:
         logger.info('Generating contact prediction lists via DeepMetaPSICOV...')
-        dmpdir = os.path.join(outpdbdir, 'dmp','')
-        pio.mdir(dmpdir)
-        if os.path.isfile(cmappath) and not skipexec[0]:
-            psys.dmp.rundmp(cseqpath, cmsaa3mpath, dmpdir)
-            if not skipexec[1]:
-                logger.info('    Repeating process for non-default sequence...')
-        else:
-            logger.info('    No cropped sequence found, using original sequence instead...')
 
-        if not os.path.isfile(cmappath) or not skipexec[1]:
-            psys.dmp.rundmp(inseq, msaa3mpath, dmpdir)
+        ppaths.mdir(dmpdir)
+        for i, iseq in seq.imer.items():
+            for n in range(2):
+                if skipexec[n] is False:
+                    sfile = fcropseq[i] if n == 0 else fseq[i]
+                    afile = fcropmsa[i] if n == 0 else fmsa[i]
+                    psys.dmp.rundmp(sfile, afile, dmpdir)
+                    if skipexec[1] is False and n == 0:
+                        if iseq.seqs['mainseq'] == iseq.seqs['fullseq']:
+                            logger.info('    No contact prediction was performed for ' +
+                                        iseq.oligomer_id + '_' + iseq.name +
+                                        ', only original sequence considered.')
+                            break
+                        else:
+                            logger.info('    Repeating process for non-default sequence...')
 
     # INTERFACE GENERATION, PISA
-    cstrpath = os.path.join(outpdbdir, pdbid+'.oldids.crops.to_uniprot.pdb')
-    pisadir = os.path.join(outpdbdir, 'pisa','')
-    n_ifaces={}
-    if not skipexec[0] or not skipexec[1]:
         logger.info('Generating interface files via PISA...')
+        for n in range(2):
+            if skipexec[n] is False:
+                if n == 0:
+                    n_ifaces.append(psys.pisa.runpisa(fcropstr, pisadir))
+                else:
+                    n_ifaces.append(psys.pisa.runpisa(fstr, pisadir))
+                if skipexec[1] is False and n == 0:
+                    if iseq.seqs['mainseq'] == iseq.seqs['fullseq']:
+                        if iseq.seqs['mainseq'] == iseq.seqs['fullseq']:
+                            logger.info('    No PISA analysis was performed for ' +
+                                        iseq.oligomer_id +
+                                        ', only original structure considered.')
+                            break
+                        else:
+                            logger.info('    Repeating process for non-default structure...')
 
-        if os.path.isfile(cmappath) and not skipexec[0]:
-            n_ifaces['cropped']=psys.pisa.runpisa(cstrpath, pisadir)
-            if not skipexec[1]:
-                logger.info('    Repeating process for non-default sequence...')
-        else:
-            n_ifaces['cropped']=None
-            logger.info('    No cropped sequence found, using original sequence instead...')
+    # READ DATA IF SKIPEXEC USED:
+    if skipexec[0] is True:
+        logger.info('Parsing already generated files...')
+        for i, iseq in seq.imer.items():
+            iseq.cropmsa = ckio.read(fcropmsa[i], 'jones')
+        xfile = os.path.join(pisadir,
+                             os.path.basename(fcropstr)[0] + '.interface.xml')
+        n_ifaces.append(psys.pisa.n_int_xml(xfile))
 
-        if not os.path.isfile(cmappath) or not skipexec[1]:
-            n_ifaces['original']=psys.pisa.runpisa(instr, pisadir)
-        else:
-            n_ifaces['original']=None
+    if skipexec[1] is True and scoring[1] is True:
+        for i, iseq in seq.imer.items():
+            if iseq.seqs['mainseq'] == iseq.seqs['fullseq']:
+                iseq.msa = iseq.cropmsa
+            else:
+                iseq.msa = ckio.read(fmsa[i], 'jones')
+        xfile = os.path.join(pisadir,
+                             os.path.basename(fstr)[0] + '.interface.xml')
+        n_ifaces.append(psys.pisa.n_int_xml(xfile))
+
+
 
     # CONTACT ANALYSIS AND MATCH
     resultdir = os.path.join(outpdbdir, 'results','')
