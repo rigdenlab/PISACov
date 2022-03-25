@@ -62,8 +62,9 @@ def create_argument_parser():
 
     parser.add_argument("-o", "--outdir", nargs=1, metavar="Output_Directory",
                         help="Set output directory path. If not supplied, default is the one containing the input sequence. If -s option is used, be aware that this directory must already contain the pdbid/deepmetapsicov directory and its files.")
-    parser.add_argument("-c", "--collection_file", nargs=1, metavar="Collection_File",
-                        help="Path to CSV file where pisacov signals will be appended. Default: outdir/pisacov_data.csv.")
+    parser.add_argument("-c", "--collection_files", nargs=2,
+                        metavar=("croppedseqs", "fullseqs"),
+                        help="Path to CSV files where pisacov signals will be appended. Default: outdir/evcovsignal.cropped.pisacov.csv and outdir/evcovsignal.full.pisacov.csv.")
 
     parser.add_argument("-u", "--uniprot_threshold", nargs=1, metavar=("Uniprot_ratio_threshold"),
                           help='Act if SIFTS database is used as intervals source AND %% residues from single Uniprot sequence is above threshold. [MIN,MAX)=[0,100).')
@@ -123,14 +124,19 @@ def main():
         invals['OUTROOT'] = ppaths.check_path(os.path.join(args.outdir[0], ''))
     ppaths.mdir(invals['OUTROOT'])
 
-    if args.collection_file is None:
-        invals['OUTCSVPATH'] = ppaths.check_path(os.path.join(
-                                        invals['OUTROOT'], "pisacov_data.csv"))
+    if args.collection_files is None:
+        invals['OUTCSVPATH'] = []
+        invals['OUTCSVPATH'].append(ppaths.check_path(os.path.join(
+                                    invals['OUTROOT'], "evcovsignal.cropped.pisacov.csv")))
+        invals['OUTCSVPATH'].append(ppaths.check_path(os.path.join(
+                                    invals['OUTROOT'], "evcovsignal.full.pisacov.csv")))
     else:
-        invals['OUTCSVPATH'] = ppaths.check_path(args.collection_file[0])
+        invals['OUTCSVPATH'] = ppaths.check_path(args.collection_files)
 
-    if os.path.isfile(invals['OUTCSVPATH']) is False:
-        pio.outcsv.csvheader(invals['OUTCSVPATH'])
+    if os.path.isfile(invals['OUTCSVPATH'][0]) is False:
+        pio.outcsv.csvheader(invals['OUTCSVPATH'], cropped=True)
+    if os.path.isfile(invals['OUTCSVPATH'][1]) is False:
+        pio.outcsv.csvheader(invals['OUTCSVPATH'], cropped=False)
 
     if args.uniprot_threshold is not None:
         try:
@@ -244,7 +250,7 @@ def main():
                     else:
                         iseq.msa = themsa
                     if skipexec[1] is False and n == 0:
-                        if iseq.seqs['mainseq'] == iseq.seqs['fullseq']:
+                        if iseq.ncrops() == 0:
                             iseq.msa = iseq.cropmsa
                             logger.info('    No cropping was performed for ' +
                                         iseq.oligomer_id + '_' + iseq.name +
@@ -264,7 +270,7 @@ def main():
                     afile = fcropmsa[i] if n == 0 else fmsa[i]
                     psys.dmp.rundmp(sfile, afile, dmpdir)
                     if skipexec[1] is False and n == 0:
-                        if iseq.seqs['mainseq'] == iseq.seqs['fullseq']:
+                        if iseq.ncrops() == 0:
                             logger.info('    No contact prediction was performed for ' +
                                         iseq.oligomer_id + '_' + iseq.name +
                                         ', only original sequence considered.')
@@ -281,8 +287,8 @@ def main():
                 else:
                     n_ifaces.append(psys.pisa.runpisa(fstr, pisadir))
                 if skipexec[1] is False and n == 0:
-                    if iseq.seqs['mainseq'] == iseq.seqs['fullseq']:
-                        if iseq.seqs['mainseq'] == iseq.seqs['fullseq']:
+                    if iseq.ncrops() == 0:
+                        if iseq.ncrops() == 0:
                             logger.info('    No PISA analysis was performed for ' +
                                         iseq.oligomer_id +
                                         ', only original structure considered.')
@@ -301,8 +307,8 @@ def main():
 
     if skipexec[1] is True and scoring[1] is True:
         for i, iseq in seq.imer.items():
-            if iseq.seqs['mainseq'] == iseq.seqs['fullseq']:
-                iseq.msa = iseq.cropmsa
+            if iseq.ncrops() == 0:
+                iseq.msa = iseq.cropmsa # pass?
             else:
                 iseq.msa = ckio.read(fmsa[i], 'jones')
         xfile = os.path.join(pisadir,
@@ -310,9 +316,7 @@ def main():
         n_ifaces.append(psys.pisa.n_int_xml(xfile))
 
 
-
     # CONTACT ANALYSIS AND MATCH
-    resultdir = os.path.join(outpdbdir, 'results','')
     logger.info('Opening output csv files...')
     pdbcsvfile=os.path.join(resultdir,pdbid+".evcovsignal.csv")
     pio.outcsv.csvheader(pdbcsvfile)

@@ -232,6 +232,23 @@ def _check_uniprot(inuniprot):
 
     return float(inuniprot), dbpath
 
+def _sourcenames(short=False):
+
+    """Return a list with the source names.
+
+    :param short: True for shorter names, defaults to False
+    :type short: bool, optional
+    :return: Source names.
+    :rtype: dict of list of str
+
+    """
+    if short is False:
+        sources = ["deepmetapsicov", "psicov", "ccmpred"]
+    else:
+        sources =["dmp", "psicov", "ccmpred"]
+
+    return sourcenames
+
 def _sources():
     """Return the subdir name and extension of each of the contact prediction types.
 
@@ -239,7 +256,7 @@ def _sources():
     :rtype: dict of list of str
 
     """
-    sources = ["deepmetapsicov", "psicov", "ccmpred"]
+    sources = _sourcenames()
     confiledir = ["deepmetapsicov", "deepmetapsicov", "deepmetapsicov"]
     confilesuffix = ["deepmetapsicov.con", "psicov", "ccmpred"]
     conkittype = ["psicov", "psicov", "ccmpred"]

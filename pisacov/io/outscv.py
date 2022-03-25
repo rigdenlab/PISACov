@@ -6,10 +6,27 @@ of proteins from evolutionary covariance.
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
+from pisacov.io import _conf_ops as pco
+from pisacov.core import scores as psc
+
 import csv
 
-def csvheader(outpath):
+
+def csvheader(outpath, cropped=False):
+    scnames = psc._scorenames(crop=cropped)
+    croptag = 'cropseq' if cropped is True else 'fullseq'
+    csvline = ('#PDB_id, Interface, Chain1, Chain2, Sequence, ' +
+               'L' + croptag + ', ' +
+               'Ncrops' + 'Lfullseq' +
+               croptag + 'Depth, ',
+               'N' + croptag + '_contacts, ' +
+               'N' + croptag + '_usedcontacts, ')
+    for score in scnames:
+        csvline += score + ', '
+
+    csvline = csvline[:-2]
+
     with open(outpath, "w") as outcsv:
-        outcsv.write('# PDBid, Mode, Interface, Lseq, SEQDepth, N_contacts, ' +
-                     '1L_Avscore, 1L_Accscore, 1L_TPs, 1L_Jaccard, ' +
-                     '2L_Avscore, 2L_Accscore, 2L_TPs, 2L_Jaccard\n')
+        outcsv.write(csvline)
+
+    return
