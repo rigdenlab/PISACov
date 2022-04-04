@@ -247,7 +247,7 @@ def _sourcenames(short=False):
     else:
         sources =["dmp", "psicov", "ccmpred"]
 
-    return sourcenames
+    return sources
 
 def _sources():
     """Return the subdir name and extension of each of the contact prediction types.

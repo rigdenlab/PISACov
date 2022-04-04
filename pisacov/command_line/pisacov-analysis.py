@@ -19,6 +19,7 @@ from pisacov import io as pio
 from pisacov.io import paths as ppaths
 from pisacov.io import conf as pco
 from pisacov import sys as psys
+from pisacov.core import contacts as pcc
 
 from crops.elements import sequences as csq
 from crops import io as cio
@@ -210,10 +211,10 @@ def main():
     fcropseq = {}
     fcropmsa = {}
     for i, iseq in seq.imer.items():
-        fmap = pdbid + '_' + i + '.crops.to_uniprot'
-        fmap = os.path.join(invals['OUTROOT'], pdbid, fmap + '.cropmap')
+        fprefix = pdbid + '_' + i + '.crops.to_uniprot'
+        fmap = os.path.join(invals['OUTROOT'], pdbid, fprefix + '.cropmap')
         amap.update(cps.parsemapfile(fmap)[pdbid])
-        fcropseq[i] = os.path.join(invals['OUTROOT'], pdbid, fmap + '.fasta')
+        fcropseq[i] = os.path.join(invals['OUTROOT'], pdbid, fprefix + '.fasta')
         fcropmsa[i] = os.path.join(invals['OUTROOT'], pdbid,
                                    'hhblits', fmap + '.msa.aln')
     seq.set_cropmaps(amap, cropmain=True)
@@ -318,15 +319,108 @@ def main():
 
     # CONTACT ANALYSIS AND MATCH
     logger.info('Opening output csv files...')
-    pdbcsvfile=os.path.join(resultdir,pdbid+".evcovsignal.csv")
-    pio.outcsv.csvheader(pdbcsvfile)
-    if not csvexists:
-        pio.outcsv.csvheader(outcsvfile)
+    resultdir = os.path.join(invals['OUTROOT'], pdbid, 'pisacov', '')
+    ppaths.mdir(resultdir)
+    csvfile=[]
+    csvfile.append(os.path.join(invals['OUTROOT'],
+                                pdbid + ".evcovsignal.full.pisacov.csv"))
+    csvfile.append(os.path.join(invals['OUTROOT'],
+                                pdbid + ".evcovsignal.cropped.pisacov.csv"))
+
+    for n in range(2):
+        if scoring[n] is True:
+            pio.outcsv.csvheader(csvfile[n])
+
+    logger.info('Parsing sequence files...')
+    for i, fpath in fseq.items():
+        seq.imer[i].seqs['conkit'] = ckio.read(fpath, 'fasta')[0]
 
     logger.info('Parsing contact predictions lists...')
-    ckseq = ckio.read(inseq, 'fasta')
+    conpred = [{}, {}]
+    pdbmaps = [[], []]
+    matches = [{}, {}]
+    for n in range(2):
+        if n == 0 or scoring[1] is True:
+
+            for s in seq.imer:
+                if s not in conpred[n]:
+                    conpred[n][s] = {}
+                fs = fcropseq[s] if n == 0 else fseq[s]
+                for source, attribs in sources.items():
+                    fc = os.path.splitext(os.path.basename(fs))[0]
+                    fc += attribs[1]
+                    confile = os.path.join(invals['OUTROOT'], pdbid,
+                                            attribs[0], fc)
+                    conpred[n][s][source] = ckio.read(confile, attribs[2])[0]
+                    conpred[n][s][source].remove_neighbors(min_distance=
+                                            invals['NEIGHBOURS_MINDISTANCE'],
+                                            inplace=True)
+                    conpred[n][s][source].sort('raw_score',
+                                               reverse=True,
+                                               inplace=True)
+                    if n == 0:
+                        conpred[n][source] = pcc.backmapping(conpred[n][source],
+                                                             seq.imer[s])
+                    conpred[n][s][source].sequence = seq.imer[s].seqs['conkit']
+                    conpred[n][s][source].set_sequence_register()
+
+            for i in range(n_ifaces[n]):
+                fs = fcropstr if n == 0 else fstr
+                fs = (os.path.splitext(os.path.basename(fs))[0] +
+                           ".interface."+str(i+1)+".pdb")
+                inputmap = ckio.read(fs, 'pdb')
+                if len(inputmap) == 4:
+                    ch = tuple(inputmap.id)
+                    if seq.whatseq(ch[0]) != seq.whatseq(ch[1]):
+                        logger.info('Interface ' + str(i) +
+                                    ' is not a homodimer. Ignoring.')
+                        continue
+                    else:
+                        s = seq.whatseq(ch[0])
+                    try:
+                        intmap = inputmap[1].as_contactmap()
+                        intmap.id = inputmap[1].id
+                    except Exception:
+                        intmap = inputmap[1] # ConKit LEGACY.
+
+
+                    for source, attribs in sources.items():
+                        for num in [0,3]:
+                            try:
+                                intra = inputmap[num].as_contactmap()
+                            except Exception:
+                                intra = inputmap[num]
+                            for contact1 in intra:
+                                c1 = str(contact1.id)[1:-1].split(', ')
+                                for contact2 in conpred[n][s][source]:
+                                    c2 = str(contact2.id)[1:-1].split(', ')
+                                    if ((c1[0] == c2[0] and c1[1] == c2[1]) or
+                                            (c1[1] == c2[0] and c1[0] == c2[1])):
+                                        conpred[n][s][source].remove(c2) # CHECK THAT REMOVAL INSIDE LOOP IS OK
+
+                    fc = os.path.join(resultdir, pdbid + )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ckseq = ckio.read(invals['INSEQ'], 'fasta')[0]
     conpred={}
+
     for source, attribs in sources.items():
+        ckseq=ckio.read(inseq,"fasta")[0]
         for mode in ['cropped', 'original']:
             seqfile = cseqpath if mode == 'cropped' else inseq
             confile = (os.path.splitext(os.path.basename(seqfile))[0] +
