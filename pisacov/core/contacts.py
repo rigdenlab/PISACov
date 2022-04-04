@@ -79,7 +79,7 @@ class contact_atlas:
                  'conpred_raw', 'conpred', 'strmap_raw', 'strmap',
                  'conkitmatch_raw', 'conkitmatch', 'intramap',
                  'tp_raw', 'tn_raw', 'fp_raw', 'fn_raw',
-                 'tp', 'tn', 'fp', 'fn']
+                 'tp', 'tn', 'fp', 'fn', 'npotential']
     def __init__(self, name=None, conpredmap=None, strmap=None, sequence=None,
                  minneigh=2, removeintra=True):
         self.name = None
@@ -100,6 +100,7 @@ class contact_atlas:
         self.tn = None
         self.fn_raw = None
         self.fn = None
+        self.npotential = None
 
         if name is not None:
             self.name = name
@@ -112,9 +113,12 @@ class contact_atlas:
 
         if sequence is not None:
             self.sequence = sequence
+            lseq = sequence.length()
+            self.npotential = lseq**2-lseq-2*(lseq-1)
 
         if conpredmap is not None and strmap is not None:
             matchedmap = conpredInt_pdb.match(intmap[nif][1], add_false_negatives=False, inplace=False)
+
     def __repr__(self):
         chtype = self.biotype if self.biotype is not None else 'Undefined'
         if 'mainseq' not in self.seqs:
@@ -140,3 +144,82 @@ class contact_atlas:
 
     def deepcopy(self):
         return copy.deepcopy(self)
+
+    def n_tps(self):
+        """
+        Return the number of True Positive contacts.
+
+        :param inmap: Conkit matched map.
+        :type inmap: conkit map
+        :return: Number of true positives
+        :rtype: int
+
+        """
+
+        ntp = 0
+
+        for contact in inmap:
+            if contact.true_positive is True:
+                ntp += 1
+
+        return ntp
+
+
+    def n_fps(inmap):
+        """
+        Return the number of False Positive contacts.
+
+        :param inmap: Conkit matched map.
+        :type inmap: conkit map
+        :return: Number of false positives
+        :rtype: int
+
+        """
+
+        nfp = 0
+
+        for contact in inmap:
+            if contact.false_positive is True:
+                nfp += 1
+
+        return nfp
+
+
+    def n_tns(inmap):
+        """
+        Return the number of True Negative contacts.
+
+        :param inmap: Conkit matched map.
+        :type inmap: conkit map
+        :return: Number of true negatives
+        :rtype: int
+
+        """
+
+        ntn = 0
+
+        for contact in inmap:
+            if contact.true_negative is True:
+                ntn += 1
+
+        return ntn
+
+
+    def n_fns(inmap):
+        """
+        Return the number of False Negative contacts.
+
+        :param inmap: Conkit matched map.
+        :type inmap: conkit map
+        :return: Number of false negatives
+        :rtype: int
+
+        """
+
+        nfn = 0
+
+        for contact in inmap:
+            if contact.false_negative is True:
+                nfn += 1
+
+        return nfn
