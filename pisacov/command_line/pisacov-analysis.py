@@ -20,6 +20,7 @@ from pisacov.io import paths as ppaths
 from pisacov.io import conf as pco
 from pisacov import sys as psys
 from pisacov.core import contacts as pcc
+from pisacov.core import scores as pcs
 
 from crops.elements import sequences as csq
 from crops import io as cio
@@ -322,9 +323,9 @@ def main():
     resultdir = os.path.join(invals['OUTROOT'], pdbid, 'pisacov', '')
     ppaths.mdir(resultdir)
     csvfile=[]
-    csvfile.append(os.path.join(invals['OUTROOT'],
+    csvfile.append(os.path.join(resultdir,
                                 pdbid + ".evcovsignal.full.pisacov.csv"))
-    csvfile.append(os.path.join(invals['OUTROOT'],
+    csvfile.append(os.path.join(resultdir,
                                 pdbid + ".evcovsignal.cropped.pisacov.csv"))
 
     for n in range(2):
@@ -338,7 +339,7 @@ def main():
     logger.info('Parsing contact predictions lists...')
     conpred = [{}, {}]
     pdbmaps = [[], []]
-    matches = [{}, {}]
+    matches = [[], []]
     for n in range(2):
         if n == 0 or scoring[1] is True:
 
@@ -352,19 +353,20 @@ def main():
                     confile = os.path.join(invals['OUTROOT'], pdbid,
                                             attribs[0], fc)
                     conpred[n][s][source] = ckio.read(confile, attribs[2])[0]
-                    conpred[n][s][source].remove_neighbors(min_distance=
-                                            invals['NEIGHBOURS_MINDISTANCE'],
-                                            inplace=True)
-                    conpred[n][s][source].sort('raw_score',
-                                               reverse=True,
-                                               inplace=True)
-                    if n == 0:
-                        conpred[n][source] = pcc.backmapping(conpred[n][source],
-                                                             seq.imer[s])
-                    conpred[n][s][source].sequence = seq.imer[s].seqs['conkit']
-                    conpred[n][s][source].set_sequence_register()
+#                    conpred[n][s][source].remove_neighbors(min_distance=
+#                                            invals['NEIGHBOURS_MINDISTANCE'],
+#                                            inplace=True)
+#                    conpred[n][s][source].sort('raw_score',
+#                                               reverse=True,
+#                                               inplace=True)
+#                    if n == 0:
+#                        conpred[n][source] = pcc.backmapping(conpred[n][source],
+#                                                             seq.imer[s])
+#                    conpred[n][s][source].sequence = seq.imer[s].seqs['conkit']
+#                    conpred[n][s][source].set_sequence_register()
 
             for i in range(n_ifaces[n]):
+                matches[n].append([])
                 fs = fcropstr if n == 0 else fstr
                 fs = (os.path.splitext(os.path.basename(fs))[0] +
                            ".interface."+str(i+1)+".pdb")
@@ -378,99 +380,53 @@ def main():
                     else:
                         s = seq.whatseq(ch[0])
                     try:
-                        intmap = inputmap[1].as_contactmap()
-                        intmap.id = inputmap[1].id
+                        pdbmaps[n].append([])
+                        for m in range(len(inputmap)):
+                            pdbmaps[n][i].append(inputmap[m].as_contactmap())
+                            pdbmaps[n][i][m].id = inputmap[m].id
                     except Exception:
-                        intmap = inputmap[1] # ConKit LEGACY.
+                        for m in range(len(inputmap)):
+                            pdbmaps[n][i].append(inputmap[m])  # ConKit LEGACY.
 
-
+                    matches[n][i].append({})
                     for source, attribs in sources.items():
-                        for num in [0,3]:
-                            try:
-                                intra = inputmap[num].as_contactmap()
-                            except Exception:
-                                intra = inputmap[num]
-                            for contact1 in intra:
-                                c1 = str(contact1.id)[1:-1].split(', ')
-                                for contact2 in conpred[n][s][source]:
-                                    c2 = str(contact2.id)[1:-1].split(', ')
-                                    if ((c1[0] == c2[0] and c1[1] == c2[1]) or
-                                            (c1[1] == c2[0] and c1[0] == c2[1])):
-                                        conpred[n][s][source].remove(c2) # CHECK THAT REMOVAL INSIDE LOOP IS OK
+                        matches[n][i][source] = pcc.contact_atlas(
+                                                    name=pdbid+'_'+str(s),
+                                                    conpredmap=conpred[n][s][source],
+                                                    strmap=pdbmaps[n][i],
+                                                    sequence=seq.imer[s],
+                                                    removeintra=True)
+#                        for num in [0,3]:
+#                            try:
+#                                intra = inputmap[num].as_contactmap()
+#                            except Exception:
+#                                intra = inputmap[num]
+#                            for contact1 in intra:
+#                                c1 = str(contact1.id)[1:-1].split(', ')
+#                                for contact2 in conpred[n][s][source]:
+#                                    c2 = str(contact2.id)[1:-1].split(', ')
+#                                    if ((c1[0] == c2[0] and c1[1] == c2[1]) or
+#                                            (c1[1] == c2[0] and c1[0] == c2[1])):
+#                                        conpred[n][s][source].remove(c2)  # CHECK THAT REMOVAL INSIDE LOOP IS OK
 
-                    fc = os.path.join(resultdir, pdbid + )
+    logger.info('Computing results and writing them to file...')
+    for n in range(2):
+        for i in range(n_ifaces[n]):
+            results=[pdbid, str(i+1)]
+            results.append(matches[n][i]['psicov'].chain1)
+            results.append(matches[n][i]['psicov'].chain2)
+            sid = seq.whatseq(matches[n][i]['psicov'].chain1)
+            results.append(str(sid))
+            results.append(str(seq.imer[sid].length()))
+            results.append(str(seq.imer[sid].cropmsa.meff))
+            results.append(str(seq.imer[sid].ncrops()))
+            results.append(str(seq.imer[sid].full_length()))
+            for source, attribs in sources.items():
+                appresults = pcs.list_scores(matches[n][i][source], tag=source)
+                results += appresults
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ckseq = ckio.read(invals['INSEQ'], 'fasta')[0]
-    conpred={}
-
-    for source, attribs in sources.items():
-        ckseq=ckio.read(inseq,"fasta")[0]
-        for mode in ['cropped', 'original']:
-            seqfile = cseqpath if mode == 'cropped' else inseq
-            confile = (os.path.splitext(os.path.basename(seqfile))[0] +
-                       attribs[1])
-            conpath = os.path.join(outpdbdir, attribs[0], confile)
-            cropmapping = cps.parsemapfile(cmappath)
-            if os.path.isfile(conpath):
-                conpred[mode][source] = ckio.read(conpath, attribs[2])[0]
-                for contact in conpred[mode][source]:
-                    contact.res1_seq = cropmapping[pdbid][chid]['cropbackmap'][contact.res1_seq]
-                    contact.res2_seq = cropmapping[pdbid][chid]['cropbackmap'][contact.res2_seq]
-            else:
-                conpred[mode][source] = None
-
-                # NOT SURE IT IS WORKING WITH SEVERAL CHAINS OF SAME SEQUENCE. CHECK EVERYTHING.
-
-
-
-
-    logger.info('    Parsing PISA interfaces...')
-    interfaces={}
-
-    for mode in ['cropped', 'original']:
-        if n_ifaces[mode] is not None:
-            interfaces[mode]=[]
-            for i in range(int(n_ifaces[mode])):
-                strfile = cstrpath if mode=='cropped' else instr
-                pdbfilei = os.path.splitext(strfile)[0]+".interface."+str(i+1)+".pdb"
-                interfaces[mode].append(ckio.read(pdbfilei, 'pdb'))
-        else:
-            interfaces[mode]=None
-
-
-
-
-
-    # OUTPUT
-
-
-# CODE TO PRINT NON-REPEATED LINES
-#    import csv
-#    rows = csv.reader(open("file.csv", "rb"))
-#    newrows = []
-#    for row in rows:
-#        if row not in newrows:
-#            newrows.append(row)
-#    writer = csv.writer(open("file.csv", "wb"))
-#    writer.writerows(newrows)
-
-
+            pio.outcsv.lineout(results, csvfile[n])
+            pio.outcsv.lineout(results, invals['OUTCSVPATH'][n])
 
     return
 

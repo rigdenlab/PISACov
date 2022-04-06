@@ -239,13 +239,13 @@ def _sourcenames(short=False):
     :param short: True for shorter names, defaults to False
     :type short: bool, optional
     :return: Source names.
-    :rtype: dict of list of str
+    :rtype: dict [list [str]]
 
     """
     if short is False:
-        sources = ["deepmetapsicov", "psicov", "ccmpred"]
+        sources = ["psicov", "ccmpred", "deepmetapsicov"]
     else:
-        sources =["dmp", "psicov", "ccmpred"]
+        sources =["psicov", "ccmpred", "dmp"]
 
     return sources
 
@@ -253,13 +253,13 @@ def _sources():
     """Return the subdir name and extension of each of the contact prediction types.
 
     :return: Contact prediction types and location.
-    :rtype: dict of list of str
+    :rtype: dict [list [str]]
 
     """
     sources = _sourcenames()
     confiledir = ["deepmetapsicov", "deepmetapsicov", "deepmetapsicov"]
-    confilesuffix = ["deepmetapsicov.con", "psicov", "ccmpred"]
-    conkittype = ["psicov", "psicov", "ccmpred"]
+    confilesuffix = ["psicov", "ccmpred", "deepmetapsicov.con"]
+    conkittype = ["psicov", "ccmpred", "psicov"]
 
     outsinfo = {}
     for n in range(len(sources)):
