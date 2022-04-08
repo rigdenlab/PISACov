@@ -46,49 +46,38 @@ logger = None
 def create_argument_parser():
     """Create a parser for the command line arguments used in crops-renumber."""
     parser = argparse.ArgumentParser(prog=__prog__, formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     description=__description__+' ('+__prog__+')  v.'+__version__ + os.linesep + __doc__,
-                                     epilog="Check pisacov.rtfd.io for more information.")
-    parser.add_argument("seqpath", nargs=1, metavar=("Seqfile"),
-                        help="Input original sequence filepath.")
+                                     description=__description__+' ('+__prog__+')  v.'+__version__+'\n'+__doc__)
+    # MUTUALLY EXCLUSIVE: FASTA path + STR path with different workflows.
+    main_args = parser.add_mutually_exclusive_group(required=True)
+    main_args.add_argument("-i", "--initialise", nargs=2,
+                           metavar=("Seqfile", "Structure"),
+                           help="Input sequence and structure filepaths.")
+    main_args.add_argument("-s", "--skip_conpred", nargs=2,
+                           metavar=("Seqfile", "Structure"),
+                           help="If HHBLITS and DMP files have already been generated in pdbid/deepmetapsicov, they will be read and those processeses bypassed. Input sequence and structure filepaths.")
+    main_args.add_argument("-d", "--skip_default_conpred", nargs=2,
+                           metavar=("Seqfile", "Structure"),
+                           help="If combined with --add_noncropped, non-default sequences will run through HHBLITS and DMP while default ones will not. If --add_noncropped not used, this function is equivalent to --skip_conpred. Input sequence and structure filepaths.")
 
-    # MUTUALLY EXCLUSIVE: Crystal PDB structure or PDB dimers from any source
-    structure_args = parser.add_mutually_exclusive_group(required=True)
-    structure_args.add_argument("-c", "--crystal_structure", nargs=1,
-                                metavar=("Crystal_structure"),
-                                help="Input original crystal structure filepath.")
-    structure_args.add_argument("-d", "--dimers", nargs='+',  # IF "*" is used and not parsed ok, do it later.
-                                metavar=("Dimer_structures"),
-                                help="Input the paths to each interface pdb file (this option will skip execution of PISA, and CROPS-related options will be ignored).")
+    parser.add_argument("-a", "--add_nondefault", action='store_true', default=False,
+                        help="Provide results for non-default sequences too. Default sequences are cropped if possible. Non-default sequences are the original sequences in the case that a cropped version exists.")
 
-    # Use CROPS
-    parser.add_argument("-r", "--remove_insertions", action='store_true', # DO IT FOR SIFTS AND ALSO OPTIONALLY FOR CUSTOM CSV
-                             default=False,
-                             help="Use CROPS and SIFTS database to remove insertions from crystal structure. ONLY if crystal structure provided, otherwise this option is ignored.")
-    parser.add_argument("-u", "--uniprot_threshold", nargs=1,
-                            metavar=("Uniprot_ratio_threshold"),
-                            help='If Uniprot sequence contribution to crystal sequence is below threshold ( %% ), all its residues are removed. [MIN,MAX)=[0,100).')
-
-
-    # HHBLITS modification
-    parser.add_argument("-a", "--hhblits_arguments", nargs=5,
-                        metavar=("n_iterations", "evalue_cutoff",
-                                 "n_nonreduntant", "mincoverage",
-                                 "maxpairwaise_seqidentity"),
-                        help=("Introduce HHBLITS arguments." + os.linesep +
-                              "DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]. " +
-                              os.linesep + "HHBlits DEEFAULT: [2, 0.001, 1000, 0, 90]"))
-
-    # SKIP CONPRED
-    parser.add_argument("-s", "--skip_conpred", action='store_true',
-                        default=False,
-                        help="Skip execution of external programs by importing already generated cropped sequence, structure, contacts, etc with default filepaths. This option ignores any values given of HHBLITS parameters or UniProt threshold.")
-
-    # OUTPUT OPTIONS
     parser.add_argument("-o", "--outdir", nargs=1, metavar="Output_Directory",
                         help="Set output directory path. If not supplied, default is the one containing the input sequence. If -s option is used, be aware that this directory must already contain the pdbid/deepmetapsicov directory and its files.")
-    parser.add_argument("-C", "--collection_file", nargs=1,
-                        metavar=("Collection_CSV_Path"),
-                        help="Path to CSV file where pisacov signals will be appended. Default: outdir/evcovsignal.cropped.pisacov.csv and outdir/evcovsignal.full.pisacov.csv.")
+    parser.add_argument("-c", "--collection_files", nargs=2,
+                        metavar=("croppedseqs", "fullseqs"),
+                        help="Path to CSV files where pisacov signals will be appended. Default: outdir/evcovsignal.cropped.pisacov.csv and outdir/evcovsignal.full.pisacov.csv.")
+
+    parser.add_argument("-u", "--uniprot_threshold", nargs=1, metavar=("Uniprot_ratio_threshold"),
+                          help='Act if SIFTS database is used as intervals source AND %% residues from single Uniprot sequence is above threshold. [MIN,MAX)=[0,100).')
+
+    main_args.add_argument("-a", "--hhblits_arguments", nargs=5,
+                           metavar=("n_iterations", "evalue_cutoff",
+                                    "n_nonreduntant", "mincoverage",
+                                    "maxpairwaise_seqidentity"),
+                           help=("Introduce HHBLITS arguments." + os.linesep +
+                           "DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]. " +
+                           "HHBlits DEEFAULT: [2, 0.001, 1000, 0, 90]"))
 
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
@@ -109,55 +98,27 @@ def main():
 
     invals['INSEQ'] = None
     invals['INSTR'] = None
-    invals['INIFS'] = None
     invals['ALTDB'] = None
     invals['OUTROOT'] = None
     invals['OUTCSVPATH'] = None
     invals['UPTHRESHOLD'] = None
 
     # READ INPUT ARGUMENTS
-    invals['INSEQ'] == ppaths.check_path(args.seqpath, 'file')
-
-    if args.crystal_structure is not None:
-        invals['INSTR'] = ppaths.check_path(args.crystal_structure, 'file')
-    elif args.dimers is not None:
-        invals['INIFS'] = []
-        args.remove_insertions = False
-        for fp in args.dimers:
-            if '*' in fp:
-                invals['INIFS'] += ppaths.check_wildcard(fp)
-            else:
-                invals['INIFS'].append(ppaths.check_path(fp, 'file'))
-        invals['INIFS'] = list(dict.fromkeys(invals['INIFS']))
-        if args.uniprot_threshold is not None:
-            logger.info('Uniprot threshold given bypassed by --dimers')
-        if args.remove_insertions is not None:
-            logger.info('Insertion removal bypassed by --dimers')
-
-    if args.uniprot_threshold is not None:
-        try:
-            invals['UPTHRESHOLD'] = float(args.uniprot_threshold)
-        except ValueError:
-            logger.critical('Uniprot threshold given not valid.')
-        if invals['UNICLUST_FASTA_PATH'] is None:
-            invals['UNICLUST_FASTA_PATH'] = pco._uniurl
-    else:
-        pass
-
-    if args.hhparams is not None:
-        invals['HHBLITS_PARAMETERS'] = pco._check_hhparams(args.hhparams)
-    else:
-        pass
-
-    if args.skip_conpred is True:
+    if args.initialise is not None:
+        invals['INSEQ'] = ppaths.check_path(args.initialise[0], 'file')
+        invals['INSTR'] = ppaths.check_path(args.initialise[1], 'file')
+        skipexec = [False, True] if args.add_nondefault is False else [False, False]
+        scoring = [True, False] if args.add_nondefaul is False else [True, True]
+    elif args.skip_conpred is not None:
+        invals['INSEQ'] = ppaths.check_path(args.skip_conpred[0], 'file')
+        invals['INSTR'] = ppaths.check_path(args.skip_conpred[1], 'file')
         skipexec = [True, True]
-        if args.uniprot_threshold is not None:
-            logger.info('Uniprot threshold given bypassed by --skip_conpred')
-        if args.hhblits_arguments is not None:
-            logger.info('HHblits parameters given bypassed by --skip_conpred')
-    else:
-        skipexec = [not args.remove_insertions, args.remove_insertions]
-    scoring = [args.remove_insertions, not args.remove_insertions]
+        scoring = [True, False] if args.add_nondefault is False else [True, True]
+    elif args.skip_default_conpred is not None:
+        invals['INSEQ'] = ppaths.check_path(args.skip_default_conpred[0], 'file')
+        invals['INSTR'] = ppaths.check_path(args.skip_default_conpred[1], 'file')
+        skipexec = [True, True] if args.add_nondefault is False else [True, False]
+        scoring = [True, False] if args.add_nondefault is False else [True, True]
 
     if args.outdir is None:
         invals['OUTROOT'] = ppaths.check_path(os.path.dirname(invals['INSEQ']))
@@ -179,6 +140,21 @@ def main():
     if os.path.isfile(invals['OUTCSVPATH'][1]) is False:
         pio.outcsv.csvheader(invals['OUTCSVPATH'], cropped=False)
 
+    if args.uniprot_threshold is not None:
+        try:
+            invals['UPTHRESHOLD'] = float(args.uniprot_threshold)
+        except ValueError:
+            logger.critical('Uniprot threshold given not valid.')
+        if invals['UNICLUST_FASTA_PATH'] is None:
+            invals['UNICLUST_FASTA_PATH'] = pco._uniurl
+    else:
+        pass
+
+    if args.hhparams is not None:
+        invals['HHBLITS_PARAMETERS'] = pco._check_hhparams(args.hhparams)
+    else:
+        pass
+
     # Define formats used
     sources = pco._sources()
     n_sources = len(sources)
@@ -187,58 +163,29 @@ def main():
     logger.info('Parsing sequence file...')
     seqs = cps.parseseqfile(invals['INSEQ'])
 
-    if invals['INSTR'] is not None:
-        logger.info('Parsing structure file...')
-        strs, filestrs = cps.parsestrfile(invals['INSTR'])
-        if len(seqs) == 1 or len(strs) == 1:
-            if len(seqs) == 1:
-                for key in seqs:
-                    pdbid = key.lower()
-            elif len(seqs) > 1 and len(strs) == 1:
-                for key in strs:
-                    pdbid = key.lower()
-        else:
-            raise Exception('More than one pdbid in sequence and/or structure set.')
-    else:
-        if len(seqs) == 1:
-            if len(seqs) == 1:
-                for key in seqs:
-                    pdbid = key.lower()
-        else:
-            raise Exception('More than one pdbid in sequence set.')
-        strs = None
-    seq = seqs[pdbid]
+    logger.info('Parsing structure file...')
+    strs, filestrs = cps.parsestrfile(invals['INSTR'])
 
-    outpdbdir = os.path.join(invals['OUTROOT'], pdbid, "")
+    if len(seqs) == 1 or len(strs) == 1:
+        if len(seqs) == 1:
+            for key in seqs:
+                pdbid = key.lower()
+        elif len(seqs) > 1 and len(strs) == 1:
+            for key in strs:
+                pdbid = key.lower()
+    else:
+        raise Exception('More than one pdbid in sequence and/or structure set.')
+
+    seq = seqs[pdbid]
+    structure = strs[pdbid]
 
     # CROPPING AND RENUMBERING
-    if invals['INSTR'] is not None:
-        instrc = os.path.join(invals['OUTROOT'],
-                              os.path.basename(invals['INSTR']))
+    outpdbdir = os.path.join(invals['OUTROOT'], pdbid, "")
+    instrc = os.path.join(invals['OUTROOT'],
+                          os.path.basename(invals['INSTR']))
+
     fseq = {}
     fmsa = {}
-
-    if skipexec[1] is False:
-        if invals['INIFS'] is not None:
-            logger.info('Renumbering interfaces provided ' +
-                        'according to position in sequence.')
-            for path in invals['INIFS']:
-                instrc = os.path.join(invals['OUTROOT'],
-                                      os.path.basename(path))
-                psys.crops.runcrops(invals['INSEQ'],
-                                    path,
-                                    invals['OUTROOT'])
-                copyfile(path, instrc)
-        else:
-            logger.info('Renumbering structures ' +
-                        'according to position in sequence.')
-            psys.crops.runcrops(invals['INSEQ'],
-                                invals['INSTR'],
-                                invals['OUTROOT'])
-            copyfile(invals['INSTR'], instrc)
-
-        pio.mdir(outpdbdir)
-
     if skipexec[0] is False:
         logger.info('Cropping and renumbering sequences, ' +
                     'structures according to SIFTS database.')
@@ -257,7 +204,7 @@ def main():
         fseq[i] = os.path.join(invals['OUTROOT'], pdbid, fiseq)
         fiseq = pdbid + '_' + i + '.msa.aln'
         fmsa[i] = os.path.join(invals['OUTROOT'], pdbid, 'hhblits', fiseq)
-        if skipexec[0] is False or skipexec[1] is False:
+        if skipexec[0] is False:
             iseq.dump(fseq[i])
 
     # Parse cropped sequences and maps

@@ -48,6 +48,42 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
         os.system(command)  # + ' > ' + loggingfile)
     except:
         logging.critical('        An error occurred while executing Crops-cropstr')
+        raise SystemError
+
+    logging.info('    Done' + os.linesep)
+
+    return
+
+
+def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
+    """
+    Run CROPS to produce clean sequence and structure files.
+
+    :param seqin: Sequence filepath.
+    :type seqin: str
+    :param strin: Structure filepath.
+    :type strin: str
+    :param outdirin: Output directory's path. If not given, seqin dir will use instead, defaults to None.
+    :type outdirin: str, optional
+
+    """
+
+    #cropsdir = os.path.dirname(crops.__file__)
+    pythonexec = '"'+sys.executable+'"'
+
+    #Renumber STRUCTURE
+    logging.info('    Running crops-renumber...')
+
+    cst = importlib.import_module('crops.command_line.crops-renumber')
+    cropspy = (cst.__file__)
+
+    command = (pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + strin + ' ' +
+               ' -o ' + outdirin + ' -i')
+    try:
+        os.system(command)  # + ' > ' + loggingfile)
+    except:
+        logging.critical('        An error occurred while executing Crops-renumber')
+        raise SystemError
 
     logging.info('    Done' + os.linesep)
 

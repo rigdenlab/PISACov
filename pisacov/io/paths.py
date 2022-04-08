@@ -9,6 +9,7 @@ from pisacov.io import conf as pcnf
 
 import os
 import argparse
+import glob
 
 import logging
 
@@ -46,6 +47,20 @@ def check_path(path, typeofpath=None):
         return path
     else:
         raise argparse.ArgumentTypeError(f"readable_dir:{path} is not a valid path")
+
+def check_wildcard(path):
+    """Return list of several files full path.
+
+    :param path: Path containing wildcard '*'.
+    :type path: str
+    :return: List of absolute paths.
+    :rtype: list [str]
+    """
+
+    abspath = check_path(path)
+
+    return glob.glob(abspath)
+
 
 def mdir(dirpath):
     """Create directory recursively if not existent.
