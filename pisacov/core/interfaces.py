@@ -11,45 +11,60 @@ import logging
 
 import xml.etree.ElementTree as ET
 
-def n_int_xml(xml_path):
+def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
     """Read interface.xml pisa file, parse it, and return number of interfaces.
 
     :param xml_path: Path to xml file.
     :type xml_path: str
-    :return: Number of interfaces.
-    :rtype: int
+    :return: List of interface info.
+    :rtype: list [:class:`~pisacov.core.interfaces.interface`]
 
     """
     try:
-        xmlparse = ET.parse(xml_path)
+        xmlparse = ET.parse(interface_xml_path)
     except Exception:
-        logging.critical("ERROR: Unable to open XML file at " + xml_path)
+        logging.critical("ERROR: Unable to open XML file at " +
+                         interface_xml_path)
         raise OSError
 
     root = xmlparse.getroot()
-    n = int(root.find('n_interfaces').text)
+    ifinfolist = []
+    for iface in root.iter('interface'):
+        ifid = iface.find('id').text
+        ifinfolist.append(interface(name = ifid))
+        for mol in iface.iter('molecule'):
+            cid = mol.find('chain_id').text
+            ctype = mol.find('class').text
+            ifinfolist[-1].chains[cid] = ctype
 
-    return n
+    if assembly_xml_path is not None:
+        try:
+            xmlparse = ET.parse(assembly_xml_path)
+        except Exception:
+            logging.critical("ERROR: Unable to open XML file at " +
+                             assembly_xml_path)
+            raise OSError
+        root = xmlparse.getroot()
+        for asm_set in root.iter('asm_set'):
+            for assembly in asm_set.iter('assembly'):
+                for ifaces in assembly.iter('interfaces'):
+                    for iface in ifaces.iter('interface'):
+                        iid = iface.find('id')
+                        diss = iface.find('dissociates')
+                        if ifinfolist[int(iid)-1].name == ifinfolist[iid]:
+                            if diss == 'No':
+                                ifinfolist[int(iid)-1].stable = True
+                            elif diss == 'Yes':
+                                ifinfolist[int(iid)-1].stable = False
+                        else:
+                            for iff in ifinfolist:
+                                if iff.name == iid:
+                                    if diss == 'No':
+                                        iff.stable = True
+                                    elif diss == 'Yes':
+                                        iff.stable = False
 
-def parse_interface_xml(xml_path):
-    """Read interface.xml pisa file, parse it, and return number of interfaces.
-
-    :param xml_path: Path to xml file.
-    :type xml_path: str
-    :return: Number of interfaces.
-    :rtype: int
-
-    """
-    try:
-        xmlparse = ET.parse(xml_path)
-    except Exception:
-        logging.critical("ERROR: Unable to open XML file at " + xml_path)
-        raise OSError
-
-    root = xmlparse.getroot()
-    n = int(root.find('n_interfaces').text)
-
-    return n
+    return ifinfolist
 
 class interface:
     """A :class:`~pisacov.core.interfaces.interface` object containing information
@@ -95,6 +110,3 @@ class interface:
 
     def deepcopy(self):
         return copy.deepcopy(self)
-
-    def get_stability(self, xmlpath):
-        # PARSE assembly.xml and set the stability values

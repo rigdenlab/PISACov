@@ -232,7 +232,7 @@ def main():
         else:
             logger.info('Renumbering structures ' +
                         'according to position in sequence.')
-            psys.crops.runcrops(invals['INSEQ'],
+            psys.crops.renumcrops(invals['INSEQ'],
                                 invals['INSTR'],
                                 invals['OUTROOT'])
             copyfile(invals['INSTR'], instrc)

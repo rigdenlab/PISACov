@@ -8,15 +8,16 @@ from pisacov import __author__, __date__, __copyright__
 
 import logging
 import sys
+import os
 
 def welcome():
-    msg="** Running "+__prog__+" v."+__version__+' **\n'
-    msg+="** "+__description__+'\n'
-    msg+="** Developed by "+__author__+". Copyright: "+__copyright__+'.\n'
+    msg="** Running "+__prog__+" v."+__version__+' **' + os.linesep
+    msg+="** "+__description__ + os.linesep
+    msg+="** Developed by "+__author__+". Copyright: "+__copyright__+'.' + os.linesep
     return msg
 
 def ok():
-    msg="** "+__prog__+" finished **\n"
+    msg="** "+__prog__+" finished **"  + os.linesep
     return msg
 
 def pisacov_logger(level="info"):

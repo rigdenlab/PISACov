@@ -12,7 +12,7 @@ from pisacov.core import scores as psc
 import csv
 
 
-def csvheader(outpath, cropped=False):
+def csvheader(outpath, cropped=False, pisascore=False):
     """
     Create a new CSV file with only the header.
 
@@ -20,6 +20,8 @@ def csvheader(outpath, cropped=False):
     :type outpath: str
     :param cropped: True when results have been obtained from crops-cropstr inputs, defaults to False.
     :type cropped: bool, optional
+    :param pisascore: If using CCP4 PISA interfaces add to csv header, defaults to False.
+    :type pisascore: bool, optional
     """
     scnames = psc._scorenames(crop=cropped)
     croptag = 'cropseq' if cropped is True else 'fullseq'
@@ -33,6 +35,9 @@ def csvheader(outpath, cropped=False):
         csvline += score + ', '
 
     csvline = csvline[:-2]
+
+    if pisascore is True:
+        csvline += ', PISAscore'
 
     with open(outpath, "w") as outcsv:
         outcsv.write(csvline)
