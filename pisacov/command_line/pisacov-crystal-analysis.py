@@ -397,6 +397,7 @@ def main():
         for source, attribs in sources.items():
             appresults = pcs.list_scores(matches[i][source], tag=source)
             results += appresults
+        results.append(str(iflist[i].stable))
         for n in range(2):
             if scoring[n] is True:
                 pio.outcsv.lineout(results, csvfile[n])
