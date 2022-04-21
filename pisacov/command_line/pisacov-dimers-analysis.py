@@ -18,7 +18,10 @@ from pisacov import command_line as pcl
 from pisacov import io as pio
 from pisacov.io import paths as ppaths
 from pisacov.io import _conf_ops as pco
-from pisacov import sys as psys
+from pisacov.sys import crops as psc
+from pisacov.sys import dmp as psd
+from pisacov.sys import msagen as psh
+from pisacov.sys import pisa as psp
 from pisacov.core import contacts as pcc
 from pisacov.core import scores as pcs
 from pisacov.core import interfaces as pci
