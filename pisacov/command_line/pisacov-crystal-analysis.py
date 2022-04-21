@@ -17,7 +17,7 @@ from pisacov import __author__, __date__, __copyright__
 from pisacov import command_line as pcl
 from pisacov import io as pio
 from pisacov.io import paths as ppaths
-from pisacov.io import conf as pco
+from pisacov.io import _conf_ops as pco
 from pisacov import sys as psys
 from pisacov.core import contacts as pcc
 from pisacov.core import scores as pcs
