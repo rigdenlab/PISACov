@@ -25,7 +25,7 @@ def pisacov_logger(level="info"):
     :param level: Console logging level, defaults to "info".
                       Options: [ notset | info | debug | warning | error | critical ]
     :type level: str, optional
-    :param logfile: The path to a full file log, defaults to None
+    :param logfile: The path to a full file log, defaults to None.
     :type logfile: str, optional
     :return: Configured logger.
     :rtype: :obj:`~logging.Logger`
