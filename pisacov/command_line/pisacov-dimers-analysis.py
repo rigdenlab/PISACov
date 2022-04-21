@@ -110,8 +110,8 @@ def main():
             invals['INIFS'].append(ppaths.check_path(fp, 'file'))
     invals['INIFS'] = list(dict.fromkeys(invals['INIFS']))
 
-    if args.hhparams is not None:
-        invals['HHBLITS_PARAMETERS'] = pco._check_hhparams(args.hhparams)
+    if args.hhblits_arguments is not None:
+        invals['HHBLITS_PARAMETERS'] = pco._check_hhparams(args.hhblits_arguments)
     else:
         pass
 

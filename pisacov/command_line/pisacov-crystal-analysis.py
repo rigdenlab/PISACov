@@ -112,8 +112,8 @@ def main():
     invals['INSEQ'] = ppaths.check_path(args.seqpath[0], 'file')
     invals['INSTR'] = ppaths.check_path(args.crystalpath[0], 'file')
 
-    if args.hhparams is not None:
-        invals['HHBLITS_PARAMETERS'] = pco._check_hhparams(args.hhparams)
+    if args.hhblits_arguments is not None:
+        invals['HHBLITS_PARAMETERS'] = pco._check_hhparams(args.hhblits_arguments)
     else:
         pass
 
