@@ -175,7 +175,12 @@ def main():
                 pdbid = key.lower()
         elif len(seqs) > 1 and len(strs) == 1:
             for key in strs:
-                pdbid = key.lower()
+                for key2 in seqs:
+                    if key == key2:
+                        pdbid = key.lower()
+                    else:
+                        if key2.lower() in key.lower():
+                            pdbid = key2.lower()
     else:
         raise Exception('More than one pdbid in sequence and/or structure set.')
 
