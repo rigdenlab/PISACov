@@ -109,8 +109,8 @@ def main():
     invals['UPTHRESHOLD'] = None
 
     # READ INPUT ARGUMENTS
-    invals['INSEQ'] = ppaths.check_path(args.seqpath, 'file')
-    invals['INSTR'] = ppaths.check_path(args.crystalpath, 'file')
+    invals['INSEQ'] = ppaths.check_path(args.seqpath[0], 'file')
+    invals['INSTR'] = ppaths.check_path(args.crystalpath[0], 'file')
 
     if args.hhparams is not None:
         invals['HHBLITS_PARAMETERS'] = pco._check_hhparams(args.hhparams)
@@ -119,7 +119,7 @@ def main():
 
     if args.uniprot_threshold is not None:
         try:
-            invals['UPTHRESHOLD'] = float(args.uniprot_threshold)
+            invals['UPTHRESHOLD'] = float(args.uniprot_threshold[0])
         except ValueError:
             logger.critical('Uniprot threshold given not valid.')
         if invals['UNICLUST_FASTA_PATH'] is None:
@@ -130,7 +130,7 @@ def main():
     if args.skip_conpred is True:
         skipexec = True
         if (args.hhblits_arguments is not None or
-                args.uniprot_threshold is not None):
+                args.uniprot_threshold[0] is not None):
             logger.info('HHblits, UniProt threshold parameters given bypassed by --skip_conpred')
     else:
         skipexec = False

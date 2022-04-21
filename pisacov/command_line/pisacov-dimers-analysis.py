@@ -98,7 +98,7 @@ def main():
     invals['OUTCSVPATH'] = None
 
     # READ INPUT ARGUMENTS
-    invals['INSEQ'] == ppaths.check_path(args.seqpath, 'file')
+    invals['INSEQ'] == ppaths.check_path(args.seqpath[0], 'file')
 
 
     invals['INIFS'] = []
@@ -132,7 +132,7 @@ def main():
         invals['OUTCSVPATH'] = ppaths.check_path(os.path.join(
                                     invals['OUTROOT'], "evcovsignal.full.pisacov.csv"))
     else:
-        invals['OUTCSVPATH'] = ppaths.check_path(args.collection_file)
+        invals['OUTCSVPATH'] = ppaths.check_path(args.collection_file[0])
 
     if os.path.isfile(invals['OUTCSVPATH']) is False:
         pio.outcsv.csvheader(invals['OUTCSVPATH'], cropped=False)
