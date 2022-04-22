@@ -20,7 +20,7 @@ from pisacov.io import paths as ppaths
 from pisacov.io import _conf_ops as pco
 from pisacov.sys import crops as psc
 from pisacov.sys import dmp as psd
-from pisacov.sys import msagen as psh
+from pisacov.sys import msagen as psm
 from pisacov.sys import pisa as psp
 from pisacov.core import contacts as pcc
 from pisacov.core import scores as pcs
@@ -201,18 +201,18 @@ def main():
         if cropping is True:
             logger.info('Cropping and renumbering sequences, ' +
                         'structures according to SIFTS database.')
-            psys.crops.runcrops(invals['INSEQ'],
-                                invals['INSTR'],
-                                invals['SIFTS_PATH'],
-                                invals['UPTHRESHOLD'],
-                                invals['UNICLUST_FASTA_PATH'],
-                                invals['OUTROOT'])
+            psc.runcrops(invals['INSEQ'],
+                         invals['INSTR'],
+                         invals['SIFTS_PATH'],
+                         invals['UPTHRESHOLD'],
+                         invals['UNICLUST_FASTA_PATH'],
+                         invals['OUTROOT'])
         else:
             logger.info('Renumbering structure ' +
                         'according to position in sequence.')
-            psys.crops.renumcrops(invals['INSEQ'],
-                                invals['INSTR'],
-                                invals['OUTROOT'])
+            psc.renumcrops(invals['INSEQ'],
+                           invals['INSTR'],
+                           invals['OUTROOT'])
 
         copyfile(invals['INSTR'], instrc)
         pio.mdir(outpdbdir)
@@ -260,9 +260,9 @@ def main():
         for i, iseq in seq.imer.items():
             sfile = fcropseq[i] if cropping is True else fseq[i]
             afile = fcropmsa[i] if cropping is True else fmsa[i]
-            themsa = psys.msagen.runhhblits(sfile,
-                                   invals['HHBLITS_PARAMETERS'],
-                                   hhdir)
+            themsa = psm.runhhblits(sfile,
+                                    invals['HHBLITS_PARAMETERS'],
+                                    hhdir)
             if cropping is True:
                 iseq.cropmsa = themsa
                 if iseq.ncrops() == 0:
@@ -283,13 +283,13 @@ def main():
         for i, iseq in seq.imer.items():
             sfile = fcropseq[i] if cropping is True else fseq[i]
             afile = fcropmsa[i] if cropping is True else fmsa[i]
-            psys.dmp.rundmp(sfile, afile, dmpdir)
+            psd.rundmp(sfile, afile, dmpdir)
 
     # INTERFACE GENERATION, PISA
     if skipexec is False:
         logger.info('Generating interface files via PISA...')
         sfile = fcropstr if cropping is True else fstr
-        iflist = psys.pisa.runpisa(sfile, pisadir)
+        iflist = psp.runpisa(sfile, pisadir)
 
     # READ DATA IF SKIPEXEC USED:
     if skipexec is True:

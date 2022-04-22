@@ -20,7 +20,7 @@ from pisacov.io import paths as ppaths
 from pisacov.io import _conf_ops as pco
 from pisacov.sys import crops as psc
 from pisacov.sys import dmp as psd
-from pisacov.sys import msagen as psh
+from pisacov.sys import msagen as psm
 from pisacov.sys import pisa as psp
 from pisacov.core import contacts as pcc
 from pisacov.core import scores as pcs
@@ -169,9 +169,9 @@ def main():
             for path in invals['INIFS']:
                 instrc = os.path.join(invals['OUTROOT'],
                                       os.path.basename(path))
-                psys.crops.renumcrops(invals['INSEQ'],
-                                    path,
-                                    invals['OUTROOT'])
+                psc.renumcrops(invals['INSEQ'],
+                               path,
+                               invals['OUTROOT'])
                 copyfile(path, instrc)
 
         pio.mdir(outpdbdir)
@@ -207,9 +207,9 @@ def main():
         for i, iseq in seq.imer.items():
             sfile = fseq[i]
             afile = fmsa[i]
-            themsa = psys.msagen.runhhblits(sfile,
-                                   invals['HHBLITS_PARAMETERS'],
-                                   hhdir)
+            themsa = psm.runhhblits(sfile,
+                                    invals['HHBLITS_PARAMETERS'],
+                                    hhdir)
             iseq.msa = themsa
 
     # DEEP META PSICOV RUN
@@ -219,7 +219,7 @@ def main():
         for i, iseq in seq.imer.items():
             sfile = fseq[i]
             afile = fmsa[i]
-            psys.dmp.rundmp(sfile, afile, dmpdir)
+            psd.rundmp(sfile, afile, dmpdir)
 
     # GENERATE INTERFACE LIST
     iflist = []
