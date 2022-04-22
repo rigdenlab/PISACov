@@ -215,7 +215,7 @@ def main():
                            invals['OUTROOT'])
 
         copyfile(invals['INSTR'], instrc)
-        pio.mdir(outpdbdir)
+        ppaths.mdir(outpdbdir)
 
     for i, iseq in seq.imer.items():
         fiseq = pdbid + '_' + i + '.fasta'
