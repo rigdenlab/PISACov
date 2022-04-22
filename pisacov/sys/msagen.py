@@ -12,7 +12,7 @@ import logging
 from conkit import io as ckio
 from conkit import plot as ckplot
 
-from pisacov.io.conf import HHSUITE_PATH
+from pisacov.io.conf import HHBLITS_PATH
 from pisacov.io.conf import HHBLITS_DATABASE_DIR
 from pisacov.io.conf import HHBLITS_DATABASE_NAME
 from pisacov import io as pio
@@ -31,7 +31,7 @@ def runhhblits(spath, hhparam, outdirmsa):
     :rtype: str
 
     """
-    hhsuite_exec = '"' + pio.check_path(HHSUITE_PATH, 'file') + '"'
+    hhsuite_exec = '"' + pio.check_path(HHBLITS_PATH, 'file') + '"'
 
     msaa3mfile = os.path.splitext(os.path.basename(spath))[0] + ".msa.a3m"
     msaa3mpath = os.path.join(outdirmsa, msaa3mfile)
