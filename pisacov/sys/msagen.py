@@ -15,7 +15,7 @@ from conkit import plot as ckplot
 from pisacov.io.conf import HHBLITS_PATH
 from pisacov.io.conf import HHBLITS_DATABASE_DIR
 from pisacov.io.conf import HHBLITS_DATABASE_NAME
-from pisacov import io as pio
+from pisacov.io import paths as ppaths
 
 def runhhblits(spath, hhparam, outdirmsa):
     """
@@ -31,28 +31,23 @@ def runhhblits(spath, hhparam, outdirmsa):
     :rtype: str
 
     """
-    hhsuite_exec = '"' + pio.check_path(HHBLITS_PATH, 'file') + '"'
+    hhsuite_exec = '"' + ppaths.check_path(HHBLITS_PATH, 'file') + '"'
 
     msaa3mfile = os.path.splitext(os.path.basename(spath))[0] + ".msa.a3m"
     msaa3mpath = os.path.join(outdirmsa, msaa3mfile)
 
-    try:
-        os.system(hhsuite_exec + ' -i ' + spath +
-                  ' -d ' + pio.check_path(HHBLITS_DATABASE_DIR, 'dir') +
-                  HHBLITS_DATABASE_NAME + ' -n ' + hhparam[0] +
-                  ' -e ' + hhparam[1] + ' -diff ' + hhparam[2] +
-                  ' -cov ' + hhparam[3] + ' -id ' + hhparam[4] +
+    execstring = (hhsuite_exec + ' -i ' + spath +
+                  ' -d ' + os.path.join(ppaths.check_path(HHBLITS_DATABASE_DIR, 'dir'),
+                                        HHBLITS_DATABASE_NAME) +
+                  ' -n ' + str(hhparam[0]) +
+                  ' -e ' + str(hhparam[1]) + ' -diff ' + str(hhparam[2]) +
+                  ' -cov ' + str(hhparam[3]) + ' -id ' + str(hhparam[4]) +
                   ' -oa3m ' + msaa3mpath)
+    try:
+        os.system(execstring)
     except Exception:
-        try:
-            os.system(hhsuite_exec + ' -i ' + spath +
-                      ' -d ' + pio.check_path(HHBLITS_DATABASE_DIR, 'dir') +
-                      HHBLITS_DATABASE_NAME + ' -n ' + hhparam[0] +
-                      ' -e ' + hhparam[1] + ' -diff ' + hhparam[2] +
-                      ' -cov ' + hhparam[3] + ' -id ' + hhparam[4] +
-                      ' -oa3m ' + msaa3mpath)
-        except Exception:
-            logging.critical('        An error occurred while executing HHBLITS.')
+        logging.critical('        An error occurred while executing HHBLITS.')
+        raise OSError
 
     # Convert A3M MSA file to Jones format (DMP standard input format)
     parsedmsa = msafilesgen(msaa3mpath)

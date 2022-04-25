@@ -48,7 +48,7 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
         os.system(command)  # + ' > ' + loggingfile)
     except:
         logging.critical('        An error occurred while executing Crops-cropstr')
-        raise SystemError
+        raise OSError
 
     logging.info('    Done' + os.linesep)
 
@@ -83,7 +83,7 @@ def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
         os.system(command)  # + ' > ' + loggingfile)
     except:
         logging.critical('        An error occurred while executing Crops-renumber')
-        raise SystemError
+        raise OSError
 
     logging.info('    Done' + os.linesep)
 

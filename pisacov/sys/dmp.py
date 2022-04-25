@@ -7,7 +7,7 @@ from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
 from pisacov.io.conf import DMP_PATH
-from pisacov import io as pio
+from pisacov.io import paths as ppaths
 
 import os
 import crops
@@ -23,10 +23,11 @@ def rundmp(spath, msapath, outdir):
     :param msapath: Input MSA filepath.
     :type msapath: str
     """
-    dmp_exec = '"'+pio.check_path(DMP_PATH, 'file')+'"'
+    dmp_exec = '"'+ppaths.check_path(DMP_PATH, 'file')+'"'
     try:
         os.system(dmp_exec + ' -i '+ spath + ' -a ' + msapath)
     except:
         logging.critical('        An error occurred while executing DeepMetaPSICOV.')
+        raise OSError
 
     logging.info('    Done\n')
