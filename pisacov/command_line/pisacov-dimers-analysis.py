@@ -133,7 +133,10 @@ def main():
 
     if args.collection_file is None:
         invals['OUTCSVPATH'] = ppaths.check_path(os.path.join(
-                                    invals['OUTROOT'], "evcovsignal.full.pisacov.csv"))
+                                    invals['OUTROOT'],
+                                    ("evcovsignal" + os.extsep +
+                                     "full" + os.extsep +
+                                     "pisacov" + os.extsep + "csv")))
     else:
         invals['OUTCSVPATH'] = ppaths.check_path(args.collection_file[0])
 
@@ -177,9 +180,9 @@ def main():
         ppaths.mdir(outpdbdir)
 
     for i, iseq in seq.imer.items():
-        fiseq = pdbid + '_' + i + '.fasta'
+        fiseq = pdbid + '_' + i + os.extsep + 'fasta'
         fseq[i] = os.path.join(invals['OUTROOT'], pdbid, fiseq)
-        fiseq = pdbid + '_' + i + '.msa.aln'
+        fiseq = pdbid + '_' + i + os.extsep + 'msa' + os.extsep + 'aln'
         fmsa[i] = os.path.join(invals['OUTROOT'], pdbid, 'hhblits', fiseq)
         if skipexec is False:
             iseq.dump(fseq[i])
@@ -190,8 +193,9 @@ def main():
     fstr = []
     for file in invals['INIFS']:
         fstr.append(os.path.join(invals['OUTROOT'],
-                            (os.path.splitext(os.path.basename(file))[0] +
-                             '.crops.seq.pdb')))
+                                 (os.path.splitext(os.path.basename(file))[0] +
+                                  os.extsep + 'crops' + os.extsep + 'seq' +
+                                  os.extsep + 'pdb')))
 
     if skipexec is False:
         # MSA GENERATOR
@@ -231,7 +235,10 @@ def main():
     logger.info('Opening output csv files...')
     resultdir = os.path.join(invals['OUTROOT'], pdbid, 'pisacov', '')
     ppaths.mdir(resultdir)
-    csvfile = os.path.join(resultdir, pdbid + ".evcovsignal.full.pisacov.csv")
+    csvfile = os.path.join(resultdir, (pdbid + os.extsep + "evcovsignal" +
+                                       os.extsep + "full" +
+                                       os.extsep + "pisacov" +
+                                       os.extsep + "csv"))
 
     pio.outcsv.csvheader(csvfile, cropped=False, pisascore=False)
 

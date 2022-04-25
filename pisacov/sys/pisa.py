@@ -36,7 +36,8 @@ def runpisa(instr, outdir):
         raise OSError
 
     # CREATE XML FILES
-    xmlfile = os.path.splitext(os.path.basename(instr))[0] + ".interface.xml"
+    xmlfile = (os.path.splitext(os.path.basename(instr))[0] +
+               os.extsep + "interface" + os.extsep + "xml")
     ixmlpath = os.path.join(outdir, xmlfile)
     try:
         os.system(pisa_exec + ' pisacov -xml interface > ' + ixmlpath)
@@ -44,7 +45,8 @@ def runpisa(instr, outdir):
         logging.critical('        An error occurred while executing PISA.')
         raise OSError
 
-    xmlfile = os.path.splitext(os.path.basename(instr))[0] + ".assembly.xml"
+    xmlfile = (os.path.splitext(os.path.basename(instr))[0] +
+               os.extsep + "assembly" + os.extsep + "xml")
     axmlpath = os.path.join(outdir, xmlfile)
     try:
         os.system(pisa_exec + ' pisacov -xml assembly > ' + axmlpath)
@@ -59,8 +61,8 @@ def runpisa(instr, outdir):
     logging.info("        Generating interface PDB files...")
     for nif in range(1, len(ilist)+1):
         # Write pdb files
-        pdbfile = (os.path.splitext(os.path.basename(instr))[0] +
-                   ".interface."+str(nif)+".pdb")
+        pdbfile = (os.path.splitext(os.path.basename(instr))[0] + os.extsep +
+                   "interface" + os.extsep + str(nif) + os.extsep + "pdb")
         try:
             os.system(pisa_exec + ' pisacov -pdb interface ' + str(nif) +
                       ' > ' + os.path.join(outdir, pdbfile))

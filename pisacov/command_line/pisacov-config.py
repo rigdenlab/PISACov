@@ -162,7 +162,8 @@ def main():
     if args.update_sifts_database is not None:
         outpath = ppaths.check_path(args.update_sifts_database[0], 'either')
         if os.path.isdir(outpath) is True:
-            outpath = os.path.join(outpath, 'pdb_chain_uniprot.csv')
+            outpath = os.path.join(outpath, ('pdb_chain_uniprot' +
+                                             os.extsep + 'csv'))
         pol.getsifts(outpath)
         configin['SIFTS_PATH'] = outpath
     else:

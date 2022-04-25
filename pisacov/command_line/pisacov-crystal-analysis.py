@@ -149,15 +149,21 @@ def main():
     invals['OUTCSVPATH'] = []
     if args.collection_file is None:
         invals['OUTCSVPATH'].append(ppaths.check_path(os.path.join(
-                                    invals['OUTROOT'], "evcovsignal.cropped.pisacov.csv")))
+                                    invals['OUTROOT'], ("evcovsignal" +
+                                                        os.extsep + "cropped" +
+                                                        os.extsep + "pisacov" +
+                                                        os.extsep + "csv"))))
         invals['OUTCSVPATH'].append(ppaths.check_path(os.path.join(
-                                    invals['OUTROOT'], "evcovsignal.full.pisacov.csv")))
+                                    invals['OUTROOT'], ("evcovsignal" +
+                                                        os.extsep + "full" +
+                                                        os.extsep + "pisacov" +
+                                                        os.extsep + "csv"))))
     else:
         if cropping is True:
             invals['OUTCSVPATH'].append(ppaths.check_path(args.collection_file[0]))
             invals['OUTCSVPATH'].append(ppaths.check_path(
-                os.path.join(os.path.splitext(args.collection_file[0])[0],
-                             'full', os.path.splitext(args.collection_file[0])[1])))
+                os.path.splitext(args.collection_file[0])[0] + os.extsep +
+                'full' + os.extsep + os.path.splitext(args.collection_file[0])[1]))
         else:
             invals['OUTCSVPATH'].append(None)
             invals['OUTCSVPATH'].append(ppaths.check_path(args.collection_file[0]))
@@ -232,21 +238,30 @@ def main():
         fcropmsa = {}
         for i, iseq in seq.imer.items():
             fprefix = pdbid + '_' + i + '.crops.to_uniprot'
-            fmap = os.path.join(invals['OUTROOT'], pdbid, fprefix + '.cropmap')
+            fmap = os.path.join(invals['OUTROOT'], pdbid,
+                                fprefix + os.extsep + 'cropmap')
             amap.update(cps.parsemapfile(fmap)[pdbid])
-            fcropseq[i] = os.path.join(invals['OUTROOT'], pdbid, fprefix + '.fasta')
-            fcropmsa[i] = os.path.join(invals['OUTROOT'], pdbid,
-                                       'hhblits', fmap + '.msa.aln')
+            fcropseq[i] = os.path.join(invals['OUTROOT'], pdbid,
+                                       fprefix + os.extsep + 'fasta')
+            fcropmsa[i] = os.path.join(invals['OUTROOT'], pdbid, 'hhblits',
+                                       (fmap + os.extsep +
+                                        'msa' + os.extsep + 'aln'))
             seq.set_cropmaps(amap, cropmain=True)
 
     # EXECUTION OF EXTERNAL PROGRAMS
     hhdir = os.path.join(invals['OUTROOT'], pdbid, 'hhblits', '')
     dmpdir = os.path.join(invals['OUTROOT'], pdbid, 'dmp', '')
     pisadir = os.path.join(invals['OUTROOT'], pdbid, 'pisa', '')
-    fstr = os.path.join(invals['OUTROOT'], pdbid + '.crops.seq.pdb')
+    fstr = os.path.join(invals['OUTROOT'], (pdbid + os.extsep + 'crops' +
+                                            os.extsep + 'seq' +
+                                            os.extsep + 'pdb'))
     if cropping:
         fcropstr = os.path.join(invals['OUTROOT'],
-                                pdbid + '.crops.oldids.crops.to_uniprot.pdb')
+                                (pdbid + os.extsep + 'crops' +
+                                 os.extsep + 'oldids' +
+                                 os.extsep + 'crops' +
+                                 os.extsep + 'to_uniprot' +
+                                 os.extsep + 'pdb'))
     if skipexec is False:
         # MSA GENERATOR
         ppaths.mdir(hhdir)
@@ -305,9 +320,13 @@ def main():
             else:
                 iseq.msa = ckio.read(afile, 'jones')
         ixml = os.path.join(pisadir,
-                             os.path.basename(sfile)[0] + '.interface.xml')
+                             (os.path.basename(sfile)[0] +
+                              os.extsep + 'interface' +
+                              os.extsep + 'xml'))
         axml = os.path.join(pisadir,
-                            os.path.basename(sfile)[0] + '.assembly.xml')
+                            (os.path.basename(sfile)[0] +
+                             os.extsep + 'assembly' +
+                             os.extsep + 'xml'))
 
         iflist = pci.parse_interface_xml(ixml, axml)
 
@@ -317,9 +336,15 @@ def main():
     ppaths.mdir(resultdir)
     csvfile = []
     csvfile.append(os.path.join(resultdir,
-                                pdbid + ".evcovsignal.cropped.pisacov.csv"))
+                                (pdbid + os.extsep + "evcovsignal" +
+                                 os.extsep + "cropped" +
+                                 os.extsep + "pisacov" +
+                                 os.extsep + "csv")))
     csvfile.append(os.path.join(resultdir,
-                                pdbid + ".evcovsignal.full.pisacov.csv"))
+                                (pdbid + os.extsep + "evcovsignal" +
+                                 os.extsep + "full" +
+                                 os.extsep + "pisacov" +
+                                 os.extsep + "csv")))
 
     for n in range(2):
         if scoring[n] is True:
@@ -347,7 +372,7 @@ def main():
     for i in range(len(iflist)):
         fs = fcropstr if n == 0 else fstr
         fs = (os.path.splitext(os.path.basename(fs))[0] +
-              ".interface." + str(i+1) + ".pdb")
+              os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "pdb")
         inputmap = ckio.read(fs, 'pdb')
 
         if len(inputmap.structure) == 4:
