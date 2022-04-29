@@ -14,7 +14,7 @@ from pisacov.io.conf import PISA_PATH
 from pisacov import io as pio
 from pisacov.core import interfaces as pci
 
-def runpisa(instr, outdir):
+def runpisa(instr, outdir, sessionid=None):
     """
     Run PISA and generate interface PDB files for given PDB
 
@@ -22,17 +22,29 @@ def runpisa(instr, outdir):
     :type instr: str
     :param outdir: Directory where results of PISA will be printed out.
     :type outdir: str
+    :param sessionid: Local name for PISA session (whole name will read 'pisacov_sessionid'), defaults to None.
+    :type sessionid: str, optional
 
     :return: Interfaces.
     :rtype: :class:`~pisacov.core.contacts.contact_atlas`
 
     """
     pisa_exec = '"' + PISA_PATH + '"'
+    sname = 'pisacov'
+    if sessionid is not None:
+        sname += '_' + sessionid
+    # CLEAR SESSION
+    try:
+        os.system(pisa_exec + ' ' + sname + ' -erase')
+    except Exception:
+        logging.critical('        An error occurred while executing PISA -erase.')
+        raise OSError
+
     # ANALYSE PDB STRUCTURE
     try:
-        os.system(pisa_exec + ' pisacov -analyse ' + instr)
+        os.system(pisa_exec + ' ' + sname + ' -analyse ' + instr)
     except Exception:
-        logging.critical('        An error occurred while executing PISA.')
+        logging.critical('        An error occurred while executing PISA -analyse.')
         raise OSError
 
     # CREATE XML FILES
@@ -40,18 +52,18 @@ def runpisa(instr, outdir):
                os.extsep + "interface" + os.extsep + "xml")
     ixmlpath = os.path.join(outdir, xmlfile)
     try:
-        os.system(pisa_exec + ' pisacov -xml interface > ' + ixmlpath)
+        os.system(pisa_exec + ' ' + sname + ' -xml interface > ' + ixmlpath)
     except Exception:
-        logging.critical('        An error occurred while executing PISA.')
+        logging.critical('        An error occurred while executing PISA -xml interface.')
         raise OSError
 
     xmlfile = (os.path.splitext(os.path.basename(instr))[0] +
                os.extsep + "assembly" + os.extsep + "xml")
     axmlpath = os.path.join(outdir, xmlfile)
     try:
-        os.system(pisa_exec + ' pisacov -xml assembly > ' + axmlpath)
+        os.system(pisa_exec + ' ' + sname + ' -xml assembly > ' + axmlpath)
     except Exception:
-        logging.critical('        An error occurred while executing PISA.')
+        logging.critical('        An error occurred while executing PISA -xml assembly.')
         raise OSError
 
     # Obtain interface list
@@ -64,12 +76,10 @@ def runpisa(instr, outdir):
         pdbfile = (os.path.splitext(os.path.basename(instr))[0] + os.extsep +
                    "interface" + os.extsep + str(nif) + os.extsep + "pdb")
         try:
-            os.system(pisa_exec + ' pisacov -pdb interface ' + str(nif) +
-                      ' > ' + os.path.join(outdir, pdbfile))
+            os.system(pisa_exec + ' ' + sessionid +' -pdb interface ' +
+                      str(nif) + ' > ' + os.path.join(outdir, pdbfile))
         except Exception:
             logging.critical("ERROR: An error occurred during the execution of PISA (interface pdb files production).")
             raise OSError
-
-    logging.info('    Done\n')
 
     return ilist

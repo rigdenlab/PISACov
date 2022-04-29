@@ -56,9 +56,9 @@ def runhhblits(spath, hhparam, outdirmsa):
 
     # Convert A3M MSA file to Jones format (DMP standard input format)
     parsedmsa = msafilesgen(msaa3mpath)
-    logging.info('    Done\n')
 
     return parsedmsa
+
 
 def msafilesgen(inpath_a3m):
     """Convert a3m format alignment to "jones" format (.aln) and print msa coverage graph.
@@ -76,9 +76,13 @@ def msafilesgen(inpath_a3m):
     ckio.write(outpath_aln, 'jones', parsedmsa)
 
     # Plot Coverage
-    msacoveragepath = (os.path.splitext(inpath_a3m)[0] + os.extsep +
-                       "coverage" + os.extsep + "png")
-    fig = ckplot.SequenceCoverageFigure(parsedmsa)
-    fig.savefig(msacoveragepath, overwrite=True)
+    try:
+        msacoveragepath = (os.path.splitext(inpath_a3m)[0] + os.extsep +
+                           "coverage" + os.extsep + "png")
+        fig = ckplot.SequenceCoverageFigure(parsedmsa)
+        fig.savefig(msacoveragepath, overwrite=True)
+    except Exception:
+        logging.warning('Something went wrong with ConKit ' +
+                        'and Coverage Plot was not produced.')
 
     return parsedmsa

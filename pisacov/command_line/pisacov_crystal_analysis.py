@@ -13,12 +13,14 @@ of proteins from evolutionary covariance.
 
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
+__script__ = 'PISACov Crystal Analysis script'
 
 from pisacov import command_line as pcl
-from pisacov import io as pio
+
 from pisacov.io import paths as ppaths
 from pisacov.io import _conf_ops as pco
-from pisacov.sys import crops as psc
+from pisacov.io import outcsv as pic
+from pisacov.sys import crop as psc
 from pisacov.sys import dmp as psd
 from pisacov.sys import msagen as psm
 from pisacov.sys import pisa as psp
@@ -26,31 +28,24 @@ from pisacov.core import contacts as pcc
 from pisacov.core import scores as pcs
 from pisacov.core import interfaces as pci
 
-from crops.elements import sequences as csq
-from crops import io as cio
 from crops.io import parsers as cps
-from crops.core import ops as cops
 
 from conkit import io as ckio
-from conkit import core as ckc
-from conkit import plot as ckplot
 
+import numpy as np
 import argparse
 import os
+import datetime
 from shutil import copyfile
-import matplotlib.pyplot as plt
-import xml.etree.ElementTree as ET
-# from string import format
-
-import time
 
 logger = None
 
 
 def create_argument_parser():
-    """Create a parser for the command line arguments used in crops-renumber."""
+    """Create a parser for the command line arguments used in pisacov_crystal_analysis."""
     parser = argparse.ArgumentParser(prog=__prog__, formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     description=__description__+' ('+__prog__+')  v.'+__version__+'\n'+__doc__)
+                                     description=__description__+' ('+__prog__+')  v.'+__version__ + os.linesep + __doc__,
+                                     epilog="Check pisacov.rtfd.io for more information.")
     parser.add_argument("seqpath", nargs=1, metavar=("Seqfile"),
                         help="Input original sequence filepath.")
     parser.add_argument("crystalpath", nargs=1,
@@ -93,13 +88,13 @@ def create_argument_parser():
 
 
 def main():
-    starttime = time.time()
     parser = create_argument_parser()
     args = parser.parse_args()
 
     global logger
     logger = pcl.pisacov_logger(level="info")
-    logger.info(pcl.welcome())
+    welcomemsg, starttime = pcl.welcome(command=__script__)
+    logger.info(welcomemsg)
 
     # PARSE CONFIGURATION FILE:
     invals = pco._initialise_inputs()
@@ -133,7 +128,7 @@ def main():
     if args.skip_conpred is True:
         skipexec = True
         if (args.hhblits_arguments is not None or
-                args.uniprot_threshold[0] is not None):
+                args.uniprot_threshold is not None):
             logger.info('HHblits, UniProt threshold parameters given bypassed by --skip_conpred')
     else:
         skipexec = False
@@ -198,7 +193,7 @@ def main():
 
     # CROPPING AND RENUMBERING
     outpdbdir = os.path.join(invals['OUTROOT'], pdbid, "")
-    instrc = os.path.join(invals['OUTROOT'],
+    instrc = os.path.join(invals['OUTROOT'], pdbid,
                           os.path.basename(invals['INSTR']))
 
     fseq = {}
@@ -207,18 +202,24 @@ def main():
         if cropping is True:
             logger.info('Cropping and renumbering sequences, ' +
                         'structures according to SIFTS database.')
+            logger.info(pcl.running('CROPS-cropstr'))
+            itime = datetime.datetime.now()
             psc.runcrops(invals['INSEQ'],
                          invals['INSTR'],
                          invals['SIFTS_PATH'],
                          invals['UPTHRESHOLD'],
                          invals['UNICLUST_FASTA_PATH'],
                          invals['OUTROOT'])
+            logger.info(pcl.running('CROPS-cropstr', done=itime))
         else:
             logger.info('Renumbering structure ' +
                         'according to position in sequence.')
+            logger.info(pcl.running('CROPS-renumber'))
+            itime = datetime.datetime.now()
             psc.renumcrops(invals['INSEQ'],
                            invals['INSTR'],
                            invals['OUTROOT'])
+            logger.info(pcl.running('CROPS-renumber', done=itime))
 
         copyfile(invals['INSTR'], instrc)
         ppaths.mdir(outpdbdir)
@@ -244,7 +245,7 @@ def main():
             fcropseq[i] = os.path.join(invals['OUTROOT'], pdbid,
                                        fprefix + os.extsep + 'fasta')
             fcropmsa[i] = os.path.join(invals['OUTROOT'], pdbid, 'hhblits',
-                                       (fmap + os.extsep +
+                                       (fprefix + os.extsep +
                                         'msa' + os.extsep + 'aln'))
             seq.set_cropmaps(amap, cropmain=True)
 
@@ -256,12 +257,11 @@ def main():
                                             os.extsep + 'seq' +
                                             os.extsep + 'pdb'))
     if cropping:
-        fcropstr = os.path.join(invals['OUTROOT'],
+        fcropstr = os.path.join(invals['OUTROOT'], pdbid,
                                 (pdbid + os.extsep + 'crops' +
                                  os.extsep + 'oldids' +
-                                 os.extsep + 'crops' +
                                  os.extsep + 'to_uniprot' +
-                                 os.extsep + 'pdb'))
+                                 os.path.splitext(invals['INSTR'])[1]))
     if skipexec is False:
         # MSA GENERATOR
         ppaths.mdir(hhdir)
@@ -275,9 +275,12 @@ def main():
         for i, iseq in seq.imer.items():
             sfile = fcropseq[i] if cropping is True else fseq[i]
             afile = fcropmsa[i] if cropping is True else fmsa[i]
+            logger.info(pcl.running('HHBlits'))
+            itime = datetime.datetime.now()
             themsa = psm.runhhblits(sfile,
                                     invals['HHBLITS_PARAMETERS'],
                                     hhdir)
+            logger.info(pcl.running('HHBlits', done=itime))
             if cropping is True:
                 iseq.cropmsa = themsa
                 if iseq.ncrops() == 0:
@@ -298,13 +301,23 @@ def main():
         for i, iseq in seq.imer.items():
             sfile = fcropseq[i] if cropping is True else fseq[i]
             afile = fcropmsa[i] if cropping is True else fmsa[i]
-            psd.rundmp(sfile, afile, dmpdir)
+            nsfile = os.path.join(dmpdir, os.path.basename(sfile))
+            if sfile != nsfile:
+                copyfile(sfile, nsfile)
+            logger.info(pcl.running('DeepMetaPSICOV'))
+            itime = datetime.datetime.now()
+            psd.rundmp(nsfile, afile, dmpdir)
+            logger.info(pcl.running('DeepMetaPSICOV', done=itime))
 
     # INTERFACE GENERATION, PISA
+    ppaths.mdir(pisadir)
     if skipexec is False:
         logger.info('Generating interface files via PISA...')
         sfile = fcropstr if cropping is True else fstr
-        iflist = psp.runpisa(sfile, pisadir)
+        logger.info(pcl.running('PISA'))
+        itime = datetime.datetime.now()
+        iflist = psp.runpisa(sfile, pisadir, sessionid = pdbid)
+        logger.info(pcl.running('PISA', done=itime))
 
     # READ DATA IF SKIPEXEC USED:
     if skipexec is True:
@@ -316,15 +329,15 @@ def main():
                 iseq.cropmsa = ckio.read(afile, 'jones')
                 if iseq.ncrops() == 0:
                     scoring[1] = True
-                    iseq.msa = ckio.read(fmsa[i], 'jones')
+                    iseq.msa = ckio.read(afile, 'jones')
             else:
                 iseq.msa = ckio.read(afile, 'jones')
         ixml = os.path.join(pisadir,
-                             (os.path.basename(sfile)[0] +
-                              os.extsep + 'interface' +
-                              os.extsep + 'xml'))
+                            (os.path.splitext(os.path.basename(sfile))[0] +
+                             os.extsep + 'interface' +
+                             os.extsep + 'xml'))
         axml = os.path.join(pisadir,
-                            (os.path.basename(sfile)[0] +
+                            (os.path.splitext(os.path.basename(sfile))[0] +
                              os.extsep + 'assembly' +
                              os.extsep + 'xml'))
 
@@ -348,8 +361,8 @@ def main():
 
     for n in range(2):
         if scoring[n] is True:
-            cpd = True if n == 0 else False
-            pio.outcsv.csvheader(csvfile[n], cropped=cpd, pisascore=True)
+            cpd = True if cropping else False
+            pic.csvheader(csvfile[n], cropped=cpd, pisascore=True)
 
     logger.info('Parsing sequence files...')
     for i, fpath in fseq.items():
@@ -361,56 +374,66 @@ def main():
     for s in seq.imer:
         if s not in conpred:
             conpred[s] = {}
-        fs = fcropseq[s] if n == 0 else fseq[s]
+        fs = fcropseq[s] if cropping else fseq[s]
         for source, attribs in sources.items():
             fc = os.path.splitext(os.path.basename(fs))[0]
-            fc += attribs[1]
-            confile = os.path.join(invals['OUTROOT'], pdbid, attribs[0], fc)
+            fc += os.extsep + attribs[1]
+            confile = os.path.join(dmpdir, fc)
             conpred[s][source] = ckio.read(confile, attribs[2])[0]
 
     logger.info('Parsing crystal structure contacts...')
     for i in range(len(iflist)):
-        fs = fcropstr if n == 0 else fstr
+        fs = fcropstr if cropping else fstr
         fs = (os.path.splitext(os.path.basename(fs))[0] +
               os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "pdb")
-        inputmap = ckio.read(fs, 'pdb')
-
-        if len(inputmap.structure) == 4:
-            ch = tuple(inputmap.id)
-            if seq.whatseq(ch[0]) != seq.whatseq(ch[1]):
-                logger.info('Interface ' + str(i) +
-                            ' is not a homodimer. Ignoring.')
-                iflist[i].structure = None
-                matches.append(None)
-                continue
-            else:
-                chtypes = list(iflist[i].chains.values())
+        spath = os.path.join(pisadir, fs)
+        inputmap = ckio.read(spath, 'pdb')
+        if len(inputmap) == 4:
+            chnames = list(iflist[i].chains.keys())
+            chtypes = list(iflist[i].chains.values())
+            if (seq.whatseq(chnames[0]) != seq.whatseq(chnames[1]) or
+                    (chtypes[0] != 'Protein' or chtypes[1] != 'Protein')):
                 if chtypes[0] != "Protein" or chtypes[1] != "Protein":
                     logger.info('Interface ' + str(i) +
                                 ' is not a Protein-Protein interface. Ignoring.')
-                    iflist[i].structure = None
-                    matches.append(None)
-                    continue
-                s = seq.whatseq(ch[0])
+                else:
+                    logger.info('Interface ' + str(i) +
+                                ' is not a homodimer. Ignoring.')
+                iflist[i].structure = None
+                matches.append(None)
+                continue
+            s = seq.whatseq(chnames[0])
+
             try:
                 iflist[i].structure = []
                 for m in range(len(inputmap)):
                     iflist[i].structure.append(inputmap[m].as_contactmap())
                     iflist[i].structure[m].id = inputmap[m].id
             except Exception:
+                logger.warning('Contact Maps obtained from a legacy ConKit ' +
+                               'version with no Distograms implemented.')
                 for m in range(len(inputmap)):
                     iflist[i].structure.append(inputmap[m])  # ConKit LEGACY.
-
+            fs = fcropstr if cropping else fstr
+            fs = (os.path.splitext(os.path.basename(fs))[0] +
+                  os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "con")
+            spath = os.path.join(pisadir, fs)
+            ckio.write(spath, 'psicov', hierarchy=iflist[i].structure[1])
+            iflist[i].contactmap = np.loadtxt(spath)
             matches.append({})
             for source, attribs in sources.items():
                 matches[i][source] = pcc.contact_atlas(
                                             name=pdbid+'_'+str(s),
                                             conpredmap=conpred[s][source],
-                                            strmap=iflist[i].structure,
+                                            structure=iflist[i].structure,
+                                            strmap=iflist[i].contactmap,
+                                            conpredtype = source,
                                             sequence=seq.imer[s],
-                                            removeintra=True)
+                                            removeintra=True,
+                                            backmap=cropping)
         else:
             iflist[i].structure = None
+            iflist[i].contactmap = None
             matches.append(None)
             continue
 
@@ -418,7 +441,7 @@ def main():
     for i in range(len(iflist)):
         if matches[i] is None:
             continue
-        results=[pdbid, str(i+1)]
+        results = [pdbid, str(i+1)]
         results.append(matches[i]['psicov'].chain1)
         results.append(matches[i]['psicov'].chain2)
         sid = seq.whatseq(matches[i]['psicov'].chain1)
@@ -433,10 +456,11 @@ def main():
         results.append(str(iflist[i].stable))
         for n in range(2):
             if scoring[n] is True:
-                pio.outcsv.lineout(results, csvfile[n])
-                pio.outcsv.lineout(results, invals['OUTCSVPATH'][n])
+                pic.lineout(results, csvfile[n])
+                pic.lineout(results, invals['OUTCSVPATH'][n])
 
-    logger.info('Analysis finished. Exiting.')
+    endmsg = pcl.ok(starttime, command=__script__)
+    logger.info(endmsg)
 
     return
 

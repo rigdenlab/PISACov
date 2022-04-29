@@ -44,21 +44,21 @@ def _scorenames(crop=False):
             elif mn[-5:] == 'Shift' and names[i] != 'psicov':
                 pass
             else:
-                scorenames[names[i]].append(mainname + '_' +
+                scorenames[names[i]].append(mn + '_' +
                                             croptag + '_' +
                                             shortnames[i])
 
     return scorenames
 
 
-def accscore(inatlas, mode=None):
+def accscore(inatlas, alt=None):
     """
     Return the cumulative score of the True Positive contacts.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
-    :param mode: None (raw), or 'absolute', or 'normal', or 'shifted', defaults to None.
-    :type mode: str, optional
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
     :return: Cumulative value
     :rtype: float
 
@@ -66,50 +66,33 @@ def accscore(inatlas, mode=None):
     if isinstance(inatlas, pcc.contact_atlas) is False:
         logging.critical('First argument of accscore must be a Contact Atlas.')
         raise TypeError
-    if (mode is not None and mode.lower() != 'raw' and
-            mode.lower() != 'absolute' and mode.lower() != 'normal' and
-            mode.lower() != 'shifted'):
-        logging.critical('Mode must be either None or a string.')
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
         raise TypeError
 
-    inmap = inatlas.conkitmatch
+    if alt is None:
+        alt = 'raw'
+
+    inmap = inatlas.conkitmatch[alt]
     acc = 0.0
-    minval = 0.0
-    maxval = 1.0
-    ntp = float(inatlas.tp)
+    ntp = float(inatlas.tp[alt])
 
     for contact in inmap:
         if contact.true_positive is True:
-            if mode is None or mode.lower() == 'raw':
-                acc += contact.raw_score
-            elif mode.lower() == 'absolute':
-                if contact.raw_score < 0.0:
-                    acc -= contact.raw_score
-                else:
-                    acc += contact.raw_score
-            elif mode.lower() == 'shifted' or mode.lower() == 'normal':
-                acc += contact.raw_score
-                if contact.raw_score < minval:
-                    minval = contact.raw_score
-                if contact.raw_score > maxval and mode.lower() == 'normal':
-                    maxval = contact.raw_score
-
-    if mode.lower() == 'shifted' or mode.lower() == 'normal':
-        acc -= minval*ntp
-        if mode.lower() == 'normal':
-            acc /= (maxval - minval)
+            acc += contact.raw_score
 
     return acc
 
 
-def avscore(inatlas, mode=None):
+def avscore(inatlas, alt=None):
     """
     Return the average score of the True Positive contacts.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
-    :param mode: None (raw), or 'absolute', or 'normal', or 'shifted', defaults to None.
-    :type mode: str, optional
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
     :return: Average value
     :rtype: float
 
@@ -117,93 +100,133 @@ def avscore(inatlas, mode=None):
     if isinstance(inatlas, pcc.contact_atlas) is False:
         logging.critical('First argument of avscore must be a Contact Atlas.')
         raise TypeError
-    if (mode is not None and mode.lower() != 'raw' and
-            mode.lower() != 'absolute' and mode.lower() != 'normal' and
-            mode.lower() != 'shifted'):
-        logging.critical('Mode must be either None or a string.')
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
         raise TypeError
 
-    ntp = float(inatlas.tp)
+    if alt is None:
+        alt = 'raw'
 
-    av = accscore(inatlas, mode=mode) / ntp
+    ntp = float(inatlas.tp[alt])
+
+    av = accscore(inatlas, alt) / ntp
 
     return av
 
 
-def n_tps(inatlas):
+def n_tps(inatlas, alt=None):
     """
     Return the number of True Positive contacts.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
     :return: Number of true positives.
     :rtype: int
 
     """
     if isinstance(inatlas, pcc.contact_atlas) is False:
-        logging.critical('Argument must be a Contact Atlas.')
+        logging.critical("Argument 'inatlas' must be a Contact Atlas.")
+        raise TypeError
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
         raise TypeError
 
-    return inatlas.tp
+    if alt is None:
+        alt = 'raw'
+
+    return inatlas.tp[alt]
 
 
-def n_fps(inatlas):
+def n_fps(inatlas, alt=None):
     """
     Return the number of False Positive contacts.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
     :return: Number of false positives.
     :rtype: int
 
     """
     if isinstance(inatlas, pcc.contact_atlas) is False:
-        logging.critical('Argument must be a Contact Atlas.')
+        logging.critical("Argument 'inatlas' must be a Contact Atlas.")
+        raise TypeError
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
         raise TypeError
 
-    return inatlas.fp
+    if alt is None:
+        alt = 'raw'
+
+    return inatlas.fp[alt]
 
 
-def n_tns(inatlas):
+def n_tns(inatlas, alt=None):
     """
     Return the number of True Negative contacts.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
     :return: Number of true negatives.
     :rtype: int
 
     """
     if isinstance(inatlas, pcc.contact_atlas) is False:
-        logging.critical('Argument must be a Contact Atlas.')
+        logging.critical("Argument 'inatlas' must be a Contact Atlas.")
+        raise TypeError
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
         raise TypeError
 
-    return inatlas.tn
+    if alt is None:
+        alt = 'raw'
+
+    return inatlas.tn[alt]
 
 
-def n_fns(inatlas):
+def n_fns(inatlas, alt=None):
     """
     Return the number of False Negative contacts.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
     :return: Number of false negatives.
     :rtype: int
 
     """
     if isinstance(inatlas, pcc.contact_atlas) is False:
-        logging.critical('Argument must be a Contact Atlas.')
+        logging.critical("Argument 'inatlas' must be a Contact Atlas.")
+        raise TypeError
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
         raise TypeError
 
-    return inatlas.fn
+    if alt is None:
+        alt = 'raw'
+
+    return inatlas.fn[alt]
 
 
-def mcc(inatlas):
+def mcc(inatlas, alt=None):
     """
     Return the number of Matthew's Correlation Coefficient.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
     :return: MCC
     :rtype: float
 
@@ -211,11 +234,18 @@ def mcc(inatlas):
     if isinstance(inatlas, pcc.contact_atlas) is False:
         logging.critical('Argument must be a Contact Atlas.')
         raise TypeError
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
+        raise TypeError
 
-    ntp = float(inatlas.tp)
-    nfp = float(inatlas.fp)
-    nfn = float(inatlas.fn)
-    ntn = float(inatlas.tn)
+    if alt is None:
+        alt = 'raw'
+
+    ntp = float(inatlas.tp[alt])
+    nfp = float(inatlas.fp[alt])
+    nfn = float(inatlas.fn[alt])
+    ntn = float(inatlas.tn[alt])
 
     mcc = ntp*ntn - nfp*nfn
     denom = (ntp+nfp)
@@ -227,12 +257,14 @@ def mcc(inatlas):
     return mcc
 
 
-def precision(inatlas):
+def precision(inatlas, alt=None):
     """
     Return the precision of the contact map.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
     :return: Precision, TP/(TP+FP)
     :rtype: float
 
@@ -240,21 +272,30 @@ def precision(inatlas):
     if isinstance(inatlas, pcc.contact_atlas) is False:
         logging.critical('Argument must be a Contact Atlas.')
         raise TypeError
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
+        raise TypeError
 
-    ntp = float(inatlas.tp)
-    nfp = float(inatlas.fp)
+    if alt is None:
+        alt = 'raw'
+
+    ntp = float(inatlas.tp[alt])
+    nfp = float(inatlas.fp[alt])
 
     p = ntp / (ntp + nfp)
 
     return p
 
 
-def coverage(inatlas):
+def coverage(inatlas, alt=None):
     """
     Return the coverage, also known as recall, of the contact map.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
     :return: Coverage, TP/(TP+FN)
     :rtype: float
 
@@ -262,21 +303,30 @@ def coverage(inatlas):
     if isinstance(inatlas, pcc.contact_atlas) is False:
         logging.critical('Argument must be a Contact Atlas.')
         raise TypeError
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
+        raise TypeError
 
-    ntp = float(inatlas.tp)
-    nfn = float(inatlas.fn)
+    if alt is None:
+        alt = 'raw'
+
+    ntp = float(inatlas.tp[alt])
+    nfn = float(inatlas.fn[alt])
 
     c = ntp / (ntp + nfn)
 
     return c
 
 
-def jaccard(inatlas):
+def jaccard(inatlas, alt=None):
     """
     Return the Jaccard Index of a given matched map. Jaccard = TP / (TP+FP+FN).
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
     :return: Jaccard Index
     :rtype: float
 
@@ -285,9 +335,17 @@ def jaccard(inatlas):
         logging.critical('Argument must be a Contact Atlas.')
         raise TypeError
 
-    ntp = float(inatlas.tp)
-    nfp = float(inatlas.fp)
-    nfn = float(inatlas.fn)
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
+        raise TypeError
+
+    if alt is None:
+        alt = 'raw'
+
+    ntp = float(inatlas.tp[alt])
+    nfp = float(inatlas.fp[alt])
+    nfn = float(inatlas.fn[alt])
 
     jacc = ntp / (ntp + nfp + nfn)
 
@@ -307,21 +365,21 @@ def list_scores(inatlas, tag=None):
 
     """
     values = []
-    psicovmodes = ['normal', 'absolute', 'shifted']
+    psicovmodes = ['norm', 'abs', 'shifted']
 
     values.append(str(inatlas.conpred_raw.ncontacts))
     values.append(str(inatlas.conpred.ncontacts))
 
     acc = accscore(inatlas)
     values.append(str(acc))
-    values.append(str(acc/inatlas.tp))
+    values.append(str(acc/inatlas.tp['raw']))
     if tag == 'psicov':
         for m in psicovmodes:
-            acc = accscore(inatlas, mode=m)
+            acc = accscore(inatlas, alt=m)
             values.append(str(acc))
-            values.append(str(acc/inatlas.tp))
+            values.append(str(acc/inatlas.tp[m]))
 
-    values.append(str(inatlas.tp))
+    values.append(str(inatlas.tp['raw']))
     values.append(str(precision(inatlas)))
     values.append(str(coverage(inatlas)))
     values.append(str(mcc(inatlas)))

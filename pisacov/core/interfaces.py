@@ -49,20 +49,17 @@ def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
             for assembly in asm_set.iter('assembly'):
                 for ifaces in assembly.iter('interfaces'):
                     for iface in ifaces.iter('interface'):
-                        iid = iface.find('id')
-                        diss = iface.find('dissociates')
-                        if ifinfolist[int(iid)-1].name == ifinfolist[iid]:
-                            if diss == 'No':
-                                ifinfolist[int(iid)-1].stable = True
-                            elif diss == 'Yes':
-                                ifinfolist[int(iid)-1].stable = False
-                        else:
-                            for iff in ifinfolist:
-                                if iff.name == iid:
-                                    if diss == 'No':
-                                        iff.stable = True
-                                    elif diss == 'Yes':
-                                        iff.stable = False
+                        iid = iface.find('id').text
+                        diss = iface.find('dissociates').text
+                        for ifobject in ifinfolist:
+                            if ifobject.name == iid:
+                                if diss == 'No':
+                                    if ifinfolist[int(iid)-1].stable is True:
+                                        pass
+                                    else:
+                                        ifinfolist[int(iid)-1].stable = True
+                                elif diss == 'Yes':
+                                    pass
 
     return ifinfolist
 
@@ -81,12 +78,13 @@ class interface:
     :vartype stable: bool, str
     """
     _kind = 'Interface'
-    __slots__ = ['name', 'chains', 'stable', 'structure']
+    __slots__ = ['name', 'chains', 'stable', 'structure', 'contactmap']
 
     def __init__(self, name, structure=None, chains=None):
         self.name = name
         self.chains = {}
         self.structure = None
+        self.contactmap = None
         self.stable = False
 
     def __repr__(self):

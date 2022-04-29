@@ -5,6 +5,7 @@ of proteins from evolutionary covariance.
 
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
+__script__ = 'PISACov Configuration script'
 
 from pisacov import command_line as pcl
 from pisacov.io import _conf_ops as pco
@@ -14,7 +15,6 @@ from pisacov.io import paths as ppaths
 
 import argparse
 import os
-import logging
 
 logger = None
 
@@ -153,7 +153,8 @@ def main():
 
     global logger
     logger = pcl.pisacov_logger(level="info")
-    # logger.info(pcl.welcome())
+    welcomemsg, starttime = pcl.welcome(command=__script__)
+    logger.info(welcomemsg)
 
     kwlist = pco._default_keys()
 
@@ -271,6 +272,8 @@ def main():
 
     _outconffile(newconf)
 
+    endmsg = pcl.ok(starttime, command=__script__)
+    logger.info(endmsg)
     return
 
 if __name__ == "__main__":

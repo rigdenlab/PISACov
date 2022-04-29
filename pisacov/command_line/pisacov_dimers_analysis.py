@@ -13,34 +13,28 @@ of proteins from evolutionary covariance.
 
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
+__script__ = 'PISACov Dimers Analysis script'
 
 from pisacov import command_line as pcl
-from pisacov import io as pio
 from pisacov.io import paths as ppaths
 from pisacov.io import _conf_ops as pco
-from pisacov.sys import crops as psc
+from pisacov.io import outcsv as pic
+from pisacov.sys import crop as psc
 from pisacov.sys import dmp as psd
 from pisacov.sys import msagen as psm
-from pisacov.sys import pisa as psp
 from pisacov.core import contacts as pcc
 from pisacov.core import scores as pcs
 from pisacov.core import interfaces as pci
 
 from crops.elements import sequences as csq
-from crops import io as cio
 from crops.io import parsers as cps
-from crops.core import ops as cops
 
 from conkit import io as ckio
-from conkit import core as ckc
-from conkit import plot as ckplot
 
 import argparse
 import os
+import datetime
 from shutil import copyfile
-import matplotlib.pyplot as plt
-import xml.etree.ElementTree as ET
-# from string import format
 
 import time
 
@@ -48,7 +42,7 @@ logger = None
 
 
 def create_argument_parser():
-    """Create a parser for the command line arguments used in crops-renumber."""
+    """Create a parser for the command line arguments used in pisacov_dimers_analysis."""
     parser = argparse.ArgumentParser(prog=__prog__, formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description=__description__+' ('+__prog__+')  v.'+__version__ + os.linesep + __doc__,
                                      epilog="Check pisacov.rtfd.io for more information.")
@@ -90,7 +84,8 @@ def main():
 
     global logger
     logger = pcl.pisacov_logger(level="info")
-    logger.info(pcl.welcome())
+    welcomemsg, starttime = pcl.welcome(command=__script__)
+    logger.info(welcomemsg)
 
     # PARSE CONFIGURATION FILE:
     invals = pco._initialise_inputs()
@@ -141,7 +136,7 @@ def main():
         invals['OUTCSVPATH'] = ppaths.check_path(args.collection_file[0])
 
     if os.path.isfile(invals['OUTCSVPATH']) is False:
-        pio.outcsv.csvheader(invals['OUTCSVPATH'], cropped=False)
+        pic.csvheader(invals['OUTCSVPATH'], cropped=False)
 
     # Define formats used
     sources = pco._sources()
@@ -170,12 +165,15 @@ def main():
             logger.info('Renumbering interfaces provided ' +
                         'according to position in sequence.')
             for path in invals['INIFS']:
-                instrc = os.path.join(invals['OUTROOT'],
+                instrc = os.path.join(invals['OUTROOT'], pdbid,
                                       os.path.basename(path))
+                logger.info(pcl.running('CROPS-renumber'))
+                itime = datetime.datetime.now()
                 psc.renumcrops(invals['INSEQ'],
                                path,
                                invals['OUTROOT'])
                 copyfile(path, instrc)
+                logger.info(pcl.running('CROPS-renumber', done=itime))
 
         ppaths.mdir(outpdbdir)
 
@@ -211,9 +209,12 @@ def main():
         for i, iseq in seq.imer.items():
             sfile = fseq[i]
             afile = fmsa[i]
+            logger.info(pcl.running('HHBlits'))
+            itime = datetime.datetime.now()
             themsa = psm.runhhblits(sfile,
                                     invals['HHBLITS_PARAMETERS'],
                                     hhdir)
+            logger.info(pcl.running('HHBlits', done=itime))
             iseq.msa = themsa
 
     # DEEP META PSICOV RUN
@@ -223,7 +224,13 @@ def main():
         for i, iseq in seq.imer.items():
             sfile = fseq[i]
             afile = fmsa[i]
-            psd.rundmp(sfile, afile, dmpdir)
+            nsfile = os.path.join(dmpdir, os.path.basename(sfile))
+            if sfile != nsfile:
+                copyfile(sfile, nsfile)
+            logger.info(pcl.running('DeepMetaPSICOV'))
+            itime = datetime.datetime.now()
+            psd.rundmp(nsfile, afile, dmpdir)
+            logger.info(pcl.running('DeepMetaPSICOV', done=itime))
 
     # GENERATE INTERFACE LIST
     iflist = []
@@ -240,7 +247,7 @@ def main():
                                        os.extsep + "pisacov" +
                                        os.extsep + "csv"))
 
-    pio.outcsv.csvheader(csvfile, cropped=False, pisascore=False)
+    pic.csvheader(csvfile, cropped=False, pisascore=False)
 
     logger.info('Parsing sequence files...')
     for i, fpath in fseq.items():
@@ -262,22 +269,21 @@ def main():
     logger.info('Parsing crystal structure contacts...')
     for i in range(len(iflist)):
         inputmap = ckio.read(fstr[i], 'pdb')
-        if len(inputmap.structure) == 4:
-            ch = tuple(inputmap.id)
-            if seq.whatseq(ch[0]) != seq.whatseq(ch[1]):
-                logger.info('Interface ' + str(i) +
-                            ' is not a homodimer. Ignoring.')
+        if len(inputmap) == 4:
+            chnames = list(iflist[i].chains.keys())
+            chtypes = list(iflist[i].chains.values())
+            if (seq.whatseq(chnames[0]) != seq.whatseq(chnames[1]) or
+                    (chtypes[0] != 'Protein' or chtypes[1] != 'Protein')):
+                if chtypes[0] != "Protein" or chtypes[1] != "Protein":
+                    logger.info('Interface ' + str(i) +
+                                ' is not a Protein-Protein interface. Ignoring.')
+                else:
+                    logger.info('Interface ' + str(i) +
+                                ' is not a homodimer. Ignoring.')
                 iflist[i].structure = None
                 matches.append(None)
                 continue
-            else:
-                if seq.imer[seq.whatseq(ch[0])].biotype != "Protein":
-                    logger.info('Interface ' + str(i) +
-                                ' is not a Protein-Protein interface. Ignoring.')
-                    iflist[i].structure = None
-                    matches.append(None)
-                    continue
-                s = seq.whatseq(ch[0])
+            s = seq.whatseq(chnames[0])
             try:
                 iflist[i].structure = []
                 for m in range(len(inputmap)):
@@ -317,10 +323,11 @@ def main():
             appresults = pcs.list_scores(matches[i][source], tag=source)
             results += appresults
 
-        pio.outcsv.lineout(results, csvfile)
-        pio.outcsv.lineout(results, invals['OUTCSVPATH'])
+        pic.lineout(results, csvfile)
+        pic.lineout(results, invals['OUTCSVPATH'])
 
-    logger.info('Analysis finished. Exiting.')
+    endmsg = pcl.ok(starttime, command=__script__)
+    logger.info(endmsg)
 
     return
 

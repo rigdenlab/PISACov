@@ -9,16 +9,89 @@ from pisacov import __author__, __date__, __copyright__
 import logging
 import sys
 import os
+import time
+import datetime
 
-def welcome():
-    msg="** Running "+__prog__+" v."+__version__+' **' + os.linesep
-    msg+="** "+__description__ + os.linesep
-    msg+="** Developed by "+__author__+". Copyright: "+__copyright__+'.' + os.linesep
+def unwraptime(delta):
+
+    if delta.days > 0:
+        wrapped = str(delta.days) + 'days, '
+    else:
+        wrapped = ''
+    seconds = delta.seconds%60
+    uwminutes = (delta.seconds - seconds)/60
+    minutes = uwminutes%60
+    hours = (uwminutes - minutes)/60
+    if int(hours) > 0 or wrapped != '':
+        wrapped += str(int(hours)) + ' hours, '
+    if int(minutes) > 0 or wrapped != '':
+        wrapped += str(int(minutes)) + ' minutes, '
+    wrapped += str(seconds + delta.microseconds/1000000) + ' seconds.'
+
+    return wrapped
+
+
+def welcome(command=None):
+    now = datetime.datetime.now().astimezone().strftime(
+        "%d %B %Y, %H:%M:%S %Z")
+    if command is not None:
+        l = len(command)
+        title = '*'*7 + ' '*3 + command + ' '*3 + '*'*(74-l)
+    else:
+        l = len('PISACov')
+        title = '*'*7 + ' '*3 + 'PISACov' + ' '*3 + '*'*(74-l)
+
+    msg = os.linesep + '*'*87 + os.linesep
+    msg += title + os.linesep
+    msg = '*'*87 + os.linesep
+    msg += "** Running "+__prog__+" v."+__version__+' **' + os.linesep
+    msg += "** "+__description__ + os.linesep
+    msg += "** Developed by "+__author__+". Copyright: "+__copyright__+'.' + os.linesep
+    msg += '*'*87 + os.linesep
+    msg += '** Time of execution: ' + now + os.linesep + os.linesep
+
+    return msg, now
+
+def ok(initime, command=None):
+    if command is not None:
+        l = len(command)
+        title = '*'*7 + ' '*3 + command + ' '*3 + '*'*(67-l)
+    else:
+        l = len('PISACov')
+        title = '*'*7 + ' '*3 + 'PISACov' + ' '*3 + '*'*(67-l)
+
+    msg = os.linesep + '*'*87 + os.linesep
+    msg += title + os.linesep
+    msg += "** " +__prog__+ " finished **"  + os.linesep
+    endtime = datetime.datetime.now()
+    tz = endtime.astimezone().strftime(
+        "%d %B %Y, %H:%M:%S %Z")
+    msg += '** Time of completion: ' + tz + os.linesep
+    delta = endtime - initime
+    seconds = str(delta.days*3600*24 + delta.seconds +
+                  delta.microseconds/1000000)
+    msg += '** Execution time: ' + seconds + ' seconds or' + os.linesep
+
+    msg += '                   ' + unwraptime(delta) + os.linesep + os.linesep
+
     return msg
 
-def ok():
-    msg="** "+__prog__+" finished **"  + os.linesep
+def running(subprocess, done=None):
+    l = len(subprocess)
+
+    if done is None:
+        title = '*'*3 + ' '*3 + ' Executing subprocess ' + subprocess + ' '*3 + '*'*(19-l)
+        msg = os.linesep + '*'*50 + os.linesep
+        msg += title + os.linesep + os.linesep
+    else:
+        delta = datetime.datetime.now() - done
+        title = '*'*3 + ' '*3 + ' Subprocess ' + subprocess + ' completed' + ' '*3 + '*'*(19-l)
+        msg = (os.linesep + title + os.linesep +
+               '** Subprocess execution time: ' + unwraptime(delta) +
+               os.linesep + os.linesep)
+
     return msg
+
 
 def pisacov_logger(level="info"):
     """Logger setup.

@@ -35,7 +35,6 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
     pythonexec = '"'+sys.executable+'"'
 
     #CROP SEQUENCE AND STRUCTURE
-    logging.info('    Running crops-cropstr...')
 
     cst = importlib.import_module('crops.command_line.crops-cropstr')
     cropspy = (cst.__file__)
@@ -49,8 +48,6 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
     except:
         logging.critical('        An error occurred while executing Crops-cropstr')
         raise OSError
-
-    logging.info('    Done' + os.linesep)
 
     return
 
@@ -84,7 +81,5 @@ def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
     except:
         logging.critical('        An error occurred while executing Crops-renumber')
         raise OSError
-
-    logging.info('    Done' + os.linesep)
 
     return
