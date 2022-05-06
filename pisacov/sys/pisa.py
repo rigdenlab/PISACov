@@ -76,7 +76,7 @@ def runpisa(instr, outdir, sessionid=None):
         pdbfile = (os.path.splitext(os.path.basename(instr))[0] + os.extsep +
                    "interface" + os.extsep + str(nif) + os.extsep + "pdb")
         try:
-            os.system(pisa_exec + ' ' + sessionid +' -pdb interface ' +
+            os.system(pisa_exec + ' ' + sname +' -pdb interface ' +
                       str(nif) + ' > ' + os.path.join(outdir, pdbfile))
         except Exception:
             logging.critical("ERROR: An error occurred during the execution of PISA (interface pdb files production).")

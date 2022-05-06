@@ -7,37 +7,42 @@ from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
 from pisacov.io import _conf_ops as pco
+from pisacov.core import _psicov_modes as PSICOV_modes
 
 import copy
 import logging
+import os
 
 from crops.elements import sequences as pes
 from crops.io import taggers as ctg
 from conkit.core import contactmap as ckc
+from conkit.core.contactmap import ContactMap
+from conkit import plot as ckplot
 
-def backmapping(conpredmap, sequence):
+def backmapping(cmap, sequence):
     """
     Return the contact prediction map with the original residue numbers.
 
-    :param conpredmap: Contact prediction map
-    :type conpredmap: :class:`~conkit.core.contactmap.ContactMap`
+    :param cmap: Contact prediction map
+    :type cmap: :class:`~conkit.core.contactmap.ContactMap`
     :param sequence: Sequence.
     :type sequence: :class:`~crops.elements.sequences.sequence`
     :return: Contact prediction map with backmapped ids.
     :rtype: :class:`~conkit.core.contactmap.ContactMap`
 
     """
-    if isinstance(conpredmap, ckc.ContactMap) is False:
+    if ((isinstance(cmap, ckc.ContactMap) is False) and
+            (isinstance(cmap, ContactMap) is False)):
         logging.critical('First argument must be a Conkit ContactMap object.')
         raise TypeError
     if isinstance(sequence, pes.sequence) is False:
         logging.critical('Second argument must be a CROPS sequence object.')
         raise TypeError
 
-    conpredout = conpredmap.deepcopy()
-    for n in range(len(conpredmap)):
-        c1 = sequence.cropbackmap[conpredmap[n].res1_seq]
-        c2 = sequence.cropbackmap[conpredmap[n].res2_seq]
+    conpredout = cmap.deepcopy()
+    for n in range(len(cmap)):
+        c1 = sequence.cropbackmap[cmap[n].res1_seq]
+        c2 = sequence.cropbackmap[cmap[n].res2_seq]
         if c1 < c2:
             conpredout[n].res1_seq = c1
             conpredout[n].res2_seq = c2
@@ -50,62 +55,30 @@ def backmapping(conpredmap, sequence):
 
     return conpredout
 
-
-def merge_interfaces(contactmap1, contactmap2):
+def filter_contacts(cmap, threshold=0.2):
     """
-    Return a contact map that is the result of merging two of them.
+    Remove low score contacts from contact prediction.
 
-    :param contactmap1: Base contact map.
-    :type contactmap1: :class:`~conkit.core.contactmap.ContactMap`
-    :param contactmap2: Secondary contact map.
-    :type contactmap2: :class:`~conkit.core.contactmap.ContactMap`
-    :return: Base contact map including also contacts from secondary contact map.
-    :rtype: :class:`~conkit.core.contactmap.ContactMap`
+    :param cmap: Contact prediction map
+    :type cmap: :class:`~conkit.core.contactmap.ContactMap`
+    :param threshold: Threshold, defaults to 0.2
+    :type threshold: float, optional
 
     """
-    cnt0 = 0
-    cnt1 = 0
-    cnt2 = 0
-    outmap = contactmap1.deepcopy()
-    print(outmap)
-    print('===')
-    for n2 in range(len(contactmap2)):
-        repeated = False
-        k1 = contactmap2[n2].res1_seq
-        k2 = contactmap2[n2].res2_seq
-        for n1 in range(len(contactmap1)):
-            c1 = contactmap1[n1].res1_seq
-            c2 = contactmap1[n1].res2_seq
-            if (k1 == c1 and k2 == c2) or (k2 == c1 and k1 == c2):
-                repeated = True
-                break
-        if repeated is False:
-            cnt2 += 1
-            outmap.add(contactmap2[n2])
-    print(outmap)
-    return outmap
+    cmap.sort('raw_score', reverse=True, inplace=True)
+    cnt = 0
+    for contact in cmap:
+        if contact.raw_score < threshold:
+            break
+        else:
+            cnt=cnt+1
 
-def remove_neighbours(conpredmap, mindist=2):
-    """
-    Return :class:`~conkit.core.contactmap.ContactMap` without neighbouring pairs.
+    return cmap[:cnt-1]
 
-    :param conpredmap: Contact map.
-    :type conpredmap: :class:`~conkit.core.contactmap.ContactMap`
-    :param mindist: Minimum allowed distance, defaults to 2.
-    :type mindist: int, optional
-    :return: Contact map.
-    :rtype: :class:`~conkit.core.contactmap.ContactMap`
-
-    """
-    if isinstance(conpredmap, ckc.ContactMap) is False:
-        logging.critical('First argument must be a Conkit ContactMap object.')
-        raise TypeError
-
-    return conpredmap.remove_neighbors(min_distance=mindist, inplace=True)
 
 class contact_atlas:
     """A :class:`~pisacov.core.contacts.contact_atlas` object containing information from
-    sequences, contact preduction maps and structure contacts.
+    sequences, contact prediction maps and structure contacts.
     The :class:`~pisacov.core.contacts.contact_atlas` class represents a data structure to hold
     contact maps, matched and unmatched with structure contacts and sequence.
 
@@ -155,23 +128,19 @@ class contact_atlas:
     """
 
     _kind = 'Contact Atlas'
-    __slots__ = ['name', 'chain1', 'chain2', 'sequence',
+    __slots__ = ['name', 'interface', 'sequence',
                  'conpred_raw', 'conpred', 'conpred_source',
-                 'strmap_raw', 'strmap', 'conkitmatch', 'intramap',
-                 'tp_raw', 'tn_raw', 'fp_raw', 'fn_raw',
+                 'conkitmatch', 'ckplotmatch',
                  'tp', 'tn', 'fp', 'fn', 'npotential']
-    def __init__(self, name, conpredmap, structure, strmap, conpredtype,
-                 sequence, minneigh=2, removeintra=True, backmap=False):
+    def __init__(self, name, sequence, dimer_interface, conpredmap, conpredtype):
         self.name = name
-        self.chain1 = None
-        self.chain2 = None
-        self.sequence = sequence
+        self.interface = dimer_interface
         self.conpred_raw = conpredmap
-        self.conpred = None
+        self.conpred = self.conpred_raw.deepcopy()
         self.conpred_source = conpredtype
-        self.strmap_raw = structure
-        self.strmap = {}
+        self.sequence = sequence
         self.conkitmatch = {}
+        self.ckplotmatch = {}
         self.tp = {}
         self.fp = {}
         self.tn = {}
@@ -179,107 +148,8 @@ class contact_atlas:
         self.npotential = None
         # Set sequence values and Number of total potential contacts
         lseq = sequence.length()
-        self.npotential = lseq**2 - lseq
-        for n in range(1, minneigh):
-            self.npotential -= 2*(lseq - n)
+        self.npotential = (lseq**2 - lseq) / 2
         self.npotential = int(self.npotential / 2)
-        # Set Contact prediction list
-        self.conpred = remove_neighbours(conpredmap, mindist=minneigh)
-        self.conpred.sort('raw_score', reverse=True, inplace=True)
-        if backmap is True:
-            self.conpred = backmapping(self.conpred, sequence)
-        self.conpred.sequence = self.sequence.seqs['conkit']
-        self.conpred.set_sequence_register()
-        # Set Structure map
-        self.chain1 = tuple(self.strmap_raw[1].id)[0]
-        self.chain2 = tuple(self.strmap_raw[1].id)[1]
-        # Remove intramolecular contacts
-        if removeintra is True:
-            for m in [0,3]:
-                intra = self.strmap_raw[m]
-                for contact1 in intra:
-                    c1 = str(contact1.id)[1:-1].split(', ')
-                    for contact2 in reversed(self.conpred):
-                        c2 = str(contact2.id)[1:-1].split(', ')
-                        if ((c1[0] == c2[0] and c1[1] == c2[1]) or
-                                (c1[1] == c2[0] and c1[0] == c2[1])):
-                            self.conpred.remove(contact2.id)  # CHECK THAT REMOVAL INSIDE LOOP IS OK
-        # Contact prediction maps
-        self.conkitmatch['raw'] = self.conpred.deepcopy()
-        if self.conpred_source == 'psicov':
-            self.conkitmatch['abs'] = self.conpred.deepcopy()
-            self.conkitmatch['shifted'] = self.conpred.deepcopy()
-            self.conkitmatch['norm'] = self.conpred.deepcopy()
-            rscmin = 0.0
-            rscmax = 0.0
-            for contact in self.conkitmatch['raw']:
-                if contact.raw_score < rscmin:
-                    rscmin = contact.raw_score
-                if contact.raw_score > rscmax:
-                    rscmax = contact.raw_score
-            for contact in self.conkitmatch['shifted']:
-                contact.raw_score -= rscmin
-            for contact in self.conkitmatch['norm']:
-                contact.raw_score -= rscmin
-                contact.raw_score /= rscmax
-            for contact in self.conkitmatch['abs']:
-                contact.raw_score = abs(contact.raw_score)
-#        threshold = pco._sources()[self.conpred_source][3]
-#        for contact in reversed(self.conkitmatch):
-#            if contact.raw_score < threshold:
-#                self.conkitmatch.remove(contact.id)
-#        if self.conpred_source == 'psicov':
-#            for cmap in self.conkitmatch_alt.values():
-#                for contact in reversed(cmap):
-#                    if contact.raw_score < threshold:
-#                        self.conkitmatch.remove(contact.id)
-        # Interface map
-        self.strmap['raw'] = ckc.ContactMap(self.strmap_raw[1].id)
-        if self.conpred_source == 'psicov':
-            self.strmap['abs'] = ckc.ContactMap(self.strmap_raw[1].id)
-            self.strmap['shifted'] = ckc.ContactMap(self.strmap_raw[1].id)
-            self.strmap['raw'] = ckc.ContactMap(self.strmap_raw[1].id)
-        npdbcontacts = 1 if len(strmap) == 1 else strmap.shape[0]
-        for altsc, cmap in self.conkitmatch.items():
-            for iconpred in cmap:
-                if npdbcontacts == 1:
-                    if ((int(iconpred.res1_seq) == int(strmap[0]) and
-                            int(iconpred.res2_seq) == int(strmap[1])) or
-                            (int(iconpred.res1_seq) == int(strmap[1]) and
-                            int(iconpred.res2_seq) == int(strmap[0]))):
-                        try:
-                            self.strmap[altsc].add(iconpred)
-                        except Exception:
-                            pass
-                elif npdbcontacts > 1:
-                    for ipdb in range(npdbcontacts):
-                        if ((int(iconpred.res1_seq) == int(strmap[ipdb][0]) and
-                                int(iconpred.res2_seq) == int(strmap[ipdb][1])) or
-                                (int(iconpred.res1_seq) == int(strmap[ipdb][1]) and
-                                int(iconpred.res2_seq) == int(strmap[ipdb][0]))):
-                            try:
-                                self.strmap[altsc].add(iconpred)
-                            except Exception:
-                                pass
-            #cmap.sequence = self.sequence.seqs['conkit']
-            #cmap.set_sequence_register()
-        # MATCH
-        for altsc, cmap in self.conkitmatch.items():
-            cmap.match(self.strmap[altsc], add_false_negatives=True, inplace=True)
-            for contact in cmap:
-                if contact.true_positive:
-                    self.tp[altsc] += 1
-                elif contact.false_positive:
-                    self.fp[altsc] += 1
-                elif contact.false_negative:
-                    self.fn[altsc] += 1
-                elif contact.true_negative:
-                    logging.warning('True negatives appearing in conkit match.')
-                else:
-                    logging.warning('Contact not evaluated.')
-
-        self.tn[altsc] = (self.npotential -
-                          self.tp[altsc] - self.fp[altsc] - self.fn[altsc])
 
     def __repr__(self):
         chtype = self.biotype if self.biotype is not None else 'Undefined'
@@ -306,3 +176,156 @@ class contact_atlas:
 
     def deepcopy(self):
         return copy.deepcopy(self)
+
+    def remove_neighbours(self, mindist=2):
+        """
+        Return :class:`~conkit.core.contactmap.ContactMap` without neighbouring pairs.
+
+        :param mindist: Minimum allowed distance, defaults to 2.
+        :type mindist: int, optional
+
+        """
+        lseq = self.sequence.length()
+        self.npotential = lseq**2 - lseq
+        for n in range(1, mindist):
+            self.npotential -= 2*(lseq - n)
+        self.npotential = int(self.npotential / 2)
+
+        self.conpred.remove_neighbors(min_distance=mindist, inplace=True)
+
+    def remove_intra(self):
+        """
+        Remove intramolecular contacts from intermolecular :class:`~conkit.core.contactmap.ContactMap`.
+
+        """
+        for m in [0,3]:
+            intra = self.interface.structure[m]
+            for contact1 in intra:
+                c1 = str(contact1.id)[1:-1].split(', ')
+                for contact2 in reversed(self.conpred):
+                    c2 = str(contact2.id)[1:-1].split(', ')
+                    if ((c1[0] == c2[0] and c1[1] == c2[1]) or
+                            (c1[1] == c2[0] and c1[0] == c2[1])):
+                        self.conpred.remove(contact2.id)  # CHECK THAT REMOVAL INSIDE LOOP IS OK
+
+    def set_cropmap(self):
+        """
+        Renumber :class:`~conkit.core.contactmap.ContactMap` according to cropped sequence.
+
+        """
+        self.conpred = backmapping(self.conpred, self.sequence)
+
+
+    def set_conpred_seq(self, sequence=None):
+        """
+        Renumber :class:`~conkit.core.contactmap.ContactMap` according to cropped sequence.
+
+        :param sequence: Conkit type sequence, defaults to self.sequence.seqs['conkit'].
+        :type mindist: :class:`~conkit.core.sequence.Sequence`
+
+        """
+        seq_in = self.sequence.seqs['conkit'] if sequence is None else sequence
+        self.conpred.sequence = seq_in
+        self.conpred.set_sequence_register()
+
+
+    def make_match(self, filterout=None):
+        """
+        Match Structure and contact prediction :class:`~conkit.core.contactmap.ContactMap`.
+
+        :param filterout: Threshold, defaults to None
+        :type filterout: float, optional
+
+        """
+        self.conkitmatch['raw'] = self.conpred.deepcopy()
+        if self.conpred_source == 'psicov':
+            rscmin = 0.0
+            rscmax = 0.0
+            for contact in self.conkitmatch['raw']:
+                if contact.raw_score < rscmin:
+                    rscmin = contact.raw_score
+                if contact.raw_score > rscmax:
+                    rscmax = contact.raw_score
+        if filterout is not None:
+            self.conkitmatch['raw'] = filter_contacts(self.conpred.deepcopy(),
+                                                      threshold=filterout)
+        else:
+            self.conkitmatch['raw'] = self.conpred.deepcopy()
+
+        if self.conpred_source == 'psicov':
+            psicovmodes = PSICOV_modes()
+            for pm in psicovmodes:
+                self.conkitmatch[pm] = self.conpred.deepcopy()
+            for contact in self.conkitmatch['shifted']:
+                contact.raw_score -= rscmin
+            for contact in self.conkitmatch['norm']:
+                contact.raw_score -= rscmin
+                contact.raw_score /= rscmax
+            for contact in self.conkitmatch['abs']:
+                contact.raw_score = abs(contact.raw_score)
+
+            if filterout is not None:
+                for pm in psicovmodes:
+                    self.conkitmatch[pm] = filter_contacts(self.conkitmatch[pm],
+                                                           threshold=filterout)
+
+        self.tp['raw'] = 0
+        self.fp['raw'] = 0
+        self.tn['raw'] = 0
+        self.fn['raw'] = 0
+        if self.conpred_source == 'psicov':
+            for pm in psicovmodes:
+                self.tp[pm] = 0
+                self.fp[pm] = 0
+                self.tn[pm] = 0
+                self.fn[pm] = 0
+        structuremap = self.interface.structure[1].deepcopy()
+        for altsc, cmap in self.conkitmatch.items():
+            logging.info('Structure: ' + str(structuremap) +
+                         ', Conpred: ' + str(cmap) +
+                         ', Source: ' + self.conpred_source +
+                         ', Mode: ' + altsc)
+            if len(cmap) > 0 and len(structuremap) > 0:
+                self.ckplotmatch[altsc] = cmap.deepcopy()
+                cmap.match(structuremap, add_false_negatives=True, inplace=True)
+                self.ckplotmatch[altsc].match(structuremap,
+                                              match_other=True,
+                                              remove_unmatched=True,
+                                              renumber=True)
+                for contact in cmap:
+                    if contact.true_positive:
+                        self.tp[altsc] += 1
+                    elif contact.false_positive:
+                        self.fp[altsc] += 1
+                    elif contact.false_negative:
+                        self.fn[altsc] += 1
+                    elif contact.true_negative:
+                        logging.warning('True negatives appearing in conkit match.')
+                    else:
+                        logging.warning('Contact not evaluated.')
+            else:
+                logging.info('Contact map contains no contacts.')
+
+        self.tn[altsc] = (self.npotential -
+                          self.tp[altsc] - self.fp[altsc] - self.fn[altsc])
+
+
+    def plot_map(self, outpath, mode='raw'):
+        """
+        Plot matched contact map.
+
+        :param outpath: Outpath.
+        :type outpath: str
+        :param mode: Mode, if any, defaults to 'raw'.
+        :type mode: str, optional
+
+        """
+        try:
+            fig = ckplot.ContactMapFigure(self.ckplotmatch[mode],
+                                          reference=self.interface.structure[1],
+                                          legend=True)
+            fig.savefig(outpath, overwrite=True)
+            del fig
+        except Exception:
+            logging.warning('Something went wrong with ConKit ' +
+                            'and Contact Plot was not produced.')

@@ -8,6 +8,7 @@ from pisacov import __author__, __date__, __copyright__
 
 from pisacov.io import _conf_ops as pco
 from pisacov.core import contacts as pcc
+from pisacov.core import _psicov_modes as PSICOV_modes
 
 import logging
 from numpy import sqrt
@@ -27,26 +28,23 @@ def _scorenames(crop=False):
     names = pco._sourcenames()
     shortnames = pco._sourcenames(short=True)
     scorenames = {}
-    mainname = ['Nconpred', 'Nconused',
-                'ACCScoreRaw', 'AVScoreRaw',
-                'ACCScoreNorm', 'AVScoreNorm',
-                'ACCScoreAbs', 'AVScoreAbs',
-                'ACCScoreShift', 'AVScoreShift',
-                'TP', 'PREC', 'COVER', 'MCC', 'JACCARD']
+    mainnameraw = ['Nconpred', 'Nconused',
+                   'ACCScoreRaw', 'AVScoreRaw',
+                   'TP', 'PREC', 'COVER', 'MCC', 'JACCARD']
+    mainnamepsi = ['Nconpred', 'Nconused',
+                   'ACCScoreRaw', 'AVScoreRaw',
+                   'ACCScoreNorm', 'AVScoreNorm',
+                   'ACCScoreAbs', 'AVScoreAbs',
+                   'ACCScoreShift', 'AVScoreShift',
+                   'TP', 'PREC', 'COVER', 'MCC', 'JACCARD']
     for i in range(len(names)):
         if names[i] not in scorenames:
             scorenames[names[i]] = []
-        for mn in mainname:
-            if mn[-4:] == 'Norm' and names[i] != 'psicov':
-                pass
-            elif mn[-3:] == 'Abs' and names[i] != 'psicov':
-                pass
-            elif mn[-5:] == 'Shift' and names[i] != 'psicov':
-                pass
-            else:
-                scorenames[names[i]].append(mn + '_' +
-                                            croptag + '_' +
-                                            shortnames[i])
+        lnames = mainnameraw if names[i] != 'psicov' else mainnamepsi
+        for mn in lnames:
+            scorenames[names[i]].append(mn + '_' +
+                                        croptag + '_' +
+                                        shortnames[i])
 
     return scorenames
 
@@ -252,7 +250,10 @@ def mcc(inatlas, alt=None):
     denom *= (ntp+nfn)
     denom *= (ntn+nfp)
     denom *= (ntn+nfn)
-    mcc /= sqrt(denom)
+    if denom == 0:
+        mcc = 0
+    else:
+        mcc /= sqrt(denom)
 
     return mcc
 
@@ -283,7 +284,10 @@ def precision(inatlas, alt=None):
     ntp = float(inatlas.tp[alt])
     nfp = float(inatlas.fp[alt])
 
-    p = ntp / (ntp + nfp)
+    if (ntp + nfp) == 0:
+        p = 0
+    else:
+        p = ntp / (ntp + nfp)
 
     return p
 
@@ -314,7 +318,10 @@ def coverage(inatlas, alt=None):
     ntp = float(inatlas.tp[alt])
     nfn = float(inatlas.fn[alt])
 
-    c = ntp / (ntp + nfn)
+    if (ntp + nfn) == 0:
+        c = 0
+    else:
+        c = ntp / (ntp + nfn)
 
     return c
 
@@ -347,7 +354,10 @@ def jaccard(inatlas, alt=None):
     nfp = float(inatlas.fp[alt])
     nfn = float(inatlas.fn[alt])
 
-    jacc = ntp / (ntp + nfp + nfn)
+    if (ntp + nfp + nfn) == 0:
+        jacc = 0
+    else:
+        jacc = ntp / (ntp + nfp + nfn)
 
     return jacc
 
@@ -365,19 +375,25 @@ def list_scores(inatlas, tag=None):
 
     """
     values = []
-    psicovmodes = ['norm', 'abs', 'shifted']
+    psicovmodes = PSICOV_modes()
 
     values.append(str(inatlas.conpred_raw.ncontacts))
-    values.append(str(inatlas.conpred.ncontacts))
+    values.append(str(inatlas.conkitmatch['raw'].ncontacts))
 
     acc = accscore(inatlas)
     values.append(str(acc))
-    values.append(str(acc/inatlas.tp['raw']))
+    if inatlas.tp['raw'] == 0:
+        values.append(str(0.0))
+    else:
+        values.append(str(acc/inatlas.tp['raw']))
     if tag == 'psicov':
         for m in psicovmodes:
             acc = accscore(inatlas, alt=m)
             values.append(str(acc))
-            values.append(str(acc/inatlas.tp[m]))
+            if inatlas.tp[m] == 0:
+                values.append(str(0.0))
+            else:
+                values.append(str(acc/inatlas.tp[m]))
 
     values.append(str(inatlas.tp['raw']))
     values.append(str(precision(inatlas)))

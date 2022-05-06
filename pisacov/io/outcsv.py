@@ -7,8 +7,10 @@ from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
 from pisacov.core import scores as psc
+from pisacov.io import _conf_ops as pco
 
 import csv
+import os
 
 
 def csvheader(outpath, cropped=False, pisascore=False):
@@ -23,20 +25,25 @@ def csvheader(outpath, cropped=False, pisascore=False):
     :type pisascore: bool, optional
     """
     scnames = psc._scorenames(crop=cropped)
+    names = pco._sourcenames()
     croptag = 'cropseq' if cropped is True else 'fullseq'
+    names = pco._sourcenames()
     csvline = ('#PDB_id, Interface, Chain1, Chain2, Sequence, ' +
                'L' + croptag + ', ' + 'Neff' + croptag + ', ' +
                'Ncrops, ' + 'Lfullseq, ' + 'Nefffullseq, ' +
                croptag + 'Depth, ' +
                'N' + croptag + '_contacts, ' +
                'N' + croptag + '_usedcontacts, ')
-    for score in scnames:
-        csvline += score + ', '
+    for source in names:
+        for score in scnames[source]:
+            csvline += score + ', '
 
     csvline = csvline[:-2]
 
     if pisascore is True:
         csvline += ', PISAscore'
+
+    csvline += os.linesep
 
     with open(outpath, "w") as outcsv:
         outcsv.write(csvline)

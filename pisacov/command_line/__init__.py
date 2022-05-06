@@ -32,8 +32,8 @@ def unwraptime(delta):
 
 
 def welcome(command=None):
-    now = datetime.datetime.now().astimezone().strftime(
-        "%d %B %Y, %H:%M:%S %Z")
+    begin = datetime.datetime.now()
+    tzbegin = begin.astimezone().strftime("%d %B %Y, %H:%M:%S %Z")
     if command is not None:
         l = len(command)
         title = '*'*7 + ' '*3 + command + ' '*3 + '*'*(74-l)
@@ -48,9 +48,9 @@ def welcome(command=None):
     msg += "** "+__description__ + os.linesep
     msg += "** Developed by "+__author__+". Copyright: "+__copyright__+'.' + os.linesep
     msg += '*'*87 + os.linesep
-    msg += '** Time of execution: ' + now + os.linesep + os.linesep
+    msg += '** Time of execution: ' + tzbegin + os.linesep + os.linesep
 
-    return msg, now
+    return msg, begin
 
 def ok(initime, command=None):
     if command is not None:
@@ -64,9 +64,9 @@ def ok(initime, command=None):
     msg += title + os.linesep
     msg += "** " +__prog__+ " finished **"  + os.linesep
     endtime = datetime.datetime.now()
-    tz = endtime.astimezone().strftime(
+    tzend = endtime.astimezone().strftime(
         "%d %B %Y, %H:%M:%S %Z")
-    msg += '** Time of completion: ' + tz + os.linesep
+    msg += '** Time of completion: ' + tzend + os.linesep
     delta = endtime - initime
     seconds = str(delta.days*3600*24 + delta.seconds +
                   delta.microseconds/1000000)

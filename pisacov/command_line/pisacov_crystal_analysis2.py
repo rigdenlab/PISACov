@@ -30,8 +30,6 @@ from pisacov.core import interfaces as pci
 
 from crops.io import parsers as cps
 
-from conkit import io as ckio
-
 import numpy as np
 import argparse
 import os
@@ -221,6 +219,7 @@ def main():
                            invals['OUTROOT'])
             logger.info(pcl.running('CROPS-renumber', done=itime))
 
+
         copyfile(invals['INSTR'], instrc)
         ppaths.mdir(outpdbdir)
 
@@ -319,176 +318,6 @@ def main():
         iflist = psp.runpisa(sfile, pisadir, sessionid = pdbid)
         logger.info(pcl.running('PISA', done=itime))
 
-    # READ DATA IF SKIPEXEC USED:
-    if skipexec is True:
-        logger.info('Parsing already generated files...')
-        for i, iseq in seq.imer.items():
-            sfile = fcropstr if cropping is True else fstr
-            afile = fcropmsa[i] if cropping is True else fmsa[i]
-            if cropping is True:
-                iseq.cropmsa = ckio.read(afile, 'jones')
-                if iseq.ncrops() == 0:
-                    scoring[1] = True
-                    iseq.msa = ckio.read(afile, 'jones')
-            else:
-                iseq.msa = ckio.read(afile, 'jones')
-        ixml = os.path.join(pisadir,
-                            (os.path.splitext(os.path.basename(sfile))[0] +
-                             os.extsep + 'interface' +
-                             os.extsep + 'xml'))
-        axml = os.path.join(pisadir,
-                            (os.path.splitext(os.path.basename(sfile))[0] +
-                             os.extsep + 'assembly' +
-                             os.extsep + 'xml'))
-
-        iflist = pci.parse_interface_xml(ixml, axml)
-
-    # CONTACT ANALYSIS AND MATCH
-    logger.info('Opening output csv files...')
-    resultdir = os.path.join(invals['OUTROOT'], pdbid, 'pisacov', '')
-    ppaths.mdir(resultdir)
-    csvfile = []
-    csvfile.append(os.path.join(resultdir,
-                                (pdbid + os.extsep + "evcovsignal" +
-                                 os.extsep + "cropped" +
-                                 os.extsep + "pisacov" +
-                                 os.extsep + "csv")))
-    csvfile.append(os.path.join(resultdir,
-                                (pdbid + os.extsep + "evcovsignal" +
-                                 os.extsep + "full" +
-                                 os.extsep + "pisacov" +
-                                 os.extsep + "csv")))
-
-    for n in range(2):
-        if scoring[n] is True:
-            cpd = True if cropping else False
-            pic.csvheader(csvfile[n], cropped=cpd, pisascore=True)
-
-    logger.info('Parsing sequence files...')
-    for i, fpath in fseq.items():
-        seq.imer[i].seqs['conkit'] = ckio.read(fpath, 'fasta')[0]
-
-    logger.info('Parsing contact predictions lists...')
-    conpred = {}
-    matches = []
-    for s in seq.imer:
-        if s not in conpred:
-            conpred[s] = {}
-        fs = fcropseq[s] if cropping else fseq[s]
-        for source, attribs in sources.items():
-            fc = os.path.splitext(os.path.basename(fs))[0]
-            fc += os.extsep + attribs[1]
-            confile = os.path.join(dmpdir, fc)
-            conpred[s][source] = ckio.read(confile, attribs[2])[0]
-
-    logger.info('Parsing crystal structure contacts...')
-    for i in range(len(iflist)):
-        logger.info(os.linesep + str(iflist[i]))
-        fs = fcropstr if cropping else fstr
-        fs = (os.path.splitext(os.path.basename(fs))[0] +
-              os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "pdb")
-        spath = os.path.join(pisadir, fs)
-        inputmap = ckio.read(spath, 'pdb')
-        if len(inputmap) == 4:
-            chnames = [iflist[i].chains[0].monomer_id,
-                       iflist[i].chains[1].monomer_id]
-            iflist[i].chains[0].seq_id = seq.whatseq(chnames[0])
-            iflist[i].chains[1].seq_id = seq.whatseq(chnames[1])
-            chseqs = [iflist[i].chains[0].seq_id,
-                       iflist[i].chains[1].seq_id]
-
-            logger.info(iflist[i].chains)
-            chtypes = [iflist[i].chains[0].type,
-                       iflist[i].chains[1].type]
-            if (chseqs[0] != chseqs[1] or
-                    (chtypes[0] != 'Protein' or chtypes[1] != 'Protein')):
-                if chtypes[0] != "Protein" or chtypes[1] != "Protein":
-                    logger.info('Interface ' + str(i) +
-                                ' is not a Protein-Protein interface. Ignoring.')
-                else:
-                    logger.info('Interface ' + str(i) +
-                                ' is not a homodimer. Ignoring.')
-                iflist[i].structure = None
-                matches.append(None)
-                continue
-            s = chseqs[0]
-
-            try:
-                iflist[i].structure = []
-                for m in range(len(inputmap)):
-                    iflist[i].structure.append(inputmap[m].as_contactmap())
-                    iflist[i].structure[m].id = inputmap[m].id
-            except Exception:
-                logger.warning('Contact Maps obtained from a legacy ConKit ' +
-                               'version with no Distograms implemented.')
-                for m in range(len(inputmap)):
-                    iflist[i].structure.append(inputmap[m])  # ConKit LEGACY.
-            fs = fcropstr if cropping else fstr
-            fs = (os.path.splitext(os.path.basename(fs))[0] +
-                  os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "con")
-            spath = os.path.join(pisadir, fs)
-            ckio.write(spath, 'psicov', hierarchy=iflist[i].structure[1])
-            iflist[i].contactmap = np.loadtxt(spath)
-            matches.append({})
-            for source, attribs in sources.items():
-                matches[i][source] = pcc.contact_atlas(
-                                            name=pdbid+'_'+str(s),
-                                            dimer_interface=iflist[i],
-                                            conpredmap=conpred[s][source],
-                                            conpredtype=source,
-                                            sequence=seq.imer[s])
-                matches[i][source].remove_neighbours(mindist=2)
-                if cropping is True:
-                    matches[i][source].set_cropmap()
-                matches[i][source].set_conpred_seq()
-                matches[i][source].remove_intra()
-                matches[i][source].make_match(filterout = 0.2)
-                for cmode, cmap in matches[i][source].conkitmatch.items():
-                    if (len(cmap) > 0 and
-                            len(matches[i][source].interface.structure[1]) > 0):
-                        if len(matches[i][source].conkitmatch) > 1:
-                            pout = (os.path.splitext(fs)[0] + os.extsep + 'match' +
-                                    os.extsep + cmode + os.extsep + source +
-                                    os.extsep + 'con' + os.extsep + 'png')
-                        else:
-                            pout = (os.path.splitext(fs)[0] + os.extsep +
-                                    'match' + os.extsep + source +
-                                    os.extsep + 'con' + os.extsep + 'png')
-                        plotpath = os.path.join(os.path.dirname(csvfile[0]), pout)
-                        matches[i][source].plot_map(plotpath, mode = cmode)
-        else:
-            iflist[i].structure = None
-            iflist[i].contactmap = None
-            matches.append(None)
-            continue
-
-    logger.info(os.linesep + 'Computing results and writing them to file...' +
-                os.linesep)
-    for i in range(len(iflist)):
-        logger.info('Generating Interface ' + str(i+1) + ' data...')
-        if matches[i] is None:
-            continue
-        results = [pdbid, str(i+1)]
-        results.append(iflist[i].chains[0].monomer_id)
-        results.append(iflist[i].chains[1].monomer_id)
-        sid = iflist[i].chains[0].seq_id
-        results.append(str(sid))
-        results.append(str(seq.imer[sid].length()))
-        if cropping is True:
-            results.append(str(seq.imer[sid].cropmsa.meff))
-        else:
-            results.append(str(seq.imer[sid].msa.meff))
-        results.append(str(seq.imer[sid].ncrops()))
-        results.append(str(seq.imer[sid].full_length()))
-        for source, attribs in sources.items():
-            appresults = pcs.list_scores(matches[i][source], tag=source)
-            results += appresults
-        results.append(str(iflist[i].stable))
-        for n in range(2):
-            if scoring[n] is True:
-                pic.lineout(results, csvfile[n])
-                pic.lineout(results, invals['OUTCSVPATH'][n])
-
     endmsg = pcl.ok(starttime, command=__script__)
     logger.info(endmsg)
 
@@ -501,6 +330,7 @@ if __name__ == "__main__":
 
     try:
         main()
+        logger.info(pcl.ok())
         sys.exit(0)
     except Exception as e:
         if not isinstance(e, SystemExit):

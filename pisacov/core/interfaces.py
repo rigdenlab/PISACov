@@ -35,7 +35,16 @@ def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
         for mol in iface.iter('molecule'):
             cid = mol.find('chain_id').text
             ctype = mol.find('class').text
-            ifinfolist[-1].chains[cid] = ctype
+            pid = mol.find('id').text
+            if pid == '1':
+                did = 'A'
+            elif pid == '2':
+                did = 'B'
+            newchain=chain_info(pisa_id=pid,
+                                monomer_id=cid,
+                                biotype=ctype,
+                                dimer_id=did)
+            ifinfolist[-1].chains.append(newchain)
 
     if assembly_xml_path is not None:
         try:
@@ -63,6 +72,33 @@ def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
 
     return ifinfolist
 
+class chain_info:
+    _kind = 'Chain Info'
+    __slots__ = ['pisa_id', 'dimer_id', 'monomer_id', 'seq_id', 'type']
+
+    def __init__(self, dimer_id=None, pisa_id=None, monomer_id=None,
+                 seqid=None, biotype=None):
+        self.dimer_id = dimer_id # ID IN INPUT DIMER (not equal to monomer_id)
+        self.pisa_id = pisa_id # ID ASSIGNED BY PISA (1, 2)
+        self.monomer_id = monomer_id # ID IN ORIGINAL STRUCTURE AND SEQUENCE
+        self.seq_id = seqid
+        self.type = biotype
+
+    def __repr__(self):
+
+        string = (self._kind + " object: (Dimer ID = " + str(self.dimer_id))
+        if self.pisa_id is not None:
+            string += ", " + "PISA xml ID = " + str(self.pisa_id)
+        if self.monomer_id is not None:
+            ", Monomer ID in assymetric unit = " + str(self.monomer_id)
+        if self.seq_id is not None:
+            ", Sequence ID = " + str(self.seq_id)
+        if self.type is not None:
+            ", Biotype = " + str(self.type)
+        string += ")"
+
+        return string
+
 class interface:
     """A :class:`~pisacov.core.interfaces.interface` object containing information
     like composition and stability.
@@ -82,7 +118,7 @@ class interface:
 
     def __init__(self, name, structure=None, chains=None):
         self.name = name
-        self.chains = {}
+        self.chains = []
         self.structure = None
         self.contactmap = None
         self.stable = False
@@ -90,9 +126,9 @@ class interface:
     def __repr__(self):
         chainstring = ''
         typestring = ''
-        for key, value in self.chains.items():
-            chainstring += key + ','
-            typestring += value +'-'
+        for chain in self.chains:
+            chainstring += chain.monomer_id + ','
+            typestring += chain.type +'-'
         chainstring = chainstring[:-1]
         typestring = typestring[:-1]
         string = (self._kind + " object " + self.name +

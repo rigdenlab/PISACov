@@ -17,6 +17,8 @@ from pisacov.io.conf import HHBLITS_DATABASE_DIR
 from pisacov.io.conf import HHBLITS_DATABASE_NAME
 from pisacov.io import paths as ppaths
 
+from matplotlib import pyplot as plt
+
 def runhhblits(spath, hhparam, outdirmsa):
     """
     Run HHSUITE to produce a Multiple Sequence Alignment from a single fasta sequence.
@@ -81,6 +83,7 @@ def msafilesgen(inpath_a3m):
                            "coverage" + os.extsep + "png")
         fig = ckplot.SequenceCoverageFigure(parsedmsa)
         fig.savefig(msacoveragepath, overwrite=True)
+        del fig
     except Exception:
         logging.warning('Something went wrong with ConKit ' +
                         'and Coverage Plot was not produced.')
