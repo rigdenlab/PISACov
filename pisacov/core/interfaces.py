@@ -1,5 +1,5 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
@@ -12,12 +12,12 @@ import logging
 import xml.etree.ElementTree as ET
 
 def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
-    """Read interface.xml pisa file, parse it, and return number of interfaces.
+    """Read interface.xml pisa file, parse it, and return interface list.
 
     :param xml_path: Path to xml file.
     :type xml_path: str
     :return: List of interface info.
-    :rtype: list [:class:`~pisacov.core.interfaces.interface`]
+    :rtype: list [:class:`~conkit.core.contactmap.ContactMap`]
 
     """
     try:
@@ -41,7 +41,7 @@ def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
             elif pid == '2':
                 did = 'B'
             newchain=chain_info(pisa_id=pid,
-                                monomer_id=cid,
+                                crystal_id=cid,
                                 biotype=ctype,
                                 dimer_id=did)
             ifinfolist[-1].chains.append(newchain)
@@ -73,14 +73,45 @@ def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
     return ifinfolist
 
 class chain_info:
-    _kind = 'Chain Info'
-    __slots__ = ['pisa_id', 'dimer_id', 'monomer_id', 'seq_id', 'type']
+    """A :class:`~pisacov.core.interfaces.chain_info` object contains several identifiers for a chain.
 
-    def __init__(self, dimer_id=None, pisa_id=None, monomer_id=None,
+    :param dimer_id: ID for chain in PISA's interface PDB structure, defaults to None.
+    :type dimer_id: str, optional
+    :param pisa_id: ID assigned by PISA in xml file (1, 2), defaults to None.
+    :type pisa_id: str, optional
+    :param crystal_id: ID for chain in original PDB structure, defaults to None.
+    :type crystal_id: str, optional
+    :param seqid: Sequence ID assigned by CROPS (e.g. Seq ID = 1 for chains A, B, C), defaults to None.
+    :type seqid: str, optional
+    :param biotype: Biological classification of chain, defaults to None.
+    :type biotype: str, optional
+
+    :ivar dimer_id: ID for chain in PISA's interface PDB structure.
+    :vartype dimer_id: str
+    :ivar pisa_id: ID assigned by PISA in xml file (1, 2).
+    :vartype pisa_id: str
+    :ivar crystal_id: ID for chain in original PDB structure.
+    :vartype crystal_id: str
+    :ivar seq_id: Sequence ID assigned by CROPS (e.g. Seq ID = 1 for chains A, B, C).
+    :vartype seqid: str
+    :ivar type: Biological classification of chain.
+    :vartype type: str
+
+    :example:
+
+    >>> from pisacov.core import interfaces as pci
+    >>> mychain = pci.chain_info(dimer_id='B', pisa_id='1', crystal_id='A', seqid='1', biotype='Protein')
+    >>> mychain
+    Chain Info object: (Dimer ID = B, PISA xml ID = 1, Monomer ID in assymmetric unit = A, Sequence ID = 1, Biotype = Protein)
+    """
+    _kind = 'Chain Info'
+    __slots__ = ['pisa_id', 'dimer_id', 'crystal_id', 'seq_id', 'type']
+
+    def __init__(self, dimer_id=None, pisa_id=None, crystal_id=None,
                  seqid=None, biotype=None):
-        self.dimer_id = dimer_id # ID IN INPUT DIMER (not equal to monomer_id)
-        self.pisa_id = pisa_id # ID ASSIGNED BY PISA (1, 2)
-        self.monomer_id = monomer_id # ID IN ORIGINAL STRUCTURE AND SEQUENCE
+        self.dimer_id = dimer_id
+        self.pisa_id = pisa_id
+        self.crystal_id = crystal_id
         self.seq_id = seqid
         self.type = biotype
 
@@ -89,12 +120,12 @@ class chain_info:
         string = (self._kind + " object: (Dimer ID = " + str(self.dimer_id))
         if self.pisa_id is not None:
             string += ", " + "PISA xml ID = " + str(self.pisa_id)
-        if self.monomer_id is not None:
-            ", Monomer ID in assymetric unit = " + str(self.monomer_id)
+        if self.crystal_id is not None:
+            string += ", Monomer ID in assymmetric unit = " + str(self.crystal_id)
         if self.seq_id is not None:
-            ", Sequence ID = " + str(self.seq_id)
+            string += ", Sequence ID = " + str(self.seq_id)
         if self.type is not None:
-            ", Biotype = " + str(self.type)
+            string += ", Biotype = " + str(self.type)
         string += ")"
 
         return string
@@ -104,36 +135,100 @@ class interface:
     like composition and stability.
 
     :param name: Name of the interface.
-    :type seqid: str
-    :param structure: Save parsed structure here, defaults to None.
-    :type oligomer: Any structure format.
-    :param chains: A dictionary containing the chain ids as keys and the type as values.
-    :type seq: dict [str: str]
+    :type name: str
+    :param structure: Save parsed Structure Contact maps here, defaults to None.
+    :type structure: list [:class:`~conkit.core.contactmap.ContactMap`] or :class:`~conkit.core.contactfile.ContactFile`, optional
+    :param chains: A list containing the two chain objects making up the interface, defaults to [].
+    :type seq: list [:class:`~pisacov.core.interfaces.chain_info`], optional
 
+    :ivar name: Name of the interface.
+    :vartype name: str
+    :ivar structure: Save parsed Structure Contact maps here.
+    :vartype structure: list [:class:`~conkit.core.contactmap.ContactMap`] or :class:`~conkit.core.contactfile.ContactFile`
+    :ivar chains: A list containing the two chain objects making up the interface.
+    :vartype seq: list [:class:`~pisacov.core.interfaces.chain_info`]
+    :ivar contactmap: Numpy-read contact list (generated from pdb structure).
+    :vartype contactmap: :class:`~numpy.ndarray`
     :ivar stable: Stability of the interface
     :vartype stable: bool, str
+
+    :example:
+
+    >>> from pisacov.core import interfaces as pci
+    >>> from conkit import io as ckio
+    >>> mycontacts = ckio.read('mypath/mystructure.pdb', 'pdb')
+    >>> mymaplist = []
+    >>> for element in mycontacts
+            mymaplist.append(element.as_contactmap())
+    >>> mychains = []
+    >>> for n in len(mycontacts[1].id):
+            did = mycontacts[1].id[n]
+            mychains.append(pci.chain_info(dimer_id=did, seqid='1', biotype='Protein')
+    >>> myIF = pci.interface('My interface',
+                             structure=mymaplist[1],
+                             chains=mychains)
+    >>> myIF
+    Interface object My interface (chains=AB(in dimer), type=Protein-Protein, stable=Unknown)
+
     """
     _kind = 'Interface'
     __slots__ = ['name', 'chains', 'stable', 'structure', 'contactmap']
 
     def __init__(self, name, structure=None, chains=None):
         self.name = name
-        self.chains = []
+        if chains is None:
+            self.chains = []
+        else:
+            self.chains = chains
         self.structure = None
         self.contactmap = None
-        self.stable = False
+        self.stable = None
 
     def __repr__(self):
         chainstring = ''
-        typestring = ''
+        chuse = 'crystal'
         for chain in self.chains:
-            chainstring += chain.monomer_id + ','
-            typestring += chain.type +'-'
-        chainstring = chainstring[:-1]
-        typestring = typestring[:-1]
+            if chain.crystal_id is None:
+                chuse = 'dimer'
+                for chain2 in self.chains:
+                    if chain2.dimer_id is None:
+                        chuse = 'Unknown'
+                        break
+                break
+
+        if chuse == 'Unknown':
+            chainstring = chuse
+        else:
+            for chain in self.chains:
+                if chuse == 'crystal':
+                    chainstring += chain.crystal_id
+                elif chuse == 'dimer':
+                    chainstring += chain.dimer_id
+            if chuse == 'crystal':
+                chainstring += '(in crystal)'
+            elif chuse == 'dimer':
+                chainstring += '(in dimer)'
+
+        typestring = ''
+        if len(self.chains) < 2:
+            typestring = 'None'
+        elif len(self.chains) == 2:
+            typestring = ''
+            for chain in self.chains:
+                typestring += chain.type + '-'
+            typestring = typestring[:-1]
+        else:
+            logging.error('Interface contains more than 2 chains.')
+            raise ValueError
+
+        if self.stable is None:
+            stability = 'Unknown'
+        else:
+            stability = str(self.stable)
+
         string = (self._kind + " object " + self.name +
                   " (chains="+chainstring + ", type=" + typestring +
-                  ", stable=" + str(self.stable) + ")")
+                  ", stable=" + stability + ")")
         return string
 
     def __iter__(self):
@@ -144,3 +239,22 @@ class interface:
 
     def deepcopy(self):
         return copy.deepcopy(self)
+
+    def itype(self):
+        """Produces interface type string from information in self.chains.
+
+        :raises ValueError: Interface contains more than 2 chains.
+        :return: Interface type (only if 2 chains are defined.)
+        :rtype: str
+
+        """
+        if len(self.chains) < 2:
+            typestring = 'None'
+        elif len(self.chains) == 2:
+            typestring = ''
+            for chain in self.chains:
+                typestring += chain.type + '-'
+            typestring = typestring[:-1]
+        else:
+            logging.error('Interface contains more than 2 chains.')
+            raise ValueError

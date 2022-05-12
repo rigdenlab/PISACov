@@ -1,5 +1,5 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
@@ -22,16 +22,16 @@ def _default_values(key):
 
     return defaultvals[key]
 
-def _default_keys():
 
+def _default_keys():
     defaultkeys = ['SIFTS_PATH', 'PISA_PATH', 'DMP_PATH', 'HHBLITS_PATH',
-                 'HHBLITS_DATABASE_NAME', 'HHBLITS_DATABASE_DIR', 'HHBLITS_PARAMETERS',
-                 'UNICLUST_FASTA_PATH', 'NEIGHBOURS_MINDISTANCE', 'REMOVE_INTRA_CONTACTS']
+                   'HHBLITS_DATABASE_NAME', 'HHBLITS_DATABASE_DIR', 'HHBLITS_PARAMETERS',
+                   'UNICLUST_FASTA_PATH', 'NEIGHBOURS_MINDISTANCE', 'REMOVE_INTRA_CONTACTS']
 
     return defaultkeys
 
-def _check_input(val, key):
 
+def _check_input(val, key):
     compmsg = {'SIFTS_PATH': "SIFTS_PATH file not found.",
                'PISA_PATH': "'PISA_PATH file not found.",
                'HHBLITS_PATH': "HHBLITS_PATH file not found.",
@@ -48,27 +48,31 @@ def _check_input(val, key):
             key == 'HHBLITS_PATH' or key == 'DMP_PATH'):
         try:
             val = check_path(val, 'file')
-        except NameError:
+        except Exception:
             logging.critical(errormsg)
+            raise NameError()
     if (key == 'UNICLUST_FASTA_PATH'):
         if val == "" or val is None:
             val = None
         else:
             try:
                 val = check_path(val, 'file')
-            except NameError:
+            except Exception:
                 logging.critical(errormsg)
+                raise NameError()
     elif (key == 'HHBLITS_DATABASE_DIR'):
         try:
             val = check_path(val, 'dir')
-        except NameError:
+        except Exception:
             logging.critical(errormsg)
+            raise NameError()
     elif (key == 'HHBLITS_DATABASE_NAME'):
         if isinstance(val, str) is False:
             try:
                 val = str(val)
             except Exception:
                 logging.critical(errormsg)
+                raise ValueError()
         else:
             pass
     elif (key == 'HHBLITS_PARAMETERS'):
@@ -77,14 +81,16 @@ def _check_input(val, key):
         else:
             if isinstance(val, list) is False:
                 logging.critical('HHBLITS_PARAMETERS is not a python list.')
+                raise ValueError()
             else:
                 for n in range(len(val)):
                     if n == 1:
                         if isinstance(val[n], float) is False:
                             try:
                                 val[n] = float(val[n])
-                            except TypeError:
+                            except Exception:
                                 logging.critical(errormsg)
+                                raise TypeError
                     else:
                         if n == 2 and val[n] == 'inf':
                             pass
@@ -92,8 +98,9 @@ def _check_input(val, key):
                             if isinstance(val[n], int) is False:
                                 try:
                                     val[n] = int(val[n])
-                                except TypeError:
+                                except Exception:
                                     logging.critical(errormsg)
+                                    raise TypeError
     elif (key == 'NEIGHBOURS_MINDISTANCE'):
         if val is None or val == "":
             val = _default_values(key)
@@ -101,8 +108,9 @@ def _check_input(val, key):
             if isinstance(val[n], int) is False:
                 try:
                     val = int(val)
-                except TypeError:
+                except Exception:
                     logging.critical(errormsg)
+                    raise TypeError
     elif (key == 'REMOVE_INTRA_CONTACTS'):
         if val is None:
             val = _default_values(key)
@@ -135,8 +143,9 @@ def _parse_conf():
                       'HHBLITS_DATABASE_NAME': pconf.HHBLITS_DATABASE_NAME,
                       'HHBLITS_DATABASE_DIR': pconf.HHBLITS_DATABASE_DIR,
                       'DMP_PATH': pconf.DMP_PATH}
-    except NameError:
+    except Exception:
         logging.critical(compmsg + trymsg)
+        raise ValueError
 
     try:
         configfile['UNICLUST_FASTA_PATH'] = pconf.UNICLUST_FASTA_PATH
@@ -187,10 +196,10 @@ def _check_hhparams(paramlist):
     :rtype: list of (int, float, str)
     """
     if (paramlist == 'dmp' or paramlist == [3, 0.001, 'inf', 50, 99] or
-        paramlist == ['3', '0.001', 'inf', '50', '99']):
+            paramlist == ['3', '0.001', 'inf', '50', '99']):
         outparams = ['3', '0.001', 'inf', '50', '99']
     elif (paramlist == 'hhblits' or paramlist == [2, 0.001, 1000, 0, 90] or
-        paramlist == ['2', '0.001', '1000', '0', '90']):
+          paramlist == ['2', '0.001', '1000', '0', '90']):
         outparams = ['2', '0.001', '1000', '0', '90']
     else:
         try:
@@ -200,8 +209,9 @@ def _check_hhparams(paramlist):
                 int(float(paramlist[2]))
             float(paramlist[4])
             float(paramlist[5])
-        except:
-            raise ValueError('One or more of HHblits arguments given are not valid')
+        except Exception:
+            logging.critical('One or more of HHblits arguments given are not valid')
+            raise ValueError
 
         outparams=[str(int(float(paramlist[0]))), str(float(paramlist[1])),
             paramlist[2], str(float(paramlist[4])), str(float(paramlist[5]))]
@@ -222,18 +232,19 @@ def _check_uniprot(inuniprot):
     """
     try:
         float(inuniprot)
-    except:
-        raise ValueError('Uniprot threshold given not valid.')
+    except Exception:
+        logging.critical('Uniprot threshold given not valid.')
+        raise ValueError
 
     try:
         dbpath = check_path(pconf.UNICLUST_FASTA_PATH, 'file')
-    except:
+    except Exception:
+        logging.warning('Uniprot database file does not exist. Switching to server-only.')
         dbpath = 'server-only'
 
     return float(inuniprot), dbpath
 
 def _sourcenames(short=False):
-
     """Return a list with the source names.
 
     :param short: True for shorter names, defaults to False

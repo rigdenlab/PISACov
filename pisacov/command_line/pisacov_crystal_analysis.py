@@ -1,15 +1,7 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
-
-# import pisacovmods.inputvalues as pmin
-# import pisacovmods.init1 as pmi1
-# import pisacovmods.init2 as pmi2
-# import pisacovmods.output as pmo
-# import pisacovmods.pisacovmod as pmp
-# import pisacovmods.sequence as pms
-# import pisacovmods.contacts as pmc
 
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
@@ -248,6 +240,15 @@ def main():
                                        (fprefix + os.extsep +
                                         'msa' + os.extsep + 'aln'))
             seq.set_cropmaps(amap, cropmain=True)
+            if iseq.ncrops() == 0:
+                logger.info('    Cropped sequence ' +
+                            iseq.oligomer_id + '_' + iseq.name +
+                            ' is identical to the original sequence.')
+            else:
+                logger.info('    Cropped sequence ' +
+                            iseq.oligomer_id + '_' + iseq.name +
+                            ' is ' + str(iseq.ncrops()) + ' residues ' +
+                            'shorter than the original sequence.')
 
     # EXECUTION OF EXTERNAL PROGRAMS
     hhdir = os.path.join(invals['OUTROOT'], pdbid, 'hhblits', '')
@@ -285,9 +286,6 @@ def main():
                 iseq.cropmsa = themsa
                 if iseq.ncrops() == 0:
                     iseq.msa = iseq.cropmsa
-                    logger.info('    Cropped sequence ' +
-                                iseq.oligomer_id + '_' + iseq.name +
-                                ' is identical to original sequence.')
                     continue
                 else:
                     pass
@@ -363,6 +361,9 @@ def main():
         if scoring[n] is True:
             cpd = True if cropping else False
             pic.csvheader(csvfile[n], cropped=cpd, pisascore=True)
+            if invals['OUTCSVPATH'][n] is not None:
+                if os.path.isfile(invals['OUTCSVPATH'][n]) is False:
+                    pic.csvheader(invals['OUTCSVPATH'][n], cropped=cpd, pisascore=True)
 
     logger.info('Parsing sequence files...')
     for i, fpath in fseq.items():
@@ -390,8 +391,8 @@ def main():
         spath = os.path.join(pisadir, fs)
         inputmap = ckio.read(spath, 'pdb')
         if len(inputmap) == 4:
-            chnames = [iflist[i].chains[0].monomer_id,
-                       iflist[i].chains[1].monomer_id]
+            chnames = [iflist[i].chains[0].crystal_id,
+                       iflist[i].chains[1].crystal_id]
             iflist[i].chains[0].seq_id = seq.whatseq(chnames[0])
             iflist[i].chains[1].seq_id = seq.whatseq(chnames[1])
             chseqs = [iflist[i].chains[0].seq_id,
@@ -469,8 +470,8 @@ def main():
         if matches[i] is None:
             continue
         results = [pdbid, str(i+1)]
-        results.append(iflist[i].chains[0].monomer_id)
-        results.append(iflist[i].chains[1].monomer_id)
+        results.append(iflist[i].chains[0].crystal_id)
+        results.append(iflist[i].chains[1].crystal_id)
         sid = iflist[i].chains[0].seq_id
         results.append(str(sid))
         results.append(str(seq.imer[sid].length()))
@@ -480,9 +481,10 @@ def main():
             results.append(str(seq.imer[sid].msa.meff))
         results.append(str(seq.imer[sid].ncrops()))
         results.append(str(seq.imer[sid].full_length()))
+        results.append(str(seq.imer[sid].msa.meff))
         for source, attribs in sources.items():
             appresults = pcs.list_scores(matches[i][source], tag=source)
-            results += appresults
+            results.extend(appresults)
         results.append(str(iflist[i].stable))
         for n in range(2):
             if scoring[n] is True:

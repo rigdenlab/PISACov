@@ -1,7 +1,8 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
+
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
@@ -12,6 +13,7 @@ import argparse
 import glob
 
 import logging
+
 
 def check_path(path, typeofpath=None):
     """Return full path. If typeofpath is given, path is checked.
@@ -42,11 +44,14 @@ def check_path(path, typeofpath=None):
         path = os.path.abspath(path)
         pathok = True
     else:
-        raise ValueError("Input string 'typeofpath' should be either 'dir' or 'file'.")
+        logging.critical("Input string 'typeofpath' should be either 'dir' or 'file'.")
+        raise ValueError
     if pathok is True:
         return path
     else:
-        raise argparse.ArgumentTypeError(f"readable_dir:{path} is not a valid path")
+        logging.critical(f"readable_dir:{path} is not a valid path")
+        raise argparse.ArgumentTypeError()
+
 
 def check_wildcard(path):
     """Return list of several files full path.
@@ -73,7 +78,8 @@ def mdir(dirpath):
 
     return
 
-def output_dir(root,baseid):
+
+def output_dir(root, baseid):
     """Return path to output directory.
 
     :param baseid: PDB ID or other id to identify the molecule.
@@ -85,13 +91,15 @@ def output_dir(root,baseid):
     if not isinstance(baseid, str):
         try:
             str(baseid)
-        except:
-            raise ValueError('Not a valid argument. String expected.')
-    outpath = os.path.join(root, str(baseid).lower(),"")
+        except Exception:
+            logging.critical('Not a valid argument. String expected.')
+            raise ValueError
+    outpath = os.path.join(root, str(baseid).lower(), "")
 
     return outpath
 
-def mkdirout(root,baseid=None):
+
+def mkdirout(root, baseid=None):
     """Check or create output directories.
 
     :param root: Path to output directory.
@@ -103,57 +111,69 @@ def mkdirout(root,baseid=None):
     :rtype: dict of str
 
     """
-    outpaths={}
+    outpaths = {}
 
     try:
         outpaths['root'] = check_path(root, 'dir')
-    except:
+    except Exception:
         try:
-            os.mkdir(os.path.join(root,""))
-        except:
-            errormsg = "Unable to create output directory " + str(os.path.join(root,""))
-            raise OSError(errormsg)
+            os.mkdir(os.path.join(root, ""))
+        except Exception:
+            errormsg = ("Unable to create output directory " +
+                        str(os.path.join(root, "")))
+            logging.critical(errormsg)
+            raise OSError
         outpaths['root'] = check_path(root, 'dir')
 
     if baseid is not None:
         try:
-            outpaths['pdbid'] = check_path(os.path.join(outpaths['root'], baseid, ""), 'dir')
-        except:
+            outpaths['pdbid'] = check_path(os.path.join(outpaths['root'],
+                                                        baseid, ""), 'dir')
+        except Exception:
             try:
                 os.mkdir(os.path.join(outpaths['root'], baseid, ""))
-            except:
-                errormsg = "Unable to create output directory " + str(os.path.join(outpaths['root'], baseid, ""))
-                raise OSError(errormsg)
+            except Exception:
+                errormsg = ("Unable to create output directory " +
+                            str(os.path.join(outpaths['root'], baseid, "")))
+                logging.critical(errormsg)
+                raise OSError
             outpaths['pdbid'] = check_path(os.path.join(outpaths['root'], baseid, ""), 'dir')
 
         try:
             outpaths['pisa'] = check_path(os.path.join(outpaths['pdbid'], 'pisa_interfaces', ""), 'dir')
-        except:
+        except Exception:
             try:
                 os.mkdir(os.path.join(outpaths['pdbid'], 'pisa_interfaces', ""))
-            except:
-                errormsg = "Unable to create output directory " + str(os.path.join(outpaths['pdbid'], 'pisa_interfaces', ""))
-                raise OSError(errormsg)
-            outpaths['pisa'] = check_path(os.path.join(outpaths['pdbid'], 'pisa_interfaces', ""), 'dir')
+            except Exception:
+                errormsg = ("Unable to create output directory " +
+                            str(os.path.join(outpaths['pdbid'],
+                                             'pisa_interfaces', "")))
+                logging.critical(errormsg)
+                raise OSError
+            outpaths['pisa'] = check_path(os.path.join(outpaths['pdbid'],'pisa_interfaces', ""), 'dir')
 
         try:
             outpaths['pisacov'] = check_path(os.path.join(outpaths['pdbid'], 'pisacov', ""), 'dir')
-        except:
+        except Exception:
             try:
                 os.mkdir(os.path.join(outpaths['pdbid'], 'pisacov', ""))
-            except:
-                errormsg = "Unable to create output directory " + str(os.path.join(outpaths['pdbid'], 'pisacov', ""))
-                raise OSError(errormsg)
+            except Exception:
+                errormsg = ("Unable to create output directory " +
+                            str(os.path.join(outpaths['pdbid'], 'pisacov', "")))
+                logging.critical(errormsg)
+                raise OSError
             outpaths['pisacov'] = check_path(os.path.join(outpaths['pdbid'], 'pisacov', ""), 'dir')
 
         try:
             outpaths['dmp'] = check_path(os.path.join(outpaths['pdbid'], 'dmp_predictions', ""), 'dir')
-        except:
+        except Exception:
             try:
                 os.mkdir(os.path.join(outpaths['pdbid'], 'dmp_predictions', ""))
-            except:
-                errormsg = "Unable to create output directory " + str(os.path.join(outpaths['pdbid'], 'dmp_predictions', ""))
-                raise OSError(errormsg)
+            except Exception:
+                errormsg = ("Unable to create output directory " +
+                            str(os.path.join(outpaths['pdbid'], 'dmp_predictions', "")))
+                logging.critical(errormsg)
+                raise OSError
             outpaths['dmp'] = check_path(os.path.join(outpaths['pdbid'], 'dmp_predictions', ""), 'dir')
 
     return outpaths

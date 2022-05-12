@@ -1,5 +1,5 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
@@ -10,13 +10,11 @@ from pisacov.io.conf import DMP_PATH
 from pisacov.io import paths as ppaths
 
 import os
-import crops
-import sys
 import logging
 
+
 def rundmp(spath, msapath, outdir):
-    """
-    Run DeepMetaPSICOV to produce contact prediction lists.
+    """Run DeepMetaPSICOV to produce contact prediction lists.
 
     :param seqpath: Input sequence filepath.
     :type seqpath: str
@@ -25,7 +23,7 @@ def rundmp(spath, msapath, outdir):
     """
     dmp_exec = '"'+ppaths.check_path(DMP_PATH, 'file')+'"'
     try:
-        os.system(dmp_exec + ' -i '+ spath + ' -a ' + msapath)
-    except:
+        os.system(dmp_exec + ' -i ' + spath + ' -a ' + msapath)
+    except Exception:
         logging.critical('        An error occurred while executing DeepMetaPSICOV.')
         raise OSError

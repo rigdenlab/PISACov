@@ -1,5 +1,5 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
@@ -7,14 +7,12 @@ from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
 import os
-# import crops
 import importlib
 import sys
 import logging
 
 def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggingfile):
-    """
-    Run CROPS to produce clean sequence and structure files.
+    """Run CROPS to produce clean sequence and structure files.
 
     :param seqin: Sequence filepath.
     :type seqin: str
@@ -45,7 +43,7 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
     command += ' -o ' + outdirin + ' -i'
     try:
         os.system(command)  # + ' > ' + loggingfile)
-    except:
+    except Exception:
         logging.critical('        An error occurred while executing Crops-cropstr')
         raise OSError
 
@@ -53,8 +51,7 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
 
 
 def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
-    """
-    Run CROPS to produce clean sequence and structure files.
+    """Run CROPS to produce clean sequence and structure files.
 
     :param seqin: Sequence filepath.
     :type seqin: str
@@ -78,7 +75,7 @@ def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
                ' -o ' + outdirin + ' -i')
     try:
         os.system(command)  # + ' > ' + loggingfile)
-    except:
+    except Exception:
         logging.critical('        An error occurred while executing Crops-renumber')
         raise OSError
 

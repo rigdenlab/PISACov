@@ -1,5 +1,5 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
@@ -15,8 +15,7 @@ from numpy import sqrt
 
 
 def _scorenames(crop=False):
-    """
-    Return scorenames.
+    """Return scorenames.
 
     :param crop: Include tag for cropped sequence, defaults to False
     :type crop: bool, optional
@@ -50,8 +49,7 @@ def _scorenames(crop=False):
 
 
 def accscore(inatlas, alt=None):
-    """
-    Return the cumulative score of the True Positive contacts.
+    """Return the cumulative score of the True Positive contacts.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
@@ -84,8 +82,7 @@ def accscore(inatlas, alt=None):
 
 
 def avscore(inatlas, alt=None):
-    """
-    Return the average score of the True Positive contacts.
+    """Return the average score of the True Positive contacts.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
@@ -114,8 +111,7 @@ def avscore(inatlas, alt=None):
 
 
 def n_tps(inatlas, alt=None):
-    """
-    Return the number of True Positive contacts.
+    """Return the number of True Positive contacts.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
@@ -140,8 +136,7 @@ def n_tps(inatlas, alt=None):
 
 
 def n_fps(inatlas, alt=None):
-    """
-    Return the number of False Positive contacts.
+    """Return the number of False Positive contacts.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
@@ -166,8 +161,7 @@ def n_fps(inatlas, alt=None):
 
 
 def n_tns(inatlas, alt=None):
-    """
-    Return the number of True Negative contacts.
+    """Return the number of True Negative contacts.
 
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
@@ -251,7 +245,7 @@ def mcc(inatlas, alt=None):
     denom *= (ntn+nfp)
     denom *= (ntn+nfn)
     if denom == 0:
-        mcc = 0
+        mcc = 'NaN'
     else:
         mcc /= sqrt(denom)
 
@@ -285,7 +279,7 @@ def precision(inatlas, alt=None):
     nfp = float(inatlas.fp[alt])
 
     if (ntp + nfp) == 0:
-        p = 0
+        p = 'NaN'
     else:
         p = ntp / (ntp + nfp)
 
@@ -319,7 +313,7 @@ def coverage(inatlas, alt=None):
     nfn = float(inatlas.fn[alt])
 
     if (ntp + nfn) == 0:
-        c = 0
+        c = 'NaN'
     else:
         c = ntp / (ntp + nfn)
 
@@ -355,7 +349,7 @@ def jaccard(inatlas, alt=None):
     nfn = float(inatlas.fn[alt])
 
     if (ntp + nfp + nfn) == 0:
-        jacc = 0
+        jacc = 'NaN'
     else:
         jacc = ntp / (ntp + nfp + nfn)
 

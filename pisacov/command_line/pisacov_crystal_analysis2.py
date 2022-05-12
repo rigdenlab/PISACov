@@ -1,15 +1,7 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
-
-# import pisacovmods.inputvalues as pmin
-# import pisacovmods.init1 as pmi1
-# import pisacovmods.init2 as pmi2
-# import pisacovmods.output as pmo
-# import pisacovmods.pisacovmod as pmp
-# import pisacovmods.sequence as pms
-# import pisacovmods.contacts as pmc
 
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__

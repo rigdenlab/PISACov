@@ -1,5 +1,5 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
@@ -29,9 +29,8 @@ def csvheader(outpath, cropped=False, pisascore=False):
     croptag = 'cropseq' if cropped is True else 'fullseq'
     names = pco._sourcenames()
     csvline = ('#PDB_id, Interface, Chain1, Chain2, Sequence, ' +
-               'L' + croptag + ', ' + 'Neff' + croptag + ', ' +
-               'Ncrops, ' + 'Lfullseq, ' + 'Nefffullseq, ' +
-               croptag + 'Depth, ' +
+               'L' + croptag + ', ' + 'Neff_' + croptag + ', ' +
+               'Ncrops, ' + 'Lfullseq, ' + 'Neff_fullseq, ' +
                'N' + croptag + '_contacts, ' +
                'N' + croptag + '_usedcontacts, ')
     for source in names:

@@ -1,4 +1,7 @@
-"""This is PISACov, a software that provides an Evolutionary Covariance analysis of CCP4 PISA interfaces."""
+"""
+This is PISACov, a program designed to infer quaternary structure
+of proteins from evolutionary covariance.
+"""
 
 import datetime
 

@@ -1,5 +1,5 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
@@ -8,15 +8,13 @@ from pisacov import __author__, __date__, __copyright__
 
 import os
 import logging
-import xml.etree.ElementTree as ET
 
 from pisacov.io.conf import PISA_PATH
-from pisacov import io as pio
 from pisacov.core import interfaces as pci
 
+
 def runpisa(instr, outdir, sessionid=None):
-    """
-    Run PISA and generate interface PDB files for given PDB
+    """Run PISA and generate interface PDB files for a given PDB file.
 
     :param instr: Input structure filepath.
     :type instr: str

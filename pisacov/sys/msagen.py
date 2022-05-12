@@ -1,5 +1,5 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
@@ -19,9 +19,9 @@ from pisacov.io import paths as ppaths
 
 from matplotlib import pyplot as plt
 
+
 def runhhblits(spath, hhparam, outdirmsa):
-    """
-    Run HHSUITE to produce a Multiple Sequence Alignment from a single fasta sequence.
+    """Run HHSUITE to produce a Multiple Sequence Alignment from a single fasta sequence.
 
     :param spath: Sequence path.
     :type spath: str
@@ -83,7 +83,7 @@ def msafilesgen(inpath_a3m):
                            "coverage" + os.extsep + "png")
         fig = ckplot.SequenceCoverageFigure(parsedmsa)
         fig.savefig(msacoveragepath, overwrite=True)
-        del fig
+        plt.close(fig.fig)
     except Exception:
         logging.warning('Something went wrong with ConKit ' +
                         'and Coverage Plot was not produced.')

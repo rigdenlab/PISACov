@@ -1,5 +1,5 @@
 """
-This is PISACov, a PISA extension to infer quaternary structure
+This is PISACov, a program designed to infer quaternary structure
 of proteins from evolutionary covariance.
 """
 
@@ -13,6 +13,15 @@ import time
 import datetime
 
 def unwraptime(delta):
+    """
+    Convert a :obj:`~datetime.timedelta` into a human readable string.
+
+    :param delta: Time interval.
+    :type delta: :obj:`~datetime.timedelta`
+    :return: Human readable description of time interval.
+    :rtype: str
+
+    """
 
     if delta.days > 0:
         wrapped = str(delta.days) + 'days, '
@@ -32,6 +41,15 @@ def unwraptime(delta):
 
 
 def welcome(command=None):
+    """
+    Produce execution message.
+
+    :param command: Script name, defaults to None.
+    :type command: str, optional
+    :return: Execution message.
+    :rtype: str
+
+    """
     begin = datetime.datetime.now()
     tzbegin = begin.astimezone().strftime("%d %B %Y, %H:%M:%S %Z")
     if command is not None:
@@ -53,6 +71,17 @@ def welcome(command=None):
     return msg, begin
 
 def ok(initime, command=None):
+    """
+    Produce completion message.
+
+    :param initime: Time of execution.
+    :type initime: :class:`~datetime.timedelta`
+    :param command: Script name, defaults to None.
+    :type command: str, optional
+    :return: Completion message.
+    :rtype: str
+
+    """
     if command is not None:
         l = len(command)
         title = '*'*7 + ' '*3 + command + ' '*3 + '*'*(67-l)
@@ -77,6 +106,17 @@ def ok(initime, command=None):
     return msg
 
 def running(subprocess, done=None):
+    """
+    Subprocess execution message.
+
+    :param subprocess: Subprocess name.
+    :type subprocess: str
+    :param done: If concluded, indicate the time of conclusion, defaults to None
+    :type done: :class:`~datetime.timedelta`, optional
+    :return: Subprocess execution message.
+    :rtype: str
+
+    """
     l = len(subprocess)
 
     if done is None:
