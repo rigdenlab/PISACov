@@ -439,7 +439,8 @@ class contact_atlas:
         try:
             fig = ckplot.ContactMapFigure(self.ckplotmatch[mode],
                                           reference=self.interface.structure[1],
-                                          legend=True)
+                                          legend=True,
+                                          lim=(1, self.sequence.full_length()))
             fig.savefig(outpath, overwrite=True)
             plt.close(fig.fig)
         except Exception:
