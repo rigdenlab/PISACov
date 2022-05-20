@@ -126,6 +126,61 @@ def map_intersection(conpredmap, strconarray):
     return newmap
 
 
+class contact:
+
+    _kind = 'Contact'
+    __slots__ = ['id', 'r1', 'r2', 'scores']
+
+    def __init__(self, res1, res2, raw_score=None):
+        try:
+            res1 = int(res1)
+            res2 = int(res2)
+        except Exception:
+            logging.critical('Input values r1 and r2 should be integers.')
+            raise ValueError
+        if res1 <= res2:
+            self.id = (res1, res2)
+        else:
+            self.id = (res2, res1)
+        self.r1 = res1
+        self.r2 = res2
+
+        self.scores = {}
+        if raw_score is None:
+            self.scores['raw'] = None
+        else:
+            try:
+                rsc = float(raw_score)
+            except Exception:
+                logging.critical('Input Raw score should be a float number.')
+                raise ValueError
+            self.scores['raw_score'] = rsc
+
+class contact_map:
+
+    _kind = 'Contact Map'
+    __slots__ = ['name', 'contacts']
+
+    def __init__(self, name=None, contacts=None):
+
+        self.name = name
+        self.contacts = []
+
+    def __repr__(self):
+        string = (self._kind+" object "+self.name +
+                  " (Number of contacts=" + str(len(self.contacts)) + ")")
+        return string
+
+
+    def sort(self, inverted=False, criteria='raw'):
+
+        if criteria = 'raw':
+
+        self.contacts.sort(reverse=inverted)
+
+
+
+
 class contact_atlas:
     """
     A :class:`~pisacov.core.contacts.contact_atlas` object containing information from
@@ -271,9 +326,6 @@ class contact_atlas:
             string += ", True Positives=" + str(self.tp['raw'])
         string += ")"
         return string
-
-    def __iter__(self):
-        return iter(self.seqs['mainseq'].values())
 
     def copy(self):
         return copy.copy(self)
