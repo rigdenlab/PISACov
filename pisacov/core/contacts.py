@@ -126,61 +126,6 @@ def map_intersection(conpredmap, strconarray):
     return newmap
 
 
-class contact:
-
-    _kind = 'Contact'
-    __slots__ = ['id', 'r1', 'r2', 'scores']
-
-    def __init__(self, res1, res2, raw_score=None):
-        try:
-            res1 = int(res1)
-            res2 = int(res2)
-        except Exception:
-            logging.critical('Input values r1 and r2 should be integers.')
-            raise ValueError
-        if res1 <= res2:
-            self.id = (res1, res2)
-        else:
-            self.id = (res2, res1)
-        self.r1 = res1
-        self.r2 = res2
-
-        self.scores = {}
-        if raw_score is None:
-            self.scores['raw'] = None
-        else:
-            try:
-                rsc = float(raw_score)
-            except Exception:
-                logging.critical('Input Raw score should be a float number.')
-                raise ValueError
-            self.scores['raw_score'] = rsc
-
-class contact_map:
-
-    _kind = 'Contact Map'
-    __slots__ = ['name', 'contacts']
-
-    def __init__(self, name=None, contacts=None):
-
-        self.name = name
-        self.contacts = []
-
-    def __repr__(self):
-        string = (self._kind+" object "+self.name +
-                  " (Number of contacts=" + str(len(self.contacts)) + ")")
-        return string
-
-
-    def sort(self, inverted=False, criteria='raw'):
-
-        if criteria = 'raw':
-
-        self.contacts.sort(reverse=inverted)
-
-
-
-
 class contact_atlas:
     """
     A :class:`~pisacov.core.contacts.contact_atlas` object containing information from
@@ -368,9 +313,10 @@ class contact_atlas:
 
     def set_sequence(self, sequence):
         """
-        Set Atlas sequence. This is the correct way to update the sequence.
-        Using myatlas.sequence = sequence will have sequence-dependent values not updated.
+        Set Atlas sequence.
 
+        This is the correct way to update the sequence.
+        Storing directly in :attr:`~pisacov.core.contacts.contact_atlas.sequence` will have sequence-dependent values not updated.
         :param sequence: A sequence object.
         :type sequence: :class:`~crops.elements.sequences.sequence`
 
@@ -395,7 +341,7 @@ class contact_atlas:
         self.conpred.set_sequence_register()
 
     def make_match(self, filterout=None, tpmap=False):
-        """Match Structure and contact prediction :class:`~conkit.core.contactmap.ContactMap`.
+        """Match Structure and contact prediction maps.
 
         :param filterout: Threshold score below which contacts are filtered out, defaults to None.
         :type filterout: float, optional
@@ -457,7 +403,8 @@ class contact_atlas:
                          ', Mode: ' + altsc)
             if len(cmap) > 0 and len(structuremap) > 0:
                 self.ckplotmatch[altsc] = cmap.deepcopy()
-                cmap.match(structuremap, add_false_negatives=True, inplace=True)
+                cmap.match_naive(structuremap, inplace=True)
+                #cmap.match(structuremap, add_false_negatives=True, inplace=True)
                 #self.ckplotmatch[altsc].match(structuremap,
                 #                              match_other=True,
                 #                              remove_unmatched=True,
@@ -480,7 +427,7 @@ class contact_atlas:
                           self.tp[altsc] - self.fp[altsc] - self.fn[altsc])
 
     def plot_map(self, outpath, mode='raw'):
-        """Plot matched contact map (self.ckplotmatch).
+        """Plot matched contact map.
 
         :param outpath: Path to output file.
         :type outpath: str

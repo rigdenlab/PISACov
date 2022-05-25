@@ -9,6 +9,7 @@ __script__ = 'PISACov Crystal Analysis script'
 
 from pisacov import command_line as pcl
 
+from pisacov import io as pio
 from pisacov.io import paths as ppaths
 from pisacov.io import _conf_ops as pco
 from pisacov.io import outcsv as pic
@@ -24,7 +25,7 @@ from crops.io import parsers as cps
 
 from conkit import io as ckio
 
-import numpy as np
+# import numpy as np
 import argparse
 import os
 import datetime
@@ -160,10 +161,12 @@ def main():
 
     # Parse sequence and structure files
     logger.info('Parsing sequence file...')
-    seqs = cps.parseseqfile(invals['INSEQ'])
+    # seqs = cps.parseseqfile(invals['INSEQ'])
+    seqs = pio.read(invals['INSEQ'], 'fasta')
 
     logger.info('Parsing structure file...')
-    strs, filestrs = cps.parsestrfile(invals['INSTR'])
+    # strs, filestrs = cps.parsestrfile(invals['INSTR'])
+    strs, filestrs = pio.read(invals['INSTR'], 'pdb')
 
     if len(seqs) == 1 or len(strs) == 1:
         if len(seqs) == 1:
@@ -324,12 +327,15 @@ def main():
             sfile = fcropstr if cropping is True else fstr
             afile = fcropmsa[i] if cropping is True else fmsa[i]
             if cropping is True:
-                iseq.cropmsa = ckio.read(afile, 'jones')
+                # iseq.cropmsa = ckio.read(afile, 'jones')
+                iseq.cropmsa = pio.read(afile, 'jones')
                 if iseq.ncrops() == 0:
                     scoring[1] = True
+                    # iseq.msa = ckio.read(afile, 'jones')
                     iseq.msa = ckio.read(afile, 'jones')
             else:
-                iseq.msa = ckio.read(afile, 'jones')
+                # iseq.msa = ckio.read(afile, 'jones')
+                iseq.msa = pio.read(afile, 'jones')
         ixml = os.path.join(pisadir,
                             (os.path.splitext(os.path.basename(sfile))[0] +
                              os.extsep + 'interface' +
@@ -367,7 +373,8 @@ def main():
 
     logger.info('Parsing sequence files...')
     for i, fpath in fseq.items():
-        seq.imer[i].seqs['conkit'] = ckio.read(fpath, 'fasta')[0]
+        # seq.imer[i].seqs['conkit'] = ckio.read(fpath, 'fasta')[0]
+        seq.imer[i].seqs['conkit'] = pio.read(fpath, 'fasta', ck=True)[0]
 
     logger.info('Parsing contact predictions lists...')
     conpred = {}
@@ -380,7 +387,8 @@ def main():
             fc = os.path.splitext(os.path.basename(fs))[0]
             fc += os.extsep + attribs[1]
             confile = os.path.join(dmpdir, fc)
-            conpred[s][source] = ckio.read(confile, attribs[2])[0]
+            # conpred[s][source] = ckio.read(confile, attribs[2])[0]
+            conpred[s][source] = pio.read(confile, attribs[2], ck=True)[0]
 
     logger.info('Parsing crystal structure contacts...')
     for i in range(len(iflist)):
@@ -389,7 +397,8 @@ def main():
         fs = (os.path.splitext(os.path.basename(fs))[0] +
               os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "pdb")
         spath = os.path.join(pisadir, fs)
-        inputmap = ckio.read(spath, 'pdb')
+        # inputmap = ckio.read(spath, 'pdb')
+        inputmap = pio.read(spath, 'pdb', ck=True)
         if len(inputmap) == 4:
             chnames = [iflist[i].chains[0].crystal_id,
                        iflist[i].chains[1].crystal_id]
@@ -428,8 +437,10 @@ def main():
             fs = (os.path.splitext(os.path.basename(fs))[0] +
                   os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "con")
             spath = os.path.join(pisadir, fs)
-            ckio.write(spath, 'psicov', hierarchy=iflist[i].structure[1])
-            iflist[i].contactmap = np.loadtxt(spath)
+            # ckio.write(spath, 'psicov', hierarchy=iflist[i].structure[1])
+            pio.write(spath, 'psicov', indata=iflist[i].structure[1])
+            # iflist[i].contactmap = np.loadtxt(spath)
+            iflist[i].contactmap = pio.read(spath, 'array')
             matches.append({})
             for source, attribs in sources.items():
                 matches[i][source] = pcc.contact_atlas(

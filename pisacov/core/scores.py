@@ -215,6 +215,7 @@ def mcc(inatlas, alt=None):
     """
     Return the number of Matthew's Correlation Coefficient.
 
+    MCC = (TP*TN-FP*FN) / ((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
     :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
@@ -256,11 +257,12 @@ def precision(inatlas, alt=None):
     """
     Return the precision of the contact map.
 
+    Prec = TP / (TP+FP)
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
     :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
     :type alt: str, optional
-    :return: Precision, TP/(TP+FP)
+    :return: Precision.
     :rtype: float
 
     """
@@ -288,13 +290,15 @@ def precision(inatlas, alt=None):
 
 def coverage(inatlas, alt=None):
     """
-    Return the coverage, also known as recall, of the contact map.
+    Return the coverage of the contact map.
 
+    Also known as True Positive Rate, Recall and Sensitivity.
+    Cover = TP / (TP+FN)
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
     :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
     :type alt: str, optional
-    :return: Coverage, TP/(TP+FN)
+    :return: Coverage.
     :rtype: float
 
     """
@@ -322,8 +326,9 @@ def coverage(inatlas, alt=None):
 
 def jaccard(inatlas, alt=None):
     """
-    Return the Jaccard Index of a given matched map. Jaccard = TP / (TP+FP+FN).
+    Return the Jaccard Index of a given matched map.
 
+    Jaccard = TP / (TP+FP+FN).
     :param inatlas: Contact atlas.
     :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
     :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
@@ -354,6 +359,153 @@ def jaccard(inatlas, alt=None):
         jacc = ntp / (ntp + nfp + nfn)
 
     return jacc
+
+
+def accuracy(inatlas, alt=None):
+    """
+    Return the Accuracy of a given matched map.
+
+    Accuracy = (TP+TN) / (TP+TN+FP+FN).
+    :param inatlas: Contact atlas.
+    :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
+    :return: Accuracy Index
+    :rtype: float
+
+    """
+    if isinstance(inatlas, pcc.contact_atlas) is False:
+        logging.critical('Argument must be a Contact Atlas.')
+        raise TypeError
+
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
+        raise TypeError
+
+    if alt is None:
+        alt = 'raw'
+
+    ntp = float(inatlas.tp[alt])
+    nfp = float(inatlas.fp[alt])
+    nfn = float(inatlas.fn[alt])
+    ntn = float(inatlas.tn[alt])
+
+    if (ntp + ntn + nfp + nfn) == 0:
+        accindex = 'NaN'
+    else:
+        accindex = (ntp + ntn) / (ntp + nfp + nfn)
+
+    return accindex
+
+
+def fn_rate(inatlas, alt=None):
+    """
+    Return the False Negative Rate of a given matched map.
+
+    FNR = TN / (TN+FN).
+    :param inatlas: Contact atlas.
+    :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
+    :return: False Negative Rate.
+    :rtype: float
+
+    """
+    if isinstance(inatlas, pcc.contact_atlas) is False:
+        logging.critical('Argument must be a Contact Atlas.')
+        raise TypeError
+
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
+        raise TypeError
+
+    if alt is None:
+        alt = 'raw'
+
+    nfn = float(inatlas.fn[alt])
+    ntn = float(inatlas.tn[alt])
+
+    if (ntn + nfn) == 0:
+        fnr = 'NaN'
+    else:
+        fnr = nfn / (ntn + nfn)
+
+    return fnr
+
+
+def specificity(inatlas, alt=None):
+    """
+    Return the False Negative Rate of a given matched map.
+
+    Also known as True Negative Rate.
+    SPC = TN / (TN+FP).
+    :param inatlas: Contact atlas.
+    :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
+    :return: Specificity.
+    :rtype: float
+
+    """
+    if isinstance(inatlas, pcc.contact_atlas) is False:
+        logging.critical('Argument must be a Contact Atlas.')
+        raise TypeError
+
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
+        raise TypeError
+
+    if alt is None:
+        alt = 'raw'
+
+    nfp = float(inatlas.fp[alt])
+    ntn = float(inatlas.tn[alt])
+
+    if (ntn + nfp) == 0:
+        spc = 'NaN'
+    else:
+        spc = ntn / (ntn + nfp)
+
+    return spc
+
+
+def fp_rate(inatlas, alt=None):
+    """
+    Return the False Positive Rate of a given matched map.
+
+    FPR = 1 - SPC = FP / (TN+FP).
+    :param inatlas: Contact atlas.
+    :type inatlas: :class:`~pisacov.core.contacts.contact_atlas`
+    :param alt: Alternative scoring (abs, shifted, norm), defaults to None.
+    :type alt: str, optional
+    :return: False Positive Rate.
+    :rtype: float
+
+    """
+    if isinstance(inatlas, pcc.contact_atlas) is False:
+        logging.critical('Argument must be a Contact Atlas.')
+        raise TypeError
+
+    if (alt is not None and alt != 'raw' and alt != 'abs'
+            and alt != 'shifted' and alt != 'norm'):
+        logging.critical("Argument must be one of 'abs', 'shifted' or 'norm'.")
+        raise TypeError
+
+    if alt is None:
+        alt = 'raw'
+
+    nfp = float(inatlas.fp[alt])
+    ntn = float(inatlas.tn[alt])
+
+    if (ntn + nfp) == 0:
+        fpr = 'NaN'
+    else:
+        fpr = nfp / (ntn + nfp)
+
+    return fpr
 
 
 def list_scores(inatlas, tag=None):

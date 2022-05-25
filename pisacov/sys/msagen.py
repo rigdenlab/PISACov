@@ -12,6 +12,7 @@ import logging
 from conkit import io as ckio
 from conkit import plot as ckplot
 
+from pisacov import io as pio
 from pisacov.io.conf import HHBLITS_PATH
 from pisacov.io.conf import HHBLITS_DATABASE_DIR
 from pisacov.io.conf import HHBLITS_DATABASE_NAME
@@ -71,7 +72,8 @@ def msafilesgen(inpath_a3m):
     :rtype: :obj:`~conkit.core.sequencefile.SequenceFile`
 
     """
-    parsedmsa = ckio.read(inpath_a3m, 'a3m')
+    # parsedmsa = ckio.read(inpath_a3m, 'a3m')
+    parsedmsa = pio.read(inpath_a3m, 'a3m')
 
     # Convert to 'jones' format
     outpath_aln = os.path.splitext(inpath_a3m)[0] + os.extsep + "aln"

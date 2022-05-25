@@ -9,6 +9,7 @@ from pisacov import __author__, __date__, __copyright__
 import copy
 import logging
 
+from pisacov import io as pio
 import xml.etree.ElementTree as ET
 
 def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
@@ -21,7 +22,8 @@ def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
 
     """
     try:
-        xmlparse = ET.parse(interface_xml_path)
+        # xmlparse = ET.parse(interface_xml_path)
+        xmlparse = pio.read(interface_xml_path, 'xml')
     except Exception:
         logging.critical("ERROR: Unable to open XML file at " +
                          interface_xml_path)
@@ -48,7 +50,8 @@ def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
 
     if assembly_xml_path is not None:
         try:
-            xmlparse = ET.parse(assembly_xml_path)
+            # xmlparse = ET.parse(assembly_xml_path)
+            xmlparse = pio.read(assembly_xml_path, 'xml')
         except Exception:
             logging.critical("ERROR: Unable to open XML file at " +
                              assembly_xml_path)
