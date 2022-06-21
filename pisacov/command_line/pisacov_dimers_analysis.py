@@ -8,9 +8,9 @@ from pisacov import __author__, __date__, __copyright__
 __script__ = 'PISACov Dimers Analysis script'
 
 from pisacov import command_line as pcl
-from pisacov.io import paths as ppaths
-from pisacov.io import _conf_ops as pco
-from pisacov.io import outcsv as pic
+from pisacov.iomod import paths as ppaths
+from pisacov.iomod import _conf_ops as pco
+from pisacov.iomod import outcsv as pic
 from pisacov.sys import crop as psc
 from pisacov.sys import dmp as psd
 from pisacov.sys import msagen as psm
@@ -19,7 +19,7 @@ from pisacov.core import scores as pcs
 from pisacov.core import interfaces as pci
 
 from crops.elements import sequences as csq
-from crops.io import parsers as cps
+from crops.iomod import parsers as cps
 
 from conkit import io as ckio
 

@@ -6,7 +6,7 @@ of proteins from evolutionary covariance.
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
-from pisacov.io import _conf_ops as pco
+from pisacov.iomod import _conf_ops as pco
 from pisacov.core import _psicov_modes as PSICOV_modes
 
 import copy
@@ -14,7 +14,7 @@ import logging
 import os
 
 from crops.elements import sequences as pes
-from crops.io import taggers as ctg
+from crops.iomod import taggers as ctg
 from conkit.core import contactmap as ckc
 from conkit.core.contactmap import ContactMap
 from conkit import plot as ckplot
@@ -175,7 +175,7 @@ class contact_atlas:
 
     >>> from pisacov.core import contacts as pcc
     >>> from pisacov.core import interfaces as pci
-    >>> from crops.io import parsers as cps
+    >>> from crops.iomod import parsers as cps
     >>> from conkit import io as ckio
     >>> myseq = cps.parseseqfile('7M6C.fasta')  # Parse sequence with CROPS
     >>> myseq['7m6c']
@@ -402,8 +402,8 @@ class contact_atlas:
                          ', Source: ' + self.conpred_source +
                          ', Mode: ' + altsc)
             if len(cmap) > 0 and len(structuremap) > 0:
-                self.ckplotmatch[altsc] = cmap.deepcopy()
-                cmap.match_naive(structuremap, inplace=True)
+                #self.ckplotmatch[altsc] = cmap.deepcopy()
+                cmap.match_naive(structuremap, add_false_negatives=True, inplace=True, matchother=True)
                 #cmap.match(structuremap, add_false_negatives=True, inplace=True)
                 #self.ckplotmatch[altsc].match(structuremap,
                 #                              match_other=True,
@@ -436,7 +436,8 @@ class contact_atlas:
 
         """
         try:
-            fig = ckplot.ContactMapFigure(self.ckplotmatch[mode],
+            fig = ckplot.ContactMapFigure(self.conkitmatch[mode],
+            # fig = ckplot.ContactMapFigure(self.ckplotmatch[mode],
                                           reference=self.interface.structure[1],
                                           legend=True,
                                           lim=(1, self.sequence.full_length()))

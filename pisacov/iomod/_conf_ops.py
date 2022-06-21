@@ -6,8 +6,8 @@ of proteins from evolutionary covariance.
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
-from pisacov.io import conf as pconf
-from pisacov.io.paths import check_path
+from pisacov.iomod import conf as pconf
+from pisacov.iomod.paths import check_path
 import logging
 
 _surl = 'ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/flatfiles/csv/pdb_chain_uniprot.csv.gz'

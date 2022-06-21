@@ -15,7 +15,8 @@ import sys
 sys.path.insert(0, "..") # pisacov path
 sys.path.insert(0, ".") # sphinxext path
 
-from pisacov import __prog__, __copyright__, __author__, __version__
+from pisacov import __prog__, __description__, __version__
+from pisacov import __author__, __date__, __copyright__
 # -- Project information -----------------------------------------------------
 
 project = __prog__

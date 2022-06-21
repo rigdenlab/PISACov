@@ -8,7 +8,7 @@ from pisacov import __author__, __date__, __copyright__
 __script__ = 'PISACov Statistical Analysis script'
 
 from pisacov import command_line as pcl
-from pisacov.io import paths as ppaths
+from pisacov.iomod import paths as ppaths
 
 import argparse
 import datetime

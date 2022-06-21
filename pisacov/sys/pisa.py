@@ -9,7 +9,7 @@ from pisacov import __author__, __date__, __copyright__
 import os
 import logging
 
-from pisacov.io.conf import PISA_PATH
+from pisacov.iomod.conf import PISA_PATH
 from pisacov.core import interfaces as pci
 
 

@@ -7,7 +7,7 @@ from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
 from pisacov.core import scores as psc
-from pisacov.io import _conf_ops as pco
+from pisacov.iomod import _conf_ops as pco
 
 import csv
 import os

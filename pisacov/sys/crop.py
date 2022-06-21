@@ -37,6 +37,9 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
     cst = importlib.import_module('crops.command_line.crops-cropstr')
     cropspy = (cst.__file__)
 
+    if outdirin is None:
+        outdirin = os.dirname(seqin)
+
     command = pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + strin + ' ' + dbin
     if thin is not None:
         command += ' -u ' + thin + ' ' + upin
@@ -71,8 +74,44 @@ def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
     cst = importlib.import_module('crops.command_line.crops-renumber')
     cropspy = (cst.__file__)
 
+    if outdirin is None:
+        outdirin = os.dirname(seqin)
+
     command = (pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + strin + ' ' +
-               ' -o ' + outdirin + ' -i')
+               ' -o ' + outdirin)
+    try:
+        os.system(command)  # + ' > ' + loggingfile)
+    except Exception:
+        logging.critical('        An error occurred while executing Crops-renumber')
+        raise OSError
+
+    return
+
+
+def splitseqs(seqin, outdirin = None):#, loggingfile):
+    """Run CROPS to split sequence files.
+
+    :param seqin: Sequence filepath.
+    :type seqin: str
+    :param outdirin: Output directory's path. If not given, seqin dir will use instead, defaults to None.
+    :type outdirin: str, optional
+
+    """
+
+    #cropsdir = os.path.dirname(crops.__file__)
+    pythonexec = '"'+sys.executable+'"'
+
+    #Renumber STRUCTURE
+    logging.info('    Running crops-renumber...')
+
+    cst = importlib.import_module('crops.command_line.crops-splitseqs')
+    cropspy = (cst.__file__)
+
+    if outdirin is None:
+        outdirin = os.dirname(seqin)
+
+    command = (pythonexec + ' ' + cropspy + ' ' + seqin + ' '  + ' -i'
+               ' -o ' + outdirin)
     try:
         os.system(command)  # + ' > ' + loggingfile)
     except Exception:

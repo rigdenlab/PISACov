@@ -9,9 +9,9 @@ __script__ = 'PISACov Crystal Analysis script'
 
 from pisacov import command_line as pcl
 
-from pisacov.io import paths as ppaths
-from pisacov.io import _conf_ops as pco
-from pisacov.io import outcsv as pic
+from pisacov.iomod import paths as ppaths
+from pisacov.iomod import _conf_ops as pco
+from pisacov.iomod import outcsv as pic
 from pisacov.sys import crop as psc
 from pisacov.sys import dmp as psd
 from pisacov.sys import msagen as psm
@@ -20,7 +20,7 @@ from pisacov.core import contacts as pcc
 from pisacov.core import scores as pcs
 from pisacov.core import interfaces as pci
 
-from crops.io import parsers as cps
+from crops.iomod import parsers as cps
 
 import numpy as np
 import argparse
@@ -166,15 +166,15 @@ def main():
     if len(seqs) == 1 or len(strs) == 1:
         if len(seqs) == 1:
             for key in seqs:
-                pdbid = key.lower()
+                pdbid = key
         elif len(seqs) > 1 and len(strs) == 1:
             for key in strs:
                 for key2 in seqs:
-                    if key == key2:
-                        pdbid = key.lower()
+                    if key.upper() == key2.upper():
+                        pdbid = key.upper()
                     else:
-                        if key2.lower() in key.lower():
-                            pdbid = key2.lower()
+                        if key2.upper() in key.upper():
+                            pdbid = key2.upper()
     else:
         raise Exception('More than one pdbid in sequence and/or structure set.')
 
@@ -211,9 +211,10 @@ def main():
                            invals['OUTROOT'])
             logger.info(pcl.running('CROPS-renumber', done=itime))
 
-
-        copyfile(invals['INSTR'], instrc)
         ppaths.mdir(outpdbdir)
+        if cropping is False:
+            psc.splitseqs(invals['INSEQ'], outpdbdir)
+        copyfile(invals['INSTR'], instrc)
 
     for i, iseq in seq.imer.items():
         fiseq = pdbid + '_' + i + '.fasta'

@@ -9,7 +9,7 @@ from pisacov import __author__, __date__, __copyright__
 import copy
 import logging
 
-from pisacov import io as pio
+from pisacov import iomod as pio
 import xml.etree.ElementTree as ET
 
 def parse_interface_xml(interface_xml_path, assembly_xml_path = None):

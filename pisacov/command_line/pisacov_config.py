@@ -8,10 +8,10 @@ from pisacov import __author__, __date__, __copyright__
 __script__ = 'PISACov Configuration script'
 
 from pisacov import command_line as pcl
-from pisacov.io import _conf_ops as pco
-from pisacov.io import conf as pconf
-from pisacov.io import online as pol
-from pisacov.io import paths as ppaths
+from pisacov.iomod import _conf_ops as pco
+from pisacov.iomod import conf as pconf
+from pisacov.iomod import online as pol
+from pisacov.iomod import paths as ppaths
 
 import argparse
 import os

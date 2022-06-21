@@ -12,11 +12,11 @@ import logging
 from conkit import io as ckio
 from conkit import plot as ckplot
 
-from pisacov import io as pio
-from pisacov.io.conf import HHBLITS_PATH
-from pisacov.io.conf import HHBLITS_DATABASE_DIR
-from pisacov.io.conf import HHBLITS_DATABASE_NAME
-from pisacov.io import paths as ppaths
+from pisacov import iomod as pio
+from pisacov.iomod.conf import HHBLITS_PATH
+from pisacov.iomod.conf import HHBLITS_DATABASE_DIR
+from pisacov.iomod.conf import HHBLITS_DATABASE_NAME
+from pisacov.iomod import paths as ppaths
 
 from matplotlib import pyplot as plt
 

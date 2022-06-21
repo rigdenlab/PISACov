@@ -6,8 +6,8 @@ of proteins from evolutionary covariance.
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
-from pisacov.io.conf import DMP_PATH
-from pisacov.io import paths as ppaths
+from pisacov.iomod.conf import DMP_PATH
+from pisacov.iomod import paths as ppaths
 
 import os
 import logging

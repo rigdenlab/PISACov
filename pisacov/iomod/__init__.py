@@ -7,7 +7,7 @@ from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
 import logging
-from crops.io import parsers as cps
+from crops.iomod import parsers as cps
 from conkit import io as ckio
 import xml.etree.ElementTree as ET
 import numpy as np

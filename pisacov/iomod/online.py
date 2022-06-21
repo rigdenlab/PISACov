@@ -5,7 +5,7 @@ of proteins from evolutionary covariance.
 
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
-from pisacov.io import _conf_ops as pco
+from pisacov.iomod import _conf_ops as pco
 
 from urllib import request as request
 from contextlib import closing
