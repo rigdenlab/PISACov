@@ -406,7 +406,7 @@ class contact_atlas:
                 self.conkitmatch[altsc] = cmap.match_naive(structuremap,
                                                            add_false_negatives=True,
                                                            inplace=False,
-                                                           matchother=True)
+                                                           match_other=True)
                 for contact in self.conkitmatch[altsc]:
                     if contact.true_positive:
                         self.tp[altsc] += 1
