@@ -489,22 +489,23 @@ class contact_atlas:
                 fnx.append(c1)
                 fny.append(c2)
 
-        fig = plt.plot()
-        fig.plot(tpx, tpy, 'ko', label='Matched (TP)')
-        fig.plot(fpx, fpy, 'ro', label='Unmatched (TN)')
-        fig.plot(fnx, fny, marker='o', color='grey', label='Structure (FN)')
+        fig, ax = plt.subplots()
+        ax.set_tile(os.path.splitext(os.path.basename(outpath))[0])
+        ax.plot(tpx, tpy, 'ko', label='Matched (TP)')
+        ax.plot(fpx, fpy, 'ro', label='Unmatched (TN)')
+        ax.plot(fnx, fny, marker='o', color='grey', label='Structure (FN)')
 
-        fig.axis([0, self.sequence.length() + 1,
-                      0, self.sequence.length() + 1])
-        fig.xlabel('Residues from Chain 1')
-        fig.ylabel('Residues from Chain 2')
+        ax.axis([0.5, self.sequence.length() + 0.5,
+                  0.5, self.sequence.length() + 0.5])
+        ax.set_xlabel('Residues from Chain 1')
+        ax.set_ylabel('Residues from Chain 2')
 
-        fig.legend(numpoints=1,
-                   fontsize=10,
-                   bbox_to_anchor=(0.0, 1.02, 1.0, 0.102),
-                   loc=3,
-                   ncol=3,
-                   mode="expand",
-                   borderaxespad=0.0)
+        ax.legend(numpoints=1,
+                  fontsize=10,
+                  bbox_to_anchor=(0.0, 1.02, 1.0, 0.102),
+                  loc=3,
+                  ncol=3,
+                  mode="expand",
+                  borderaxespad=0.0)
 
         fig.savefig(outpath, overwrite=True)
