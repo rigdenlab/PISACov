@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 def _ftypelist():
-    lout = ['psicov', 'fasta', 'pdb', 'a3m', 'jones', 'xml']
+    lout = ['psicov', 'ccmpred', 'fasta', 'pdb', 'a3m', 'jones', 'xml']
     return lout
 
 def read(infile, ftype, ck=False):
@@ -31,7 +31,8 @@ def read(infile, ftype, ck=False):
     """
     if (ftype.lower() not in _ftypelist() or
             isinstance(ftype, str) is not True):
-        logging.critical('Specified type not valid.')
+        strerr ='Specified type ' + str(ftype) + ' not valid.'
+        logging.critical(strerr)
         raise ValueError
 
     if ck is True and ftype.lower() != 'xml' and ftype.lower() != 'array':
