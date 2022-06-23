@@ -402,14 +402,12 @@ class contact_atlas:
                          ', Source: ' + self.conpred_source +
                          ', Mode: ' + altsc)
             if len(cmap) > 0 and len(structuremap) > 0:
-                #self.ckplotmatch[altsc] = cmap.deepcopy()
-                cmap.match_naive(structuremap, add_false_negatives=True, inplace=True, matchother=True)
-                #cmap.match(structuremap, add_false_negatives=True, inplace=True)
-                #self.ckplotmatch[altsc].match(structuremap,
-                #                              match_other=True,
-                #                              remove_unmatched=True,
-                #                              renumber=True)
-                for contact in cmap:
+                self.conkitmatch[altsc] = cmap.deepcopy()
+                self.conkitmatch[altsc] = cmap.match_naive(structuremap,
+                                                           add_false_negatives=True,
+                                                           inplace=False,
+                                                           matchother=True)
+                for contact in self.conkitmatch[altsc]:
                     if contact.true_positive:
                         self.tp[altsc] += 1
                     elif contact.false_positive:
@@ -419,7 +417,7 @@ class contact_atlas:
                     elif contact.true_negative:
                         logging.warning('True negatives appearing in conkit match.')
                     else:
-                        logging.warning('Contact not evaluated.')
+                        logging.warning('Contact ' + str(contact.id) + ' not evaluated.')
             else:
                 logging.info('Contact map contains no contacts.')
 
@@ -446,3 +444,67 @@ class contact_atlas:
         except Exception:
             logging.warning('Something went wrong with ConKit ' +
                             'and Contact Plot was not produced.')
+
+
+    def plot_map_alt(self, outpath, mode='raw', plot_type='png', ncontacts=None):
+        """Plot matched contact map.
+
+        :param outpath: Path to output file.
+        :type outpath: str
+        :param mode: Mode, if any, defaults to 'raw'.
+        :type mode: str, optional
+        :param plot_type: Plot either as a 'png' image or raw data in 'grace' format, defaults to 'png'.
+        :type plot_type: str, optional
+        :param ncontacts: Number of contacts plotted as a function of L, defaults to None (all contacts).
+        :type ncontacts: int or float, optional
+
+        """
+        import matplotlib.pyplot as plt
+
+        if ncontacts is not None:
+            nc = round(self.sequence.length()*ncontacts)
+        else:
+            nc = len(self.conkitmatch[mode])
+
+        fpx = []
+        fpy = []
+        tpx = []
+        tpy = []
+        fnx = []
+        fny = []
+
+        n = 0
+        for contact in self.conkitmatch[mode]:
+            c1 = contact.id[0]
+            c2 = contact.id[1]
+            if contact.true_positive and n < nc:
+                n += 1
+                tpx.append(c1)
+                tpy.append(c2)
+            elif contact.true_negative and n < nc:
+                n += 1
+                fpx.append(c1)
+                fpy.append(c2)
+            else:
+                fnx.append(c1)
+                fny.append(c2)
+
+        fig = plt.plot()
+        fig.axis([0, self.sequence.length() + 1,
+                      0, self.sequence.length() + 1])
+        fig.xlabel('Residues from Chain 1')
+        fig.ylabel('Residues from Chain 2')
+
+        fig.plot(tpx, tpy, 'ko', label='Matched (TP)')
+        fig.plot(fpx, fpy, 'ro', label='Unmatched (TN)')
+        fig.plot(fnx, fny, marker='o', color='grey', label='Structure (FN)')
+
+        fig.legend(numpoints=1,
+                   fontsize=10,
+                   bbox_to_anchor=(0.0, 1.02, 1.0, 0.102),
+                   loc=3,
+                   ncol=3,
+                   mode="expand",
+                   borderaxespad=0.0)
+
+        fig.savefig(outpath, overwrite=True)

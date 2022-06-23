@@ -467,7 +467,7 @@ def main():
                                     'match' + os.extsep + source +
                                     os.extsep + 'con' + os.extsep + 'png')
                         plotpath = os.path.join(os.path.dirname(csvfile[0]), pout)
-                        matches[i][source].plot_map(plotpath, mode = cmode)
+                        matches[i][source].plot_map_alt(plotpath, mode = cmode)
         else:
             iflist[i].structure = None
             iflist[i].contactmap = None
