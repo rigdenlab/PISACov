@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 def _ftypelist():
-    lout = ['psicov', 'ccmpred', 'fasta', 'pdb', 'a3m', 'jones', 'xml']
+    lout = ['psicov', 'ccmpred', 'fasta', 'pdb', 'a3m', 'jones', 'xml', 'array']
     return lout
 
 def read(infile, ftype, ck=False):
