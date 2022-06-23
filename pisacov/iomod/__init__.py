@@ -46,7 +46,8 @@ def read(infile, ftype, ck=False):
         elif ftype.lower() == 'pdb':
             output1, output2 = cps.parsestrfile(infile)
             return output1, output2
-        elif ftype.lower() == 'a3m' or 'jones':
+        elif (ftype.lower() == 'a3m' or
+              ftype.lower() =='jones'):
             output = ckio.read(infile, ftype.lower())
         elif ftype.lower() == 'xml':
             output = ET.parse(infile)
