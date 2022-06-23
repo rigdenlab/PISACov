@@ -489,15 +489,14 @@ class contact_atlas:
                 fnx.append(c1)
                 fny.append(c2)
 
-        fig = plt.plot()
+        fig.plot(tpx, tpy, 'ko', label='Matched (TP)')
+        fig.plot(fpx, fpy, 'ro', label='Unmatched (TN)')
+        fig.plot(fnx, fny, marker='o', color='grey', label='Structure (FN)')
+
         fig.axis([0, self.sequence.length() + 1,
                       0, self.sequence.length() + 1])
         fig.xlabel('Residues from Chain 1')
         fig.ylabel('Residues from Chain 2')
-
-        fig.plot(tpx, tpy, 'ko', label='Matched (TP)')
-        fig.plot(fpx, fpy, 'ro', label='Unmatched (TN)')
-        fig.plot(fnx, fny, marker='o', color='grey', label='Structure (FN)')
 
         fig.legend(numpoints=1,
                    fontsize=10,
