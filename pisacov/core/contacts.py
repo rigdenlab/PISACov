@@ -490,7 +490,7 @@ class contact_atlas:
                 fny.append(c2)
 
         fig, ax = plt.subplots()
-        ax.set_tile(os.path.splitext(os.path.basename(outpath))[0])
+        ax.set_title(os.path.splitext(os.path.basename(outpath))[0])
         ax.plot(tpx, tpy, 'ko', label='Matched (TP)')
         ax.plot(fpx, fpy, 'ro', label='Unmatched (TN)')
         ax.plot(fnx, fny, marker='o', color='grey', label='Structure (FN)')
