@@ -489,6 +489,7 @@ class contact_atlas:
                 fnx.append(c1)
                 fny.append(c2)
 
+        fig = plt.plot()
         fig.plot(tpx, tpy, 'ko', label='Matched (TP)')
         fig.plot(fpx, fpy, 'ro', label='Unmatched (TN)')
         fig.plot(fnx, fny, marker='o', color='grey', label='Structure (FN)')
