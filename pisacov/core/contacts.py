@@ -497,14 +497,20 @@ class contact_atlas:
 
         fig, ax = plt.subplots()
         ax.set_title(os.path.splitext(os.path.basename(outpath))[0])
-        ax.scatter(tpx, tpy, 'ko', label='Matched (TP)')
-        ax.scatter(fpx, fpy, 'ro', label='Unmatched (TN)')
-        ax.scatter(fnx, fny, 'o', color='lightgrey', label='Structure (FN)')
 
-        ax.axis([0.5, self.sequence.length() + 0.5,
-                  0.5, self.sequence.length() + 0.5])
+        vmin = 1
+        vmax = self.sequence.length()
+        ax.axis([vmin, vmax, vmin, vmax])
+        ax.set_xlim(vmin - 0.5, vmax + 0.5)
+        ax.set_ylim(vmin - 0.5, vmax + 0.5)
+
         ax.set_xlabel('Residues from Chain 1')
         ax.set_ylabel('Residues from Chain 2')
+
+        s = ((ax.get_window_extent().width  / (vmax-vmin+1.) * 72./fig.dpi) ** 2)
+        ax.scatter(tpx, tpy, s=s, marker='o', linewidth=0, c='k', label='Matched (TP)')
+        ax.scatter(fpx, fpy, s=s, marker='o', linewidth=0, c='r', label='Unmatched (TN)')
+        ax.scatter(fnx, fny, s=s, marker='o', linewidth=0, c='lightgrey', label='Structure (FN)')
 
         ax.legend(numpoints=1,
                   fontsize=10,
