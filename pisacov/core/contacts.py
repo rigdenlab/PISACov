@@ -480,20 +480,26 @@ class contact_atlas:
             if contact.true_positive and n < nc:
                 n += 1
                 tpx.append(c1)
+                tpx.append(c2)
+                tpy.append(c1)
                 tpy.append(c2)
             elif contact.true_negative and n < nc:
                 n += 1
                 fpx.append(c1)
                 fpy.append(c2)
+                fpx.append(c2)
+                fpy.append(c1)
             else:
                 fnx.append(c1)
                 fny.append(c2)
+                fnx.append(c2)
+                fny.append(c1)
 
         fig, ax = plt.subplots()
         ax.set_title(os.path.splitext(os.path.basename(outpath))[0])
-        ax.plot(tpx, tpy, 'ko', label='Matched (TP)')
-        ax.plot(fpx, fpy, 'ro', label='Unmatched (TN)')
-        ax.plot(fnx, fny, marker='o', color='grey', label='Structure (FN)')
+        ax.scatter(tpx, tpy, 'ko', label='Matched (TP)')
+        ax.scatter(fpx, fpy, 'ro', label='Unmatched (TN)')
+        ax.scatter(fnx, fny, 'o', color='lightgrey', label='Structure (FN)')
 
         ax.axis([0.5, self.sequence.length() + 0.5,
                   0.5, self.sequence.length() + 0.5])
