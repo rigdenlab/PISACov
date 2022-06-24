@@ -507,9 +507,10 @@ class contact_atlas:
                     fout.write('@target G0.S' + str(p) + '\n@type xy\n')
                     for n in range(len(xdat[p])):
                         fout.write(str(xdat[p][n]) + '  ' + str(ydat[p][n]) + '\n')
+                    fout.write('&\n')
             return
 
-        ax.set_title(os.path.splitext(os.path.basename(outpath))[0])
+        ax.set_title(os.path.splitext(os.path.basename(outpath))[0], y=1.08)
 
         vmin = 1
         vmax = self.sequence.length()
@@ -520,7 +521,7 @@ class contact_atlas:
         ax.set_xlabel('Residues from Chain 1')
         ax.set_ylabel('Residues from Chain 2')
 
-        s = ((ax.get_window_extent().width  / (vmax-vmin+1.) * 72./fig.dpi) ** 2)
+        s = ((ax.get_window_extent().width  / (vmax-vmin+1.) * 40./fig.dpi) ** 2)
         ax.scatter(tpx, tpy, s=s, marker='o', linewidth=0, c='k', label='Matched (TP)')
         ax.scatter(fpx, fpy, s=s, marker='o', linewidth=0, c='r', label='Unmatched (TN)')
         ax.scatter(fnx, fny, s=s, marker='o', linewidth=0, c='lightgrey', label='Structure (FN)')
