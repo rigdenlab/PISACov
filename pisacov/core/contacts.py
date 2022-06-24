@@ -473,6 +473,12 @@ class contact_atlas:
         fnx = []
         fny = []
 
+        title = (self.name + ', ' + 'Interface ' + self.interface +
+                 ', Chains ' + self.chains[0] + self.chains[1] +
+                 ', ', self.conpred_source)
+        if self.conpred_source == 'psicov':
+            title += ' (' + mode + ')'
+
         n = 0
         for contact in self.conkitmatch[mode]:
             c1 = contact.id[0]
@@ -510,7 +516,7 @@ class contact_atlas:
                     fout.write('&\n')
             return
 
-        ax.set_title(os.path.splitext(os.path.basename(outpath))[0], y=1.08)
+        ax.set_title(title, y=1.08)
 
         vmin = 1
         vmax = self.sequence.length()
@@ -521,7 +527,7 @@ class contact_atlas:
         ax.set_xlabel('Residues from Chain 1')
         ax.set_ylabel('Residues from Chain 2')
 
-        s = ((ax.get_window_extent().width  / (vmax-vmin+1.) * 40./fig.dpi) ** 2)
+        s = ((ax.get_window_extent().width  / (vmax-vmin+1.) * 50./fig.dpi) ** 2)
         ax.scatter(tpx, tpy, s=s, marker='o', linewidth=0, c='k', label='Matched (TP)')
         ax.scatter(fpx, fpy, s=s, marker='o', linewidth=0, c='r', label='Unmatched (TN)')
         ax.scatter(fnx, fny, s=s, marker='o', linewidth=0, c='lightgrey', label='Structure (FN)')
