@@ -499,7 +499,7 @@ class contact_atlas:
         ax.set_title(os.path.splitext(os.path.basename(outpath))[0])
 
         vmin = 1
-        vmax = self.sequence.length()
+        vmax = self.sequence.length(dpi=141)
         ax.axis([vmin, vmax, vmin, vmax])
         ax.set_xlim(vmin - 0.5, vmax + 0.5)
         ax.set_ylim(vmin - 0.5, vmax + 0.5)
