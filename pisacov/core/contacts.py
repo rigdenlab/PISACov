@@ -495,11 +495,11 @@ class contact_atlas:
                 fnx.append(c2)
                 fny.append(c1)
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(dpi=141)
         ax.set_title(os.path.splitext(os.path.basename(outpath))[0])
 
         vmin = 1
-        vmax = self.sequence.length(dpi=141)
+        vmax = self.sequence.length()
         ax.axis([vmin, vmax, vmin, vmax])
         ax.set_xlim(vmin - 0.5, vmax + 0.5)
         ax.set_ylim(vmin - 0.5, vmax + 0.5)
