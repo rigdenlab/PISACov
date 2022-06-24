@@ -453,7 +453,7 @@ class contact_atlas:
         :type outpath: str
         :param mode: Mode, if any, defaults to 'raw'.
         :type mode: str, optional
-        :param plot_type: Plot either as a 'png' image or raw data in 'grace' format, defaults to 'png'.
+        :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'dat' in raw grace format, defaults to 'png'.
         :type plot_type: str, optional
         :param ncontacts: Number of contacts plotted as a function of L, defaults to None (all contacts).
         :type ncontacts: int or float, optional
@@ -481,8 +481,8 @@ class contact_atlas:
                 n += 1
                 tpx.append(c1)
                 tpx.append(c2)
-                tpy.append(c1)
                 tpy.append(c2)
+                tpy.append(c1)
             elif contact.true_negative and n < nc:
                 n += 1
                 fpx.append(c1)
@@ -495,7 +495,20 @@ class contact_atlas:
                 fnx.append(c2)
                 fny.append(c1)
 
-        fig, ax = plt.subplots(dpi=141)
+        if plot_type == 'png':
+            fig, ax = plt.subplots(dpi=141)
+        elif plot_type == 'eps':
+            fig, ax = plt.subplots(dpi=1200)
+        elif plot_type == 'dat':
+            xdat = [tpx, fpx, fnx]
+            ydat = [tpy, fpy, fny]
+            with open(outpath, 'w') as fout:
+                for p in range(3):
+                    fout.write('@target G0.S' + str(p) + '\n@type xy\n')
+                    for n in range(len(xdat[p])):
+                        fout.write(str(xdat[p][n]) + '  ' + str(ydat[p][n]) + '\n')
+            return
+
         ax.set_title(os.path.splitext(os.path.basename(outpath))[0])
 
         vmin = 1
@@ -520,4 +533,5 @@ class contact_atlas:
                   mode="expand",
                   borderaxespad=0.0)
 
-        fig.savefig(outpath, overwrite=True)
+        if plot_type == 'png' or plot_type == 'eps':
+            fig.savefig(outpath, format=plot_type, overwrite=True)

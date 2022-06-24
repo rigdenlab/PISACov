@@ -458,16 +458,19 @@ def main():
                 for cmode, cmap in matches[i][source].conkitmatch.items():
                     if (len(cmap) > 0 and
                             len(matches[i][source].interface.structure[1]) > 0):
-                        if len(matches[i][source].conkitmatch) > 1:
-                            pout = (os.path.splitext(fs)[0] + os.extsep + 'match' +
-                                    os.extsep + cmode + os.extsep + source +
-                                    os.extsep + 'con' + os.extsep + 'png')
-                        else:
-                            pout = (os.path.splitext(fs)[0] + os.extsep +
-                                    'match' + os.extsep + source +
-                                    os.extsep + 'con' + os.extsep + 'png')
-                        plotpath = os.path.join(os.path.dirname(csvfile[0]), pout)
-                        matches[i][source].plot_map_alt(plotpath, mode = cmode)
+                        for imtype in ['png', 'eps', 'dat']:
+                            if len(matches[i][source].conkitmatch) > 1:
+                                pout = (os.path.splitext(fs)[0] + os.extsep + 'match' +
+                                        os.extsep + cmode + os.extsep + source +
+                                        os.extsep + 'con' + os.extsep + imtype)
+                            else:
+                                pout = (os.path.splitext(fs)[0] + os.extsep +
+                                        'match' + os.extsep + source +
+                                        os.extsep + 'con' + os.extsep + imtype)
+                            plotpath = os.path.join(os.path.dirname(csvfile[0]), pout)
+                            matches[i][source].plot_map_alt(plotpath,
+                                                            mode = cmode,
+                                                            plot_type = imtype)
         else:
             iflist[i].structure = None
             iflist[i].contactmap = None
