@@ -547,4 +547,4 @@ class contact_atlas:
 
         if plot_type == 'png' or plot_type == 'eps':
             fig.savefig(outpath, format=plot_type, overwrite=True)
-            plt.close(fig.fig)
+            plt.close(fig)
