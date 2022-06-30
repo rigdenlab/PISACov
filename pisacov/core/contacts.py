@@ -473,7 +473,7 @@ class contact_atlas:
         fnx = []
         fny = []
 
-        title = (self.name + ', ' + 'Interface ' + self.interface +
+        title = (self.name + ', ' + 'Interface ' + self.interface.name +
                  ', Chains ' + self.chains[0] + self.chains[1] +
                  ', ', self.conpred_source)
         if self.conpred_source == 'psicov':
