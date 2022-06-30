@@ -476,12 +476,12 @@ class contact_atlas:
         title = (self.name + ', ' + 'Interface ' + self.interface.name +
                  ', Chains ' + self.interface.chains[0].crystal_id
                  + self.interface.chains[1].crystal_id +
-                 ', ', self.conpred_source)
+                 ', ' + self.conpred_source)
         if self.conpred_source == 'psicov':
             title += ' (' + mode + ')'
 
         n = 0
-        for contact in self.conkitmatch[mode]:
+        for contact in self.conkitmach[mode]:
             c1 = contact.id[0]
             c2 = contact.id[1]
             if contact.true_positive and n < nc:
