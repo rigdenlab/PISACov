@@ -481,7 +481,7 @@ class contact_atlas:
             title += ' (' + mode + ')'
 
         n = 0
-        for contact in self.conkitmach[mode]:
+        for contact in self.conkitmatch[mode]:
             c1 = contact.id[0]
             c2 = contact.id[1]
             if contact.true_positive and n < nc:
