@@ -474,7 +474,8 @@ class contact_atlas:
         fny = []
 
         title = (self.name + ', ' + 'Interface ' + self.interface.name +
-                 ', Chains ' + self.interface.chains[0] + self.interface.chains[1] +
+                 ', Chains ' + self.interface.chains[0].crystal_id
+                 + self.interface.chains[1].crystal_id +
                  ', ', self.conpred_source)
         if self.conpred_source == 'psicov':
             title += ' (' + mode + ')'
