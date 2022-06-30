@@ -271,7 +271,7 @@ def _sources():
     confiledir = ["deepmetapsicov", "deepmetapsicov", "deepmetapsicov"]
     confilesuffix = ["psicov", "ccmpred", "deepmetapsicov.con"]
     conkittype = ["psicov", "ccmpred", "psicov"]
-    threshold = [0.2, 0.1, 0.1]
+    threshold = [0.2, 0.7, 0.2]
 
     outsinfo = {}
     for n in range(len(sources)):

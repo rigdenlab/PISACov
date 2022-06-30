@@ -280,7 +280,7 @@ class contact_atlas:
 
     def remove_neighbors(self, mindist=2):
         md = mindist
-        return self.remove_neighbours(mindist=md)
+        self.remove_neighbours(mindist=md)
 
     def remove_neighbours(self, mindist=2):
         """Return :class:`~conkit.core.contactmap.ContactMap` without neighbouring pairs.
@@ -309,7 +309,7 @@ class contact_atlas:
                     # c2 = str(contact2.id)[1:-1].split(', ')
                     if ((c1[0] == c2[0] and c1[1] == c2[1]) or
                             (c1[1] == c2[0] and c1[0] == c2[1])):
-                        self.conpred.remove(contact2.id)  # CHECK THAT REMOVAL INSIDE LOOP IS OK
+                        self.conpred.remove(contact2.id)
 
     def set_sequence(self, sequence):
         """

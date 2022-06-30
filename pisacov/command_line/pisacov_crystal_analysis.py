@@ -74,6 +74,9 @@ def create_argument_parser():
     parser.add_argument("-c", "--collection_file", nargs=1,
                         metavar=("Collection_CSV_Path"),
                         help="Path to CSV file where pisacov signals will be appended. Default: outdir/evcovsignal.cropped.pisacov.csv and outdir/evcovsignal.full.pisacov.csv.")
+    parser.add_argument("-p", "--plot_formats", nargs='+',
+                        metavar=("Plot file format(s)"),
+                        help="One or more formats of 'png', 'eps' and 'dat' of figures to be produced.")
 
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
@@ -155,6 +158,14 @@ def main():
         else:
             invals['OUTCSVPATH'].append(None)
             invals['OUTCSVPATH'].append(ppaths.check_path(args.collection_file[0]))
+
+    if args.plot_formats is None:
+        plotformats={'png'}
+    else:
+        plotformats=set()
+        for element in args.plot_formats:
+            if element.lower() in {'png', 'eps', 'dat'}:
+                plotformats.add(element.lower())
 
     # Define formats used
     sources = pco._sources()
@@ -449,16 +460,16 @@ def main():
                                             conpredmap=conpred[s][source],
                                             conpredtype=source,
                                             sequence=seq.imer[s])
-                matches[i][source].remove_neighbours(mindist=2)
                 if cropping is True:
                     matches[i][source].set_cropmap()
+                matches[i][source].remove_neighbours(mindist=2)
                 matches[i][source].set_conpred_seq()
                 matches[i][source].remove_intra()
-                matches[i][source].make_match(filterout = 0.2)
+                matches[i][source].make_match(filterout = attribs[3])
                 for cmode, cmap in matches[i][source].conkitmatch.items():
                     if (len(cmap) > 0 and
                             len(matches[i][source].interface.structure[1]) > 0):
-                        for imtype in ['png', 'eps', 'dat']:
+                        for imtype in plotformats:
                             if len(matches[i][source].conkitmatch) > 1:
                                 pout = (os.path.splitext(fs)[0] + os.extsep + 'match' +
                                         os.extsep + cmode + os.extsep + source +
