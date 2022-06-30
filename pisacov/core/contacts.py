@@ -302,11 +302,15 @@ class contact_atlas:
         for m in [0, 3]:
             intra = self.interface.structure[m]
             for contact1 in intra:
-                c1 = contact1.id
-                # c1 = str(contact1.id)[1:-1].split(', ')
+                if isinstance(contact1.id, tuple):
+                    c1 = contact1.id
+                elif isinstance(contact1.id, str):
+                    c1 = contact1.id[1:-1].split(', ')
                 for contact2 in reversed(self.conpred):
-                    c2 = contact2.id
-                    # c2 = str(contact2.id)[1:-1].split(', ')
+                    if isinstance(contact2.id, tuple):
+                        c2 = contact2.id
+                    elif isinstance(contact2.id, str):
+                        c2 = contact2.id[1:-1].split(', ')
                     if ((c1[0] == c2[0] and c1[1] == c2[1]) or
                             (c1[1] == c2[0] and c1[0] == c2[1])):
                         self.conpred.remove(contact2.id)

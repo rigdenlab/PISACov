@@ -444,14 +444,13 @@ def main():
                                'version with no Distograms implemented.')
                 for m in range(len(inputmap)):
                     iflist[i].structure.append(inputmap[m])  # ConKit LEGACY.
-            fs = fcropstr if cropping else fstr
-            fs = (os.path.splitext(os.path.basename(fs))[0] +
-                  os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "con")
-            spath = os.path.join(pisadir, fs)
-            # ckio.write(spath, 'psicov', hierarchy=iflist[i].structure[1])
-            pio.write(spath, 'psicov', indata=iflist[i].structure[1])
-            # iflist[i].contactmap = np.loadtxt(spath)
-            iflist[i].contactmap = pio.read(spath, 'array')
+            #fs = fcropstr if cropping else fstr
+            #fs = (os.path.splitext(os.path.basename(fs))[0] +
+            #      os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "con")
+            #spath = os.path.join(pisadir, fs)
+            #pio.write(spath, 'psicov', indata=iflist[i].structure[1])
+            #iflist[i].contactmap = pio.read(spath, 'array')
+            iflist[i].contactmap = iflist[i].structure[1].deepcopy()
             matches.append({})
             for source, attribs in sources.items():
                 matches[i][source] = pcc.contact_atlas(
