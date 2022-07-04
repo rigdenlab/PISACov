@@ -18,6 +18,7 @@ from crops.iomod import taggers as ctg
 from conkit.core import contactmap as ckc
 from conkit.core.contactmap import ContactMap
 from conkit.core.contact import Contact as ckContact
+from conkit.core.mappings import ContactMatchState as ckCMS
 from conkit import plot as ckplot
 
 from matplotlib import pyplot as plt
@@ -427,28 +428,22 @@ class contact_atlas:
                             self.conkitmatch[altsc].add(ckContact(c1.id[1], c1.id[0], c1.raw_score))
                     self.conkitmatch[altsc].sort('raw_score', reverse=True, inplace=True)
                 for c2 in self.interface.contactmap:
-                    c2.true_positive(False)
-                    c2.true_negative(False)
-                    c2.false_positive(False)
-                    c2.false_negative(False)
+                    c2.status = ckCMS.unknown
                 for c1 in self.conkitmatch[altsc]:
-                    c1.true_positive(False)
-                    c1.true_negative(False)
-                    c1.false_positive(False)
-                    c1.false_negative(False)
+                    c1.status = ckCMS.unknown
                     for c2 in self.interface.contactmap:
                         if c1.id[0] == c2.id[0] and c1.id[1] == c2.id[1]:
-                            c1.true_positive(True)
-                            c2.true_positive(True)
+                            c1.status = ckCMS.true_positive
+                            c2.status = ckCMS.true_positive
                             self.tp[altsc] += 1
                 for c2 in self.interface.contactmap:
                     if c2.true_positive is False:
-                        c2.false_negative(True)
+                        c2.status = ckCMS.false_negative
                         self.conkitmatch[altsc].add(c2)
                         self.fn[altsc] += 1
                 for c1 in self.conkitmatch[altsc]:
                     if c1.true_positive is False and c1.false_negative is False:
-                        c1.false_positive(True)
+                        c1.status = ckCMS.false_positive
                         self.fp[altsc] += 1
 
                     #if contact.true_positive:
