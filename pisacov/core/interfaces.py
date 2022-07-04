@@ -71,7 +71,10 @@ def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
                                     else:
                                         ifinfolist[int(iid)-1].stable = True
                                 elif diss == 'Yes':
-                                    pass
+                                    if ifinfolist[int(iid)-1].stable is True:
+                                        pass
+                                    else:
+                                        ifinfolist[int(iid)-1].stable = False
 
     return ifinfolist
 
