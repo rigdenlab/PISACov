@@ -423,8 +423,8 @@ class contact_atlas:
                 #                                         match_other=True)
                 if self.conpred_source == 'psicov' or self.conpred_source == 'deepmetapsicov':
                     for c1 in cmap:
-                        if c1[0] != c1[1]:
-                            self.conkitmatch[altsc].add(ckContact(c1[1], c1[0], c1.raw_score))
+                        if c1.id[0] != c1.id[1]:
+                            self.conkitmatch[altsc].add(ckContact(c1.id[1], c1.id[0], c1.raw_score))
                     self.conkitmatch[altsc].sort('raw_score', reverse=True, inplace=True)
                 for c2 in self.interface.contactmap:
                     c2.true_positive(False)
@@ -437,7 +437,7 @@ class contact_atlas:
                     c1.false_positive(False)
                     c1.false_negative(False)
                     for c2 in self.interface.contactmap:
-                        if c1[0] == c2[0] and c1[1] == c2[1]:
+                        if c1.id[0] == c2.id[0] and c1.id[1] == c2.id[1]:
                             c1.true_positive(True)
                             c2.true_positive(True)
                             self.tp[altsc] += 1
