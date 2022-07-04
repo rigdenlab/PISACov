@@ -484,7 +484,7 @@ class contact_atlas:
                             'and Contact Plot was not produced.')
 
 
-    def plot_map_alt(self, outpath, mode='raw', plot_type='png', ncontacts=None):
+    def plot_map_alt(self, outpath, mode='raw', plot_type='png', xL=None):
         """Plot matched contact map.
 
         :param outpath: Path to output file.
@@ -493,14 +493,14 @@ class contact_atlas:
         :type mode: str, optional
         :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'dat' in raw grace format, defaults to 'png'.
         :type plot_type: str, optional
-        :param ncontacts: Number of contacts plotted as a function of L, defaults to None (all contacts).
-        :type ncontacts: int or float, optional
+        :param xL: Number of contacts plotted as a function of L, defaults to None (all contacts).
+        :type xL: int or float, optional
 
         """
         import matplotlib.pyplot as plt
 
-        if ncontacts is not None:
-            nc = round(self.sequence.length()*ncontacts)
+        if xL is not None:
+            nc = round(self.sequence.length()*xL)
         else:
             nc = len(self.conkitmatch[mode])
 
@@ -525,20 +525,14 @@ class contact_atlas:
             if contact.true_positive and n < nc:
                 n += 1
                 tpx.append(c1)
-                tpx.append(c2)
                 tpy.append(c2)
-                tpy.append(c1)
             elif contact.true_negative and n < nc:
                 n += 1
                 fpx.append(c1)
                 fpy.append(c2)
-                fpx.append(c2)
-                fpy.append(c1)
             else:
                 fnx.append(c1)
                 fny.append(c2)
-                fnx.append(c2)
-                fny.append(c1)
 
         if plot_type == 'png':
             fig, ax = plt.subplots(dpi=141)
