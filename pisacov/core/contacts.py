@@ -17,7 +17,7 @@ from crops.elements import sequences as pes
 from crops.iomod import taggers as ctg
 from conkit.core import contactmap as ckc
 from conkit.core.contactmap import ContactMap
-from conkit.core.contact import ckContact
+from conkit.core.contact import Contact as ckContact
 from conkit import plot as ckplot
 
 from matplotlib import pyplot as plt
