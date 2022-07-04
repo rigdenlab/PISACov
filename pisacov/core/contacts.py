@@ -17,6 +17,7 @@ from crops.elements import sequences as pes
 from crops.iomod import taggers as ctg
 from conkit.core import contactmap as ckc
 from conkit.core.contactmap import ContactMap
+from conkit.core.contact import ckContact
 from conkit import plot as ckplot
 
 from matplotlib import pyplot as plt
@@ -314,6 +315,14 @@ class contact_atlas:
                     if ((c1[0] == c2[0] and c1[1] == c2[1]) or
                             (c1[1] == c2[0] and c1[0] == c2[1])):
                         self.conpred.remove(contact2.id)
+                for contact2 in reversed(self.interface.contactmap):
+                    if isinstance(contact2.id, tuple):
+                        c2 = contact2.id
+                    elif isinstance(contact2.id, str):
+                        c2 = contact2.id[1:-1].split(', ')
+                    if ((c1[0] == c2[0] and c1[1] == c2[1]) or
+                            (c1[1] == c2[0] and c1[0] == c2[1])):
+                        self.interface.contactmap.remove(contact2.id)
 
     def set_sequence(self, sequence):
         """
@@ -399,34 +408,64 @@ class contact_atlas:
                 self.fp[pm] = 0
                 self.tn[pm] = 0
                 self.fn[pm] = 0
-        structuremap = self.interface.structure[1].deepcopy()
+        structuremap = self.interface.contactmap
         for altsc, cmap in self.conkitmatch.items():
             logging.info('Structure: ' + str(structuremap) +
                          ', Conpred: ' + str(cmap) +
                          ', Source: ' + self.conpred_source +
                          ', Mode: ' + altsc)
             if len(cmap) > 0 and len(structuremap) > 0:
+                ##self.conkitmatch[altsc] = ContactMap()
                 self.conkitmatch[altsc] = cmap.deepcopy()
-                self.conkitmatch[altsc] = cmap.match_naive(structuremap,
-                                                           add_false_negatives=True,
-                                                           inplace=False,
-                                                           match_other=True)
-                for contact in self.conkitmatch[altsc]:
-                    if contact.true_positive:
-                        self.tp[altsc] += 1
-                    elif contact.false_positive:
-                        self.fp[altsc] += 1
-                    elif contact.false_negative:
+                #self.conkitmatch[altsc] = cmap.match_naive(structuremap,
+                #                                          add_false_negatives=True,
+                #                                         inplace=False,
+                #                                         match_other=True)
+                if self.conpred_source == 'psicov' or self.conpred_source == 'deepmetapsicov':
+                    for c1 in cmap:
+                        if c1[0] != c1[1]:
+                            self.conkitmatch[altsc].add(ckContact(c1[1], c1[0], c1.raw_score))
+                    self.conkitmatch[altsc].sort('raw_score', reverse=True, inplace=True)
+                for c2 in self.interface.contactmap:
+                    c2.true_positive(False)
+                    c2.true_negative(False)
+                    c2.false_positive(False)
+                    c2.false_negative(False)
+                for c1 in self.conkitmatch[altsc]:
+                    c1.true_positive(False)
+                    c1.true_negative(False)
+                    c1.false_positive(False)
+                    c1.false_negative(False)
+                    for c2 in self.interface.contactmap:
+                        if c1[0] == c2[0] and c1[1] == c2[1]:
+                            c1.true_positive(True)
+                            c2.true_positive(True)
+                            self.tp[altsc] += 1
+                for c2 in self.interface.contactmap:
+                    if c2.true_positive is False:
+                        c2.false_negative(True)
+                        self.conkitmatch[altsc].add(c2)
                         self.fn[altsc] += 1
-                    elif contact.true_negative:
-                        logging.warning('True negatives appearing in conkit match.')
-                    else:
-                        logging.warning('Contact ' + str(contact.id) + ' not evaluated.')
+                for c1 in self.conkitmatch[altsc]:
+                    if c1.true_positive is False and c1.false_negative is False:
+                        c1.false_positive(True)
+                        self.fp[altsc] += 1
+
+                    #if contact.true_positive:
+                    #    self.tp[altsc] += 1
+                    #elif contact.false_positive:
+                    #    self.fp[altsc] += 1
+                    #elif contact.false_negative:
+                    #    self.fn[altsc] += 1
+                    #elif contact.true_negative:
+                    #    logging.warning('True negatives appearing in conkit match.')
+                    #else:
+                    #    logging.warning('Contact ' + str(contact.id) + ' not evaluated.')
             else:
                 logging.info('Contact map contains no contacts.')
 
-        self.tn[altsc] = (self.npotential -
-                          self.tp[altsc] - self.fp[altsc] - self.fn[altsc])
+            self.tn[altsc] = (self.npotential -
+                              self.tp[altsc] - self.fp[altsc] - self.fn[altsc])
 
     def plot_map(self, outpath, mode='raw'):
         """Plot matched contact map.
