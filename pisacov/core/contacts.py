@@ -571,7 +571,8 @@ class contact_atlas:
                   ncol=3,
                   mode="expand",
                   borderaxespad=0.0)
-
+        for n in range(len(ax.lengend.legendHandless)):
+            ax.legend.legendHandles[n]._sizes = [30]
         if plot_type == 'png' or plot_type == 'eps':
             fig.savefig(outpath, format=plot_type, overwrite=True)
             plt.close(fig)
