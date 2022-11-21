@@ -19,7 +19,7 @@ def csvheader(outpath, cropped=False, pisascore=False):
 
     :param outpath: CSV filepath.
     :type outpath: str
-    :param cropped: True when results have been obtained from crops-cropstr inputs, defaults to False.
+    :param cropped: True when results have been obtained from crops_cropstr inputs, defaults to False.
     :type cropped: bool, optional
     :param pisascore: If using CCP4 PISA interfaces add to csv header, defaults to False.
     :type pisascore: bool, optional

@@ -34,7 +34,7 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
 
     #CROP SEQUENCE AND STRUCTURE
 
-    cst = importlib.import_module('crops.command_line.crops-cropstr')
+    cst = importlib.import_module('crops.command_line.crops_cropstr')
     cropspy = (cst.__file__)
 
     if outdirin is None:
@@ -47,7 +47,7 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
     try:
         os.system(command)  # + ' > ' + loggingfile)
     except Exception:
-        logging.critical('        An error occurred while executing Crops-cropstr')
+        logging.critical('        An error occurred while executing crops_cropstr')
         raise OSError
 
     return
@@ -69,9 +69,9 @@ def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
     pythonexec = '"'+sys.executable+'"'
 
     #Renumber STRUCTURE
-    logging.info('    Running crops-renumber...')
+    logging.info('    Running crops_renumber...')
 
-    cst = importlib.import_module('crops.command_line.crops-renumber')
+    cst = importlib.import_module('crops.command_line.crops_renumber')
     cropspy = (cst.__file__)
 
     if outdirin is None:
@@ -82,7 +82,7 @@ def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
     try:
         os.system(command)  # + ' > ' + loggingfile)
     except Exception:
-        logging.critical('        An error occurred while executing Crops-renumber')
+        logging.critical('        An error occurred while executing crops_renumber')
         raise OSError
 
     return
@@ -102,9 +102,9 @@ def splitseqs(seqin, outdirin = None):#, loggingfile):
     pythonexec = '"'+sys.executable+'"'
 
     #Renumber STRUCTURE
-    logging.info('    Running crops-renumber...')
+    logging.info('    Running crops_renumber...')
 
-    cst = importlib.import_module('crops.command_line.crops-splitseqs')
+    cst = importlib.import_module('crops.command_line.crops_splitseqs')
     cropspy = (cst.__file__)
 
     if outdirin is None:
@@ -115,7 +115,7 @@ def splitseqs(seqin, outdirin = None):#, loggingfile):
     try:
         os.system(command)  # + ' > ' + loggingfile)
     except Exception:
-        logging.critical('        An error occurred while executing Crops-renumber')
+        logging.critical('        An error occurred while executing crops_renumber')
         raise OSError
 
     return
