@@ -33,7 +33,7 @@ def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
     ifinfolist = []
     for iface in root.iter('interface'):
         ifid = iface.find('id').text
-        ifinfolist.append(interface(name = ifid))
+        ifinfolist.append(interface(name=ifid))
         for mol in iface.iter('molecule'):
             cid = mol.find('chain_id').text
             ctype = mol.find('class').text
@@ -42,10 +42,10 @@ def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
                 did = 'A'
             elif pid == '2':
                 did = 'B'
-            newchain=chain_info(pisa_id=pid,
-                                crystal_id=cid,
-                                biotype=ctype,
-                                dimer_id=did)
+            newchain = chain_info(pisa_id=pid,
+                                  crystal_id=cid,
+                                  biotype=ctype,
+                                  dimer_id=did)
             ifinfolist[-1].chains.append(newchain)
 
     if assembly_xml_path is not None:
@@ -77,6 +77,7 @@ def parse_interface_xml(interface_xml_path, assembly_xml_path = None):
                                         ifinfolist[int(iid)-1].stable = False
 
     return ifinfolist
+
 
 class chain_info:
     """A :class:`~pisacov.core.interfaces.chain_info` object contains several identifiers for a chain.
@@ -110,6 +111,7 @@ class chain_info:
     >>> mychain
     Chain Info object: (Dimer ID = B, PISA xml ID = 1, Monomer ID in assymmetric unit = A, Sequence ID = 1, Biotype = Protein)
     """
+
     _kind = 'Chain Info'
     __slots__ = ['pisa_id', 'dimer_id', 'crystal_id', 'seq_id', 'type']
 

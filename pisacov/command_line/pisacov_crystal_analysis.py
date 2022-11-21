@@ -281,7 +281,7 @@ def main():
         # MSA GENERATOR
         ppaths.mdir(hhdir)
         if invals['HHBLITS_PARAMETERS'] == ['3', '0.001', 'inf', '50', '99']:
-            logger.info('Generating Multiple Sequence Alignment using DeepMetaPSICOV default parameters... [AS RECOMMENDED]')
+            logger.info('Generating Multiple Sequence Alignment using DeepMetaPSICOV default parameters... [RECOMMENDED OPTION]')
         elif invals['HHBLITS_PARAMETERS'] == ['2', '0.001', '1000', '0', '90']:
             logger.info('Generating Multiple Sequence Alignment using HHBlits default parameters...')
         else:
@@ -331,7 +331,7 @@ def main():
         iflist = psp.runpisa(sfile, pisadir, sessionid = pdbid)
         logger.info(pcl.running('PISA', done=itime))
 
-    # READ DATA IF SKIPEXEC USED:
+    # READ DATA IF SKIPEXEC USED
     if skipexec is True:
         logger.info('Parsing already generated files...')
         for i, iseq in seq.imer.items():

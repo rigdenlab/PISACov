@@ -426,6 +426,7 @@ class contact_atlas:
                     if c1.id[0] != c1.id[1]:
                         self.conkitmatch[altsc].add(ckContact(c1.id[1], c1.id[0], c1.raw_score))
                 self.conkitmatch[altsc].sort('raw_score', reverse=True, inplace=True)
+                # Conkit ckCMS.status: {0: Unk, 1: TP, 2: TN, 3: FP, 4: FN}
                 for c2 in self.interface.contactmap:
                     c2.status = ckCMS.unknown
                 for c1 in self.conkitmatch[altsc]:
@@ -509,7 +510,7 @@ class contact_atlas:
         tpy = []
         fnx = []
         fny = []
-
+        # TO DO: Adapt title to non-crystal dimer inputs
         title = (self.name + ', ' + 'Interface ' + self.interface.name +
                  ', Chains ' + self.interface.chains[0].crystal_id
                  + self.interface.chains[1].crystal_id +
@@ -521,11 +522,11 @@ class contact_atlas:
         for contact in self.conkitmatch[mode]:
             c1 = contact.id[0]
             c2 = contact.id[1]
-            if contact.true_positive and n < nc:
+            if contact.true_positive is True and n < nc:
                 n += 1
                 tpx.append(c1)
                 tpy.append(c2)
-            elif contact.true_negative and n < nc:
+            elif contact.false_positive is True and n < nc:
                 n += 1
                 fpx.append(c1)
                 fpy.append(c2)
@@ -561,7 +562,7 @@ class contact_atlas:
 
         s = ((ax.get_window_extent().width  / (vmax-vmin+1.) * 50./fig.dpi) ** 2)
         ax.scatter(tpx, tpy, s=s, marker='o', linewidth=0, c='k', label='Matched (TP)')
-        ax.scatter(fpx, fpy, s=s, marker='o', linewidth=0, c='r', label='Unmatched (TN)')
+        ax.scatter(fpx, fpy, s=s, marker='o', linewidth=0, c='r', label='Unmatched (FP)')
         ax.scatter(fnx, fny, s=s, marker='o', linewidth=0, c='lightgrey', label='Structure (FN)')
 
         ax.legend(numpoints=1,
@@ -571,8 +572,8 @@ class contact_atlas:
                   ncol=3,
                   mode="expand",
                   borderaxespad=0.0)
-        for n in range(len(ax.lengend.legendHandles)):
-            ax.legend.legendHandles[n]._sizes = [30]
+        for n in range(len(ax.legend_.legendHandles)):
+            ax.legend_.legendHandles[n]._sizes = [30]
         if plot_type == 'png' or plot_type == 'eps':
             fig.savefig(outpath, format=plot_type, overwrite=True)
             plt.close(fig)
