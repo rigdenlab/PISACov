@@ -18,7 +18,7 @@ def unwraptime(delta):
 
     :param delta: Time interval.
     :type delta: :obj:`~datetime.timedelta`
-    :return: Human readable description of time interval.
+    :return: Human-readable description of time interval.
     :rtype: str
 
     """
