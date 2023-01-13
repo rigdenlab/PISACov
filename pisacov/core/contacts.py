@@ -491,7 +491,7 @@ class contact_atlas:
         :type outpath: str
         :param mode: Mode, if any, defaults to 'raw'.
         :type mode: str, optional
-        :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'dat' in raw grace format, defaults to 'png'.
+        :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'agr' in raw grace format, defaults to 'png'.
         :type plot_type: str, optional
         :param xL: Number of contacts plotted as a function of L, defaults to None (all contacts).
         :type xL: int or float, optional
@@ -538,7 +538,10 @@ class contact_atlas:
             fig, ax = plt.subplots(dpi=141)
         elif plot_type == 'eps':
             fig, ax = plt.subplots(dpi=1200)
-        elif plot_type == 'dat':
+        elif plot_type == 'agr':
+            tpx, tpy = (list(e) for e in zip(*sorted(zip(tpx, tpy))))
+            fpx, fpy = (list(e) for e in zip(*sorted(zip(fpx, fpy))))
+            fnx, fny = (list(e) for e in zip(*sorted(zip(fnx, fny))))
             xdat = [tpx, fpx, fnx]
             ydat = [tpy, fpy, fny]
             with open(outpath, 'w') as fout:

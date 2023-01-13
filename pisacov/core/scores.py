@@ -24,26 +24,33 @@ def _scorenames(crop=False):
 
     """
     croptag = 'fullseq' if crop is False else 'cropseq'
-    names = pco._sourcenames()
     shortnames = pco._sourcenames(short=True)
     scorenames = {}
-    mainnameraw = ['Nconpred', 'Nconused',
-                   'ACCScoreRaw', 'AVScoreRaw',
-                   'TP', 'PREC', 'COVER', 'MCC', 'JACCARD']
-    mainnamepsi = ['Nconpred', 'Nconused',
-                   'ACCScoreRaw', 'AVScoreRaw',
-                   'ACCScoreNorm', 'AVScoreNorm',
-                   'ACCScoreAbs', 'AVScoreAbs',
-                   'ACCScoreShift', 'AVScoreShift',
-                   'TP', 'PREC', 'COVER', 'MCC', 'JACCARD']
-    for i in range(len(names)):
-        if names[i] not in scorenames:
-            scorenames[names[i]] = []
-        lnames = mainnameraw if names[i] != 'psicov' else mainnamepsi
-        for mn in lnames:
-            scorenames[names[i]].append(mn + '_' +
-                                        croptag + '_' +
-                                        shortnames[i])
+    psicovmodes = PSICOV_modes(raw=True)
+
+
+    nconpredname = 'Nconpred_'+croptag,
+    mainname = ['Nconused_'+croptag,
+                'AccScore_'+croptag,
+                'AvScore_'+croptag,
+                'TP'+croptag,
+                'PREC'+croptag,
+                'COVER'+croptag,
+                'MCC'+croptag,
+                'JACCARD'+croptag]
+
+    for s in shortnames:
+        if s == 'psicov':
+            modes = psicovmodes
+        else:
+            modes = ['raw']
+
+        for m in modes:
+            if m =='raw':
+                scorenames[s] = []
+                scorenames[s].append(nconpredname+'_'+s)
+            for n in mainname:
+                scorenames[s].append(n+'_'+m+s)
 
     return scorenames
 
@@ -521,30 +528,28 @@ def list_scores(inatlas, tag=None):
 
     """
     values = []
-    psicovmodes = PSICOV_modes()
+    psicovmodes = PSICOV_modes(raw=True)
 
     values.append(str(inatlas.conpred_raw.ncontacts))
-    values.append(str(inatlas.conkitmatch['raw'].ncontacts))
 
-    acc = accscore(inatlas)
-    values.append(str(acc))
-    if inatlas.tp['raw'] == 0:
-        values.append(str(0.0))
-    else:
-        values.append(str(acc/inatlas.tp['raw']))
     if tag == 'psicov':
-        for m in psicovmodes:
-            acc = accscore(inatlas, alt=m)
-            values.append(str(acc))
-            if inatlas.tp[m] == 0:
-                values.append(str(0.0))
-            else:
-                values.append(str(acc/inatlas.tp[m]))
+        modes = psicovmodes
+    else:
+        modes = ['raw']
 
-    values.append(str(inatlas.tp['raw']))
-    values.append(str(precision(inatlas)))
-    values.append(str(coverage(inatlas)))
-    values.append(str(mcc(inatlas)))
-    values.append(str(jaccard(inatlas)))
+    for m in modes:
+        values.append(str(inatlas.conkitmatch[m].ncontacts))
+        acc = accscore(inatlas, alt=m)
+        values.append(str(acc))
+        if inatlas.tp[m] == 0:
+            values.append(str(0.0))
+        else:
+            values.append(str(acc/inatlas.tp[m]))
+
+        values.append(str(inatlas.tp[m]))
+        values.append(str(precision(inatlas, alt=m)))
+        values.append(str(coverage(inatlas, alt=m)))
+        values.append(str(mcc(inatlas, alt=m)))
+        values.append(str(jaccard(inatlas, alt=m)))
 
     return values

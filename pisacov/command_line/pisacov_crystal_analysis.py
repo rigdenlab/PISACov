@@ -76,7 +76,7 @@ def create_argument_parser():
                         help="Path to CSV file where pisacov signals will be appended. Default: outdir/evcovsignal.cropped.pisacov.csv and outdir/evcovsignal.full.pisacov.csv.")
     parser.add_argument("-p", "--plot_formats", nargs='+',
                         metavar=("Plot file format(s)"),
-                        help="One or more formats of 'png', 'eps' and 'dat' of figures to be produced.")
+                        help="One or more formats of 'png', 'eps' and 'agr' of figures/data to be produced.")
 
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
@@ -164,7 +164,7 @@ def main():
     else:
         plotformats=set()
         for element in args.plot_formats:
-            if element.lower() in {'png', 'eps', 'dat'}:
+            if element.lower() in {'png', 'eps', 'agr'}:
                 plotformats.add(element.lower())
 
     # Define formats used
@@ -519,7 +519,6 @@ def main():
     logger.info(endmsg)
 
     return
-
 
 if __name__ == "__main__":
     import sys
