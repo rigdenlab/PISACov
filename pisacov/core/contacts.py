@@ -66,11 +66,15 @@ def filter_contacts(cmap, threshold=0.2):
     :param cmap: Contact prediction map.
     :type cmap: :class:`~conkit.core.contactmap.ContactMap`
     :param threshold: Threshold, defaults to 0.2.
-    :type threshold: float, optional
+    :type threshold: float, str, optional
 
     """
     cmap.sort('raw_score', reverse=True, inplace=True)
     cnt = 0
+    if threshold == "inf":
+        threshold = 1000000000000
+    elif threshold == "-inf":
+        threshold = -1000000000000
     for contact in cmap:
         if contact.raw_score < threshold:
             break
@@ -358,7 +362,7 @@ class contact_atlas:
         """Match Structure and contact prediction maps.
 
         :param filterout: Threshold score below which contacts are filtered out, defaults to None.
-        :type filterout: float, optional
+        :type filterout: float, str, optional
         :param tpmap: If True, only consider conpred's TPs, defaults to False.
         :type tpmap: bool, optional
 

@@ -51,11 +51,15 @@ def create_argument_parser():
                            metavar=("n_iterations", "evalue_cutoff",
                                     "n_nonreduntant", "mincoverage",
                                     "maxpairwaise_seqidentity"),
-                           help=("Introduce HHBLITS arguments." + os.linesep +
+                           help=("Insert HHBLITS arguments." + os.linesep +
                            "DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]. " +
                            "HHBlits DEEFAULT: [2, 0.001, 1000, 0, 90]"))
     main_args.add_argument("-r", "--reset_hhblits_arguments", action='store_true', default=False,
                            help="Reset to DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99].")
+    main_args.add_argument("-c", "--lower_cutoff", nargs=3,
+                           metavar=("psicov", "ccmpred", "deepmetapsicov"),
+                           help=("Insert lower thresholds for predicted contacts." + os.linesep +
+                           "PISACov DEFAULT: [0.2, 0.7, 0.2]. Use '-inf' for no lower cutoff."))
     main_args.add_argument("-i", "--intramolecular", action='store_true', default=None,
                            help="Pairs of residues that appear as intermolecular " +
                            "contacts and intramolecular contacts too are removed " +
@@ -110,6 +114,12 @@ def _outconffile(aconf):
             f.write("#HHBLITS_PARAMETERS = [3, 0.001, 'inf', 50, 99]\n")
         else:
             f.write("HHBLITS_PARAMETERS = " + str(aconf['HHBLITS_PARAMETERS']))
+        f.write("\n")
+        f.write('## LOWER THRESHOLD FOR PSICOV, CCMPRed and DeepMetaPSICOV. Use "-inf" for no lower cutoff.\n')
+        if aconf['LOWTHRESHOLD'] is None:
+            f.write("#LOWTHRESHOLD = [0.2, 0.7, 0.2]\n")
+        else:
+            f.write("LOWTHRESHOLD = " + str(aconf['LOWTHRESHOLD']))
         f.write("\n")
         f.write("## CONTACT PARAMETERS")
         f.write("\n")
@@ -209,6 +219,8 @@ def main():
         configin['UNICLUST_FASTA_PATH'] = args.uniclust_path[0]
     if args.hhblits_arguments is not None:
         configin['HHBLITS_PARAMETERS'] = args.hhblits_arguments[0]
+    if args.hhblits_arguments is not None:
+        configin['LOWTHRESHOLD'] = args.lower_cutoff[0]
     if args.neighbours is not None:
         configin['NEIGHBOURS_MINDISTANCE'] = args.neighbours[0]
         configin['REMOVE_INTRA_CONTACTS'] = False
@@ -228,7 +240,11 @@ def main():
                                       "#iterations, E-value cutoff, Non-redundant seqs to keep, " +
                                       " MinimumCoverageWithMasterSeq(%), and MaxPairwiseSequenceIdentity.\n" +
                                       "Leave empty for DMP default (3, 0.001, 'inf', 50, 99).\n"),
-               'UNICLUST_FASTA_PATH': ("Please, enter the path to the UniClust fasta file.\n"
+               'LOWTHRESHOLD': ("Please, enter the 3 values of the lower cutoff for predicted scores," +
+                                   " one per each (in this order): PSICOV, CCMPred, DeepMetaPSICOV.\n"+
+                                   "Leave empty for PISACov default (0.2, 0.7, 0.2).\n"+
+                                   "Use '-inf' for no lower cutoff.\n"),
+               'UNICLUST_FASTA_PATH': ("Please, enter the path to the UniClust fasta file.\n"+
                                        "An empty input will deactivate this option.\n"),
                'NEIGHBOURS_MINDISTANCE': ("Press ENTER for intramolecular contacts " +
                                           "to be removed from intermolecular contact lists.\n" +

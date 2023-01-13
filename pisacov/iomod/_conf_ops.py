@@ -16,6 +16,7 @@ _uniurl = 'https://www.uniprot.org/uniprot/'
 def _default_values(key):
     defaultvals = {}
     defaultvals['HHBLITS_PARAMETERS'] = [3, 0.001, 'inf', 50, 99]
+    defaultvals['LOWER_THRESHOLD'] = [0.2, 0.7, 0.2]
     defaultvals['UNICLUST_FASTA_PATH'] = None
     defaultvals['NEIGHBOURS_MINDISTANCE'] = 2
     defaultvals['REMOVE_INTRA_CONTACTS'] = True
@@ -158,6 +159,11 @@ def _parse_conf():
         configfile['HHBLITS_PARAMETERS'] = None
 
     try:
+        configfile['LOWTHRESHOLD'] = pconf.HHBLITS_PARAMETERS
+    except Exception:
+        configfile['LOWTHRESHOLD'] = None
+
+    try:
         configfile['NEIGHBOURS_MINDISTANCE'] = pconf.NEIGHBOURS_MINDISTANCE
         configfile['REMOVE_INTRA_CONTACTS'] = False
     except Exception:
@@ -220,6 +226,36 @@ def _check_hhparams(paramlist):
 
     return outparams
 
+def _check_lowth(paramlist):
+    """Return a list with the validated scores' lower thresholds.
+
+    :param paramlist: User-provided list of thresholds.
+    :type paramlist: list of str
+    :raises ValueError: Arguments are not valid.
+    :return: Complete and checked list of thresholds.
+    :rtype: list of (float, str)
+    """
+    if not isinstance(paramlist, list):
+        logging.critical('A list is required as input.')
+    else:
+        if len(paramlist) != 3:
+            logging.critical('3 parameters are required as lower thresholds.')
+
+    outparams = []
+    for n in range(len(paramlist)):
+        try:
+            float(paramlist[n])
+        except Exception:
+            logging.critical('One or more of thresholds given are not valid')
+            raise
+
+        if paramlist[n] != "inf" and paramlist[n] != "-inf":
+            outparams.append(float(paramlist[n]))
+        else:
+            outparams.append(paramlist[n])
+
+    return outparams
+
 def _check_uniprot(inuniprot):
     """Return Uniprot segment threshold value and Uniprot database path.
 
@@ -260,8 +296,11 @@ def _sourcenames(short=False):
 
     return sources
 
-def _sources():
+def _sources(lowth=[0.2, 0.7, 0.2]):
     """Return the subdir name and extension of each of the contact prediction types.
+
+    :param lowth: Low threshold for each data source, defaults to [0.2, 0.7, 0.2].
+    :type lowth: list [float], optional
 
     :return: Contact prediction types and location.
     :rtype: dict [list [str]]
@@ -271,11 +310,10 @@ def _sources():
     confiledir = ["deepmetapsicov", "deepmetapsicov", "deepmetapsicov"]
     confilesuffix = ["psicov", "ccmpred", "deepmetapsicov.con"]
     conkittype = ["psicov", "ccmpred", "psicov"]
-    threshold = [0.2, 0.7, 0.2]
 
     outsinfo = {}
     for n in range(len(sources)):
         outsinfo[sources[n]] = [confiledir[n], confilesuffix[n],
-                                conkittype[n], threshold[n]]
+                                conkittype[n], lowth[n]]
 
     return outsinfo

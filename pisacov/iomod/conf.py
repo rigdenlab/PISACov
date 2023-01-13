@@ -24,6 +24,10 @@ DMP_PATH = '/home/javier/Programs/DeepMetaPSICOV/run_DMP.sh'
 ## HHBLITS DEFAULT: [2, 0.001, 1000, 0, 90]
 ## Uncomment next line to use non-DeepMetaPSICOV-default values
 HHBLITS_PARAMETERS = [3, 0.001, 'inf', 50, 99]
+
+## LOWER THRESHOLD FOR PSICOV, CCMPRed and DeepMetaPSICOV.
+LOWTHRESHOLD = [0.2, 0.7, 0.2]
+
 ## CONTACT PARAMETERS
 ## By default, pairs of residues that appear as intermolecular contacts
 ## and intramolecular contacts too are removed with NEIGHBOURS_MINDISTANCE set to 2;
@@ -33,4 +37,3 @@ HHBLITS_PARAMETERS = [3, 0.001, 'inf', 50, 99]
 ## |pos_res1-pos_res2|>=MinDistance; Minimum value: 2; Default: 2
 ## Uncomment next line if you want to bypass the default behaviour and fix a custom minimum distance while ignoring intramolecular contacts.
 #NEIGHBOURS_MINDISTANCE = 2
-

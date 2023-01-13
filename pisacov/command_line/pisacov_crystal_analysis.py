@@ -63,6 +63,11 @@ def create_argument_parser():
                               "DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]. " +
                               os.linesep + "HHBlits DEEFAULT: [2, 0.001, 1000, 0, 90]"))
 
+    #THRESHOLD ABOVE WHICH CONTACTS COUNT
+    parser.add_argument("-l", "--lower_threshold", nargs=3,
+                        metavar=("psicov", "ccmpred", "dmp"),
+                        help=("Remove predicted contacts scored below these values. Use '-inf' for no lower cutoff."))
+
     # SKIP CONPRED
     parser.add_argument("-s", "--skip_conpred", action='store_true',
                         default=False,
@@ -108,6 +113,11 @@ def main():
 
     if args.hhblits_arguments is not None:
         invals['HHBLITS_PARAMETERS'] = pco._check_hhparams(args.hhblits_arguments)
+    else:
+        pass
+
+    if args.lower_threshold is not None:
+        invals['LOWTHRESHOLD'] = pco._check_lowth(args.lower_threshold)
     else:
         pass
 
@@ -168,7 +178,7 @@ def main():
                 plotformats.add(element.lower())
 
     # Define formats used
-    sources = pco._sources()
+    sources = pco._sources(lowth=invals['LOWTHRESHOLD'])
 
     # Parse sequence and structure files
     logger.info('Parsing sequence file...')
