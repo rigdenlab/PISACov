@@ -29,7 +29,7 @@ def _scorenames(crop=False):
     psicovmodes = PSICOV_modes(raw=True)
 
 
-    nconpredname = 'Nconpred_'+croptag,
+    nconpredname = 'Nconpred_' + croptag
     mainname = ['Nconused_'+croptag,
                 'AccScore_'+croptag,
                 'AvScore_'+croptag,

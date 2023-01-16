@@ -12,7 +12,6 @@ def _psicov_modes(raw=False):
 
     :param raw: Include 'raw' as the first mode in list, defaults to False.
     :type raw: bool, optional
-    :type raw: Include 'raw' as the first mode in list, defaults to False.
 
     :return: Psicov Modes
     :rtype: list [str]
