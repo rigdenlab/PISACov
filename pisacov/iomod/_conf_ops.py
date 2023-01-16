@@ -40,6 +40,8 @@ def _check_input(val, key):
                'HHBLITS_DATABASE_DIR': "HHBLITS_DATABASE_DIR directory not found.",
                'DMP_PATH': "DMP_PATH file not found.",
                'HHBLITS_PARAMETERS': "Format should be [int, float, int or 'inf', int, int].",
+               'LOWTHRESHOLD': "Format should be [float or 'inf' or '-inf', " +
+                   "float or 'inf' or '-inf', float or 'inf' or '-inf'].",
                'UNICLUST_FASTA_PATH': "UNICLUST_FASTA_PATH file not found.",
                'NEIGHBOURS_MINDISTANCE': "NEIGHBOURS_MINDISTANCE should be an integer.",
                'REMOVE_INTRA_CONTACTS': "REMOVE_INTRA_CONTACTS should be a boolean."}
@@ -102,6 +104,24 @@ def _check_input(val, key):
                                 except Exception:
                                     logging.critical(errormsg)
                                     raise TypeError
+    elif (key == 'LOWTHRESHOLD'):
+        if val is None or val == "":
+            val = _default_values(key)
+        else:
+            if isinstance(val, list) is False:
+                logging.critical('LOWTHRESHOLD is not a python list.')
+                raise ValueError()
+            else:
+                for n in range(len(val)):
+                    if isinstance(val[n], float) is False:
+                        if val[n] == 'inf' or val[n] == '-inf':
+                            pass
+                        else:
+                            try:
+                                val[n] = float(val[n])
+                            except Exception:
+                                logging.critical(errormsg)
+                                raise TypeError
     elif (key == 'NEIGHBOURS_MINDISTANCE'):
         if val is None or val == "":
             val = _default_values(key)
