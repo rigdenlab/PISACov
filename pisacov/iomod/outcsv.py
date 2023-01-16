@@ -56,9 +56,8 @@ def csvheader(outpath, cropped=False, pisascore=False,
     csvline += os.linesep
 
     scnames = psc._scorenames(crop=cropped)
-    names = pco._sourcenames()
     croptag = 'cropseq' if cropped is True else 'fullseq'
-    names = pco._sourcenames()
+    names = pco._sourcenames(short=True)
     csvline = ('#PDB_id, Interface, Chain1, Chain2, Sequence, ' +
                'L' + croptag + ', ' + 'Neff_' + croptag + ', ' +
                'Ncrops, ' + 'Lfullseq, ' + 'Neff_fullseq, ' +
