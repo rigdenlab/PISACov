@@ -9,12 +9,11 @@ __script__ = 'PISACov Statistical Analysis script'
 
 from pisacov import command_line as pcl
 from pisacov.iomod import paths as ppaths
-from pisacov.core import scores as pcs
 from pisacov.iomod import _conf_ops as pco
 from pisacov.iomod import outcsv as pic
+from pisacov.core import rocs as pcr
 
 import argparse
-import datetime
 import os
 import csv
 
@@ -44,6 +43,7 @@ def create_argument_parser():
 
 
 def main():
+
     parser = create_argument_parser()
     args = parser.parse_args()
 
@@ -112,8 +112,12 @@ def main():
     thr = []
     rates = {}
     areas = []  # 0.5*(TPR[n]-TPR[n-1])*(FPR[n]+FPR[n-1])
-    area = 0
+
     for n in range(L):
+        area = 0
+        rates[names[n]] = [[], []]  # FPR, TPR
+        rates[names[n]][0], [names[n]][1], area = pcr.tpr_vs_fpr(scores[n][0], scores[n][1], return_area=True)
+
         scores[n][0], scores[n][1] = zip(*sorted(zip(scores[n][0], scores[n][1]), reverse=True))
         thr.append(list(set(scores[n][0])))
 
