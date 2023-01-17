@@ -37,10 +37,12 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
     tzbegin = begin.astimezone().strftime("%d %B %Y - %H:%M:%S %Z")
     if csvtype == 'scores':
         csvline = '# PISACov run. ' + tzbegin + ". Using "
-        if cropped:
+        if cropped is True:
             csvline += "cropped "
-        else:
+        elif cropped is False:
             csvline += "full "
+        elif cropped is None:
+            csvline += "unknown "
         csvline += "version of sequences. "
         if upth is False:
             upth = 0.0
@@ -55,9 +57,9 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
             csvline += "; CCMPred = " + str(scoreth[1])
             csvline += "; DeepMetaPSICOV = " + str(scoreth[2]) +"."
     elif csvtype == 'rocs':
-        csvline = "# PISACov stats: Receiver operating characteristic curves (ROCs). Sorted by area." + tzbegin + "."
+        csvline = "# PISACov stats: TPR vs FPR Receiver operating characteristic curves (ROCs). Sorted by area." + tzbegin + "."
     elif csvtype == 'rocareas':
-        csvline = "# PISACov stats: Areas under Receiver operating characteristic curves (ROC areas). Sorted by area." + tzbegin + "."
+        csvline = "# PISACov stats: Areas under TPR vs FPR Receiver operating characteristic curves (ROC areas). Sorted by area." + tzbegin + "."
     else:
         logging.critical("        pisacov.iomod.csvheader input 'csvtype' must be one of scores' or 'rocs' or 'rocareas'.")
         raise ValueError

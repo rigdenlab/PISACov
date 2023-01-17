@@ -11,6 +11,7 @@ from pisacov import command_line as pcl
 from pisacov.iomod import paths as ppaths
 from pisacov.core import scores as pcs
 from pisacov.iomod import _conf_ops as pco
+from pisacov.iomod import outcsv as pic
 
 import argparse
 import datetime
@@ -18,6 +19,7 @@ import os
 import csv
 
 logger = None
+
 
 def create_argument_parser():
     """Create a parser for the command line arguments used in pisacov_stats."""
@@ -28,7 +30,7 @@ def create_argument_parser():
 
     parser_rocs = subparsers.add_parser('rocs', help='Produce Receiver operating characteristic (ROC) curves for the data provided.')
     parser_rocs.add_argument('scores', nargs=1, metavar=("ScoresCSVFile"),
-                        help="Input scores CSV filepath.")
+                             help="Input scores CSV filepath.")
     parser_rocs.add_argument("-f", "--full_score_analysis", action='store_true',
                              default=False,
                              help="Produce full analysis of beta score list (beta score list required).")
@@ -39,6 +41,7 @@ def create_argument_parser():
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
     return parser
+
 
 def main():
     parser = create_argument_parser()
@@ -56,19 +59,28 @@ def main():
         outdir = ppaths.check_path(args.outdir)
         ppaths.mdir(outdir)
 
+    fcurves = os.path.splitext(os.path.basename(csvfile))[0] + "TPRvFPR.rocs.csv"
+    fcurves = os.path.join(outdir, fcurves)
+    fareas = os.path.splitext(os.path.basename(csvfile))[0] + "TPRvFPR.roc_areas.csv"
+    fareas = os.path.join(outdir, fareas)
+
     # Parsing scores
-    scores=[]
-    names=[]
+    scores = []
+    names = []
     ignore = set()
     srcs = tuple(pco._sourcenames(short=True))
 
     if 'cropped' in os.path.basename(csvfile):
         crpd = 'cropped'
+        crp = True
     elif 'full' in os.path.basename(csvfile):
-        crpd = 'full'
+        crpd = False
     else:
         crpd = None
+        crp = None
 
+    pic.csvheader(fcurves, cropped=crp, csvtype='rocs')
+    pic.csvheader(fareas, cropped=crp, csvtype='rocareas')
 
     with open(csvfile, newline='') as csvin:
         signals = csv.reader(csvin, delimiter=',' , quotechar='|')
@@ -77,9 +89,9 @@ def main():
                 row[c].replace(" ", "")
             if row[0].startswith('#') is False:
                 c = 0
-                for n in range(12, len(row)-1):
+                for n in range(len(row)-1):
                     if n not in ignore:
-                        if row[n].lower()!= 'nan':
+                        if row[n].lower() != 'nan':
                             scores[c][0].append(float(row[n]))
                             if row[-1].lower() == 'true':
                                 scores[c][1].append(True)
@@ -89,88 +101,81 @@ def main():
             else:
                 if row[0] == '#PDB_id':
                     for c in range(len(row)):
-                        if row[c].endswith(srcs):
+                        if row[c].endswith(srcs) or row[c] == 'PISAscore':
                             names.append(row[c])
-                            scores.append([[],[]])
+                            scores.append([[], []])
                         else:
                             ignore.add(c)
-                else:
-                    header = "".join(row)
 
+    # Calculate ROCs and areas
+    L = len(names)
+    thr = []
+    rates = {}
+    areas = []  # 0.5*(TPR[n]-TPR[n-1])*(FPR[n]+FPR[n-1])
+    area = 0
+    for n in range(L):
+        scores[n][0], scores[n][1] = zip(*sorted(zip(scores[n][0], scores[n][1]), reverse=True))
+        thr.append(list(set(scores[n][0])))
 
-
-    scores = {}
-    names = None
-    thraw = {}
-    with open(csvfile, 'r') as fin:
-        scoresin = csv.reader(fin)
-        for entry in scoresin:
-            if entry[0][0] != "#":
-                if (names is None or isinstance(names, str) or
-                        (isinstance(names, list) and
-                         len(names) != len(entry))):
-                    names = []
-                    for n in range(len(entry)):
-                        names.append('sc_'+str(n+1))
-                else:
-                    if thraw == {}:
-                        for name in names[13:-1]:
-                            thraw[name] = []
-                if entry[0] not in scores:
-                    scores[entry[0]] = {}
-                if entry[1] not in scores[entry[0]]:
-                    scores[entry[0]][entry[1]] = []
-                    for sc in (entry.split(sep=', ')[13:-1]):
-                        scores[entry[0]][entry[1]].append(float(sc))
-                    if (entry.split(sep=', ')[-1]) == 'True' or '1':
-                        scores[entry[0]][entry[1]].append(True)
-                    elif (entry.split(sep=', ')[-1]) == 'False' or '0':
-                        scores[entry[0]][entry[1]].append(False)
-                    for n in range(len(names)):
-                        thraw[names[n]].append(scores[entry[0]][entry[1]][n])
-                else:
-                    if entry.split(sep=', ')[13:] == scores[entry[0]][entry[1]]:
-                        pass
-                    else:
-                        raise ValueError('CSV file contains different values for same interface.')
-            else:
-                names = entry[1:].split(sep=', ')
-
-    # Setting thresholds
-    thr = {}
-    FPR = {}
-    TPR = {}
-    for key, value in thraw.items():
-        thr[key] = list(set(thraw)).sort()
-        FPR[key] = []
-        TPR[key] = []
-        for t in thr[key]:
+        tlist = sorted(thr[n], reverse=True)
+        rates[names[n]] = [[], []]  # FPR, TPR
+        rates[names[n]][0].append(0)
+        rates[names[n]][1].append(0)
+        for t in tlist:
             FP = 0
             TP = 0
             FN = 0
             TN = 0
-            for pdbid in scores:
-                for iface in scores[pdbid]:
-                    stable = scores[pdbid][iface][-1]
-                    for n in range(len(names)):
-                        if scores[pdbid][iface][n] < t:
-                            if stable is True:
-                                FN += 1
-                            else:
-                                TN += 1
-                        else:
-                            if stable is True:
-                                TP += 1
-                            else:
-                                FP += 1
-            FPR[key].append(FP/(FP+TN))
-            TPR[key].append(TP/(TP+FN))
-        fnameout = os.path.join(outdir, (key +
-                                         os.path.splitext(os.path.basename(csvfile))[0] +
-                                         'roc.dat'))
-        with open(fnameout, 'w') as fout:
-            for n in range(len(FPR[key])):
-                fout.write(str(FPR[key][n]) + ' ' + str(TPR[key][n]))
+            for s in range(len(scores[n][0])):
+                if scores[n][0][s] < t:
+                    if scores[n][1][s]:
+                        FN += 1
+                    else:
+                        TN += 1
+                else:
+                    if scores[n][1][s]:
+                        TP += 1
+                    else:
+                        FP += 1
+            if (FP+TN) == 0 or (TP+FN) == 0:
+                rates[names[n]][0].append(None)
+                rates[names[n]][1].append(None)
+            else:
+                rates[names[n]][0].append(FP/(FP+TN))
+                rates[names[n]][1].append(TP/(TP+FN))
+                p = -1
+                while True:
+                    if rates[names[n]][0][-1] is None:
+                        p -= 1
+                    else:
+                        break
+                area += 0.5*(rates[names[n]][1][-1]-rates[names[n]][1][p-1])
+                area *= (rates[names[n]][0][-1]+rates[names[n]][0][p-1])
+
+        areas.append(area)
+    areas, names = zip(*sorted(zip(areas, names), reverse=True))
+
+    # Print out results
+    for n in range(L):
+        pic.lineout([names[n], areas[n]], fareas)
+
+    ignore = ()
+    p = 0
+    while True:
+        listline = []
+        for name in names:
+            if name in ignore:
+                listline.append("")
+                listline.append("")
+            else:
+                listline.append(rates[name][0][p])
+                listline.append(rates[name][1][p])
+                if len(rates[name][0]) == p + 1:
+                    ignore.add(name)
+        pic.lineout(listline, fcurves)
+        p += 1
+        if len(ignore) == len(names):
+            break
 
     endmsg = pcl.ok(starttime, command=__script__)
     logger.info(endmsg)
