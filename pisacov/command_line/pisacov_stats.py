@@ -9,6 +9,8 @@ __script__ = 'PISACov Statistical Analysis script'
 
 from pisacov import command_line as pcl
 from pisacov.iomod import paths as ppaths
+from pisacov.core import scores as pcs
+from pisacov.iomod import _conf_ops as pco
 
 import argparse
 import datetime
@@ -48,10 +50,55 @@ def main():
     logger.info(welcomemsg)
 
     csvfile = ppaths.check_path(args.scores[0], 'file')
-    outdir = ppaths.check_path(args.outdir)
-    ppaths.mdir(outdir)
+    if args.outdir is None:
+        outdir = ppaths.check_path(os.path.dirname(csvfile))
+    else:
+        outdir = ppaths.check_path(args.outdir)
+        ppaths.mdir(outdir)
 
     # Parsing scores
+    scores=[]
+    names=[]
+    ignore = set()
+    srcs = tuple(pco._sourcenames(short=True))
+
+    if 'cropped' in os.path.basename(csvfile):
+        crpd = 'cropped'
+    elif 'full' in os.path.basename(csvfile):
+        crpd = 'full'
+    else:
+        crpd = None
+
+
+    with open(csvfile, newline='') as csvin:
+        signals = csv.reader(csvin, delimiter=',' , quotechar='|')
+        for row in signals:
+            for c in range(len(row)):
+                row[c].replace(" ", "")
+            if row[0].startswith('#') is False:
+                c = 0
+                for n in range(12, len(row)-1):
+                    if n not in ignore:
+                        if row[n].lower()!= 'nan':
+                            scores[c][0].append(float(row[n]))
+                            if row[-1].lower() == 'true':
+                                scores[c][1].append(True)
+                            else:
+                                scores[c][1].append(False)
+                        c += 1
+            else:
+                if row[0] == '#PDB_id':
+                    for c in range(len(row)):
+                        if row[c].endswith(srcs):
+                            names.append(row[c])
+                            scores.append([[],[]])
+                        else:
+                            ignore.add(c)
+                else:
+                    header = "".join(row)
+
+
+
     scores = {}
     names = None
     thraw = {}
