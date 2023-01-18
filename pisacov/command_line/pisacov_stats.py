@@ -11,11 +11,12 @@ from pisacov import command_line as pcl
 from pisacov.iomod import paths as ppaths
 from pisacov.iomod import _conf_ops as pco
 from pisacov.iomod import outcsv as pic
-from pisacov.core import rocs as pcr
+from pisacov.core import stats as pcs
 
 import argparse
 import os
 import csv
+import numpy as np
 
 logger = None
 
@@ -66,6 +67,7 @@ def main():
 
     # Parsing scores
     scores = []
+    wholescores = []
     names = []
     ignore = set()
     srcs = tuple(pco._sourcenames(short=True))
@@ -83,81 +85,59 @@ def main():
     pic.csvheader(fareas, cropped=crp, csvtype='rocareas')
 
     with open(csvfile, newline='') as csvin:
-        signals = csv.reader(csvin, delimiter=',' , quotechar='|')
+        signals = csv.reader(csvin, delimiter=',', quotechar='|')
         for row in signals:
             for c in range(len(row)):
                 row[c].replace(" ", "")
             if row[0].startswith('#') is False:
                 c = 0
+                if row[-1].lower() == 'true':
+                    wholescores[0].append(1.0)
+                elif row[-1].lower() == 'false':
+                    wholescores[0].append(0.0)
+                else:
+                    wholescores[0].append(None)
                 for n in range(len(row)-1):
                     if n not in ignore:
                         if row[n].lower() != 'nan':
                             scores[c][0].append(float(row[n]))
+                            wholescores[c+1].append(float(row[n]))
                             if row[-1].lower() == 'true':
                                 scores[c][1].append(True)
                             else:
                                 scores[c][1].append(False)
+                        else:
+                            wholescores[c+1].append(None)
                         c += 1
             else:
                 if row[0] == '#PDB_id':
                     for c in range(len(row)):
-                        if row[c].endswith(srcs) or row[c] == 'PISAscore':
+                        if row[c].endswith(srcs):
                             names.append(row[c])
                             scores.append([[], []])
+                        elif row[c] == 'PISAscore':
+                            wholescores.append([])
                         else:
                             ignore.add(c)
 
-    # Calculate ROCs and areas
+    # Calculate ROCs, areas and correlations
     L = len(names)
-    thr = []
     rates = {}
-    areas = []  # 0.5*(TPR[n]-TPR[n-1])*(FPR[n]+FPR[n-1])
+    unsrtdareas = []  # 0.5*(TPR[n]-TPR[n-1])*(FPR[n]+FPR[n-1])
 
     for n in range(L):
         area = 0
         rates[names[n]] = [[], []]  # FPR, TPR
-        rates[names[n]][0], [names[n]][1], area = pcr.tpr_vs_fpr(scores[n][0], scores[n][1], return_area=True)
+        rates[names[n]][0], rates[names[n]][1], area = pcs.tpr_vs_fpr(scores[n][0], scores[n][1])
+        unsrtdareas.append(area)
 
-        scores[n][0], scores[n][1] = zip(*sorted(zip(scores[n][0], scores[n][1]), reverse=True))
-        thr.append(list(set(scores[n][0])))
+    areas, names = zip(*sorted(zip(unsrtdareas, names), reverse=True))
 
-        tlist = sorted(thr[n], reverse=True)
-        rates[names[n]] = [[], []]  # FPR, TPR
-        rates[names[n]][0].append(0)
-        rates[names[n]][1].append(0)
-        for t in tlist:
-            FP = 0
-            TP = 0
-            FN = 0
-            TN = 0
-            for s in range(len(scores[n][0])):
-                if scores[n][0][s] < t:
-                    if scores[n][1][s]:
-                        FN += 1
-                    else:
-                        TN += 1
-                else:
-                    if scores[n][1][s]:
-                        TP += 1
-                    else:
-                        FP += 1
-            if (FP+TN) == 0 or (TP+FN) == 0:
-                rates[names[n]][0].append(None)
-                rates[names[n]][1].append(None)
-            else:
-                rates[names[n]][0].append(FP/(FP+TN))
-                rates[names[n]][1].append(TP/(TP+FN))
-                p = -1
-                while True:
-                    if rates[names[n]][0][-1] is None:
-                        p -= 1
-                    else:
-                        break
-                area += 0.5*(rates[names[n]][1][-1]-rates[names[n]][1][p-1])
-                area *= (rates[names[n]][0][-1]+rates[names[n]][0][p-1])
-
-        areas.append(area)
-    areas, names = zip(*sorted(zip(areas, names), reverse=True))
+    # Calculate correlation matrices
+    # SORT WHOLESCORES BY AREA (0=PISA, 1+ BY AREA)
+    for n in range(len(wholescores)):
+        for m in range(len(wholescores)):
+            wholescores
 
     # Print out results
     for n in range(L):

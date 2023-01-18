@@ -241,9 +241,9 @@ def main():
                                       " MinimumCoverageWithMasterSeq(%), and MaxPairwiseSequenceIdentity.\n" +
                                       "Leave empty for DMP default (3, 0.001, 'inf', 50, 99).\n"),
                'LOWTHRESHOLD': ("Please, enter the 3 values of the lower cutoff for predicted scores," +
-                                   " one per each (in this order): PSICOV, CCMPred, DeepMetaPSICOV.\n"+
-                                   "Leave empty for PISACov default (0.2, 0.7, 0.2).\n"+
-                                   "Use '-inf' for no lower cutoff.\n"),
+                                " one per each (in this order): PSICOV, CCMPred, DeepMetaPSICOV.\n" +
+                                "Leave empty for PISACov default (0.2, 0.7, 0.2).\n" +
+                                "Use '-inf' for no lower cutoff.\n"),
                'UNICLUST_FASTA_PATH': ("Please, enter the path to the UniClust fasta file.\n"+
                                        "An empty input will deactivate this option.\n"),
                'NEIGHBOURS_MINDISTANCE': ("Press ENTER for intramolecular contacts " +
