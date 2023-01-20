@@ -60,7 +60,7 @@ def main():
     if args.outdir is None:
         outdir = ppaths.check_path(os.path.dirname(csvfile))
     else:
-        outdir = ppaths.check_path(args.outdir)
+        outdir = ppaths.check_path(os.path.join(args.outdir[0], ''))
         ppaths.mdir(outdir)
 
     fcurves = os.path.splitext(os.path.basename(csvfile))[0] + "TPRvFPR.rocs.csv"
