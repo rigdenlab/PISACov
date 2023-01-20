@@ -108,7 +108,7 @@ def main():
                     wholescores['PISAscore'].append(None)
                 for n in range(len(row)-1):
                     if n not in ignore:
-                        if row[n].lower() != 'nan':
+                        if row[n].lower().strip() != 'nan':
                             scores[c][0].append(float(row[n]))
                             wholescores[names[n]].append(float(row[n]))
                             if row[-1].lower() == 'true':
@@ -121,7 +121,7 @@ def main():
             else:
                 if row[0] == '#PDB_id':
                     for c in range(len(row)):
-                        if row[c].endswith(srcs):
+                        if row[c].strip().endswith(tuple(srcs)):
                             names.append(row[c].strip())
                             scores.append([[], []])
                             wholescores[row[c].strip()] = []
