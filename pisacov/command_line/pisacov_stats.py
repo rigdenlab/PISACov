@@ -28,14 +28,12 @@ def create_argument_parser():
     parser = argparse.ArgumentParser(prog=__prog__, formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description=__description__+' ('+__prog__+')  v.'+__version__ + os.linesep + __doc__,
                                      epilog="Check pisacov.rtfd.io for more information.")
-    subparsers = parser.add_subparsers(help='sub-command help')
 
-    parser_rocs = subparsers.add_parser('rocs', help='Produce Receiver operating characteristic (ROC) curves for the data provided.')
-    parser_rocs.add_argument('scores', nargs=1, metavar=("ScoresCSVFile"),
-                             help="Input scores CSV filepath.")
-    parser_rocs.add_argument("-f", "--full_score_analysis", action='store_true',
-                             default=False,
-                             help="Produce full analysis of beta score list (beta score list required).")
+    parser.add_argument('scores', nargs=1, metavar=("ScoresCSVFile"),
+                        help="Input scores CSV filepath.")
+    parser.add_argument("-f", "--full_score_analysis", action='store_true',
+                        default=False,
+                        help="Produce full analysis of beta score list (beta score list required).")
 
     parser.add_argument("-o", "--outdir", nargs=1, metavar="Output_Directory",
                         help="Set output directory path. If not supplied, default is the one containing the input data.")
