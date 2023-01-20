@@ -122,13 +122,14 @@ def main():
                         c += 1
             else:
                 if row[0] == '#PDB_id':
+                    print(row)
                     for c in range(len(row)):
                         if row[c].endswith(srcs):
                             names.append(row[c])
                             scores.append([[], []])
                             wholescores[row[c]] = []
                         elif row[c] == 'PISAscore':
-                            wholescores['PISAscore'] = []
+                            wholescores[row[c]] = []
                         else:
                             ignore.add(c)
 
