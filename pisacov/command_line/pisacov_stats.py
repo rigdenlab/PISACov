@@ -99,7 +99,7 @@ def main():
         signals = csv.reader(csvin, delimiter=',', quotechar='|')
         for row in signals:
             for c in range(len(row)):
-                row[c].replace(" ", "")
+                row[c].strip()
             if row[0].startswith('#') is False:
                 c = 0
                 if row[-1].lower() == 'true':
