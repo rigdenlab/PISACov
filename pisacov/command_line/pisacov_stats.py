@@ -98,8 +98,6 @@ def main():
     with open(csvfile, newline='') as csvin:
         signals = csv.reader(csvin, delimiter=',', quotechar='|')
         for row in signals:
-            for c in range(len(row)):
-                row[c].strip()
             if row[0].startswith('#') is False:
                 c = 0
                 if row[-1].lower() == 'true':
@@ -122,14 +120,13 @@ def main():
                         c += 1
             else:
                 if row[0] == '#PDB_id':
-                    print(row)
                     for c in range(len(row)):
                         if row[c].endswith(srcs):
-                            names.append(row[c])
+                            names.append(row[c].strip())
                             scores.append([[], []])
-                            wholescores[row[c]] = []
-                        elif row[c] == 'PISAscore':
-                            wholescores[row[c]] = []
+                            wholescores[row[c].strip()] = []
+                        elif row[c].strip() == 'PISAscore':
+                            wholescores[row[c].strip()] = []
                         else:
                             ignore.add(c)
 
