@@ -130,6 +130,7 @@ def main():
                             wholescores[row[c].strip()] = []
                         else:
                             ignore.add(c)
+                    print(str(len(scores) + ", " + str(len(row) - len(ignore)-1)))
 
     # Calculate ROCs, areas and correlations
     L = len(names)
