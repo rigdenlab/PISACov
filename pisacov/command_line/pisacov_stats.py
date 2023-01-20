@@ -129,7 +129,7 @@ def main():
                 if row[0] == '#PDB_id':
                     for c in range(len(row)):
                         # print(row[c].strip())
-                        if row[c].strip().endswith(tuple(srcs)):
+                        if row[c].strip().endswith(srcs):
                             names.append(row[c].strip())
                             scores.append([[], []])
                             wholescores[row[c].strip()] = []

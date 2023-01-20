@@ -63,7 +63,7 @@ def tpr_vs_fpr(scores, against):
                     p -= 1
                 else:
                     break
-            area += 0.5*(tpr[-1]-tpr[1][p-1])*(fpr[-1]+fpr[p-1])
+            area += 0.5*(tpr[-1]-tpr[p-1])*(fpr[-1]+fpr[p-1])
 
     return fpr, tpr, area
 
