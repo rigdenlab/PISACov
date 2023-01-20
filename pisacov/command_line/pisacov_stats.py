@@ -121,6 +121,7 @@ def main():
             else:
                 if row[0] == '#PDB_id':
                     for c in range(len(row)):
+                        print(row[c].strip())
                         if row[c].strip().endswith(tuple(srcs)):
                             names.append(row[c].strip())
                             scores.append([[], []])
