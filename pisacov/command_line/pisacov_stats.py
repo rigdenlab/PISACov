@@ -113,6 +113,7 @@ def main():
                                 scores[c][0].append(float(row[n]))
                             except Exception:
                                 print(row)
+                                print(len(row))
                                 print(c)
                                 print(n)
                                 raise Exception
