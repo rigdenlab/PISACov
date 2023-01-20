@@ -13,6 +13,7 @@ from pisacov import iomod as pio
 from pisacov.iomod import paths as ppaths
 from pisacov.iomod import _conf_ops as pco
 from pisacov.iomod import outcsv as pic
+from pisacov.iomod import plots as pip
 from pisacov.sys import crop as psc
 from pisacov.sys import dmp as psd
 from pisacov.sys import msagen as psm
@@ -488,9 +489,13 @@ def main():
                                         'match' + os.extsep + source +
                                         os.extsep + 'con' + os.extsep + imtype)
                             plotpath = os.path.join(os.path.dirname(csvfile[0]), pout)
-                            matches[i][source].plot_map_alt(plotpath,
-                                                            mode = cmode,
-                                                            plot_type = imtype)
+                            pip.plot_matched_map(input_atlas=matches[i][source],
+                                                 outpath=plotpath,
+                                                 mode = cmode,
+                                                 plot_type = imtype)
+                            #matches[i][source].plot_map_alt(plotpath,
+                            #                                mode = cmode,
+                            #                                plot_type = imtype)
         else:
             iflist[i].structure = None
             iflist[i].contactmap = None

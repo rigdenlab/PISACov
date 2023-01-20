@@ -11,12 +11,14 @@ from pisacov import command_line as pcl
 from pisacov.iomod import paths as ppaths
 from pisacov.iomod import _conf_ops as pco
 from pisacov.iomod import outcsv as pic
+from pisacov.iomod import plots as pip
 from pisacov.core import stats as pcs
 
 import argparse
 import os
 import csv
 import numpy as np
+import copy
 
 logger = None
 
@@ -37,6 +39,9 @@ def create_argument_parser():
 
     parser.add_argument("-o", "--outdir", nargs=1, metavar="Output_Directory",
                         help="Set output directory path. If not supplied, default is the one containing the input data.")
+    parser.add_argument("-p", "--plot_formats", nargs='+',
+                        metavar=("Plot file format(s)"),
+                        help="One or more formats of 'png' and 'eps' of figures to be produced.")
 
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
@@ -65,9 +70,17 @@ def main():
     fareas = os.path.splitext(os.path.basename(csvfile))[0] + "TPRvFPR.roc_areas.csv"
     fareas = os.path.join(outdir, fareas)
 
+    if args.plot_formats is None:
+        plotformats={'png'}
+    else:
+        plotformats=set()
+        for element in args.plot_formats:
+            if element.lower() in {'png', 'eps'}:
+                plotformats.add(element.lower())
+
     # Parsing scores
     scores = []
-    wholescores = []
+    wholescores = {}
     names = []
     ignore = set()
     srcs = tuple(pco._sourcenames(short=True))
@@ -92,22 +105,22 @@ def main():
             if row[0].startswith('#') is False:
                 c = 0
                 if row[-1].lower() == 'true':
-                    wholescores[0].append(1.0)
+                    wholescores['PISAscore'].append(1.0)
                 elif row[-1].lower() == 'false':
-                    wholescores[0].append(0.0)
+                    wholescores['PISAscore'].append(0.0)
                 else:
-                    wholescores[0].append(None)
+                    wholescores['PISAscore'].append(None)
                 for n in range(len(row)-1):
                     if n not in ignore:
                         if row[n].lower() != 'nan':
                             scores[c][0].append(float(row[n]))
-                            wholescores[c+1].append(float(row[n]))
+                            wholescores[names[n]].append(float(row[n]))
                             if row[-1].lower() == 'true':
                                 scores[c][1].append(True)
                             else:
                                 scores[c][1].append(False)
                         else:
-                            wholescores[c+1].append(None)
+                            wholescores[names[n]].append(None)
                         c += 1
             else:
                 if row[0] == '#PDB_id':
@@ -115,8 +128,9 @@ def main():
                         if row[c].endswith(srcs):
                             names.append(row[c])
                             scores.append([[], []])
+                            wholescores[row[c]] = []
                         elif row[c] == 'PISAscore':
-                            wholescores.append([])
+                            wholescores['PISAscore'] = []
                         else:
                             ignore.add(c)
 
@@ -132,12 +146,31 @@ def main():
         unsrtdareas.append(area)
 
     areas, names = zip(*sorted(zip(unsrtdareas, names), reverse=True))
+    areas_dict = {names[i]: areas[i] for i in range(len(names))}
 
     # Calculate correlation matrices
-    # SORT WHOLESCORES BY AREA (0=PISA, 1+ BY AREA)
-    for n in range(len(wholescores)):
-        for m in range(len(wholescores)):
-            wholescores
+    correl_matrix = np.identity(L+1)
+
+    namex = ['PISAscore'] + names
+    for n in range(len(namex)-1):
+        for m in range(n, len(namex)):
+            set1 = []
+            set2 = []
+            setr = []
+            for dat in range(len(wholescores[namex[n]])):
+                if (wholescores[namex[m]][dat] is not None and
+                        wholescores[namex[n]][dat] is not None):
+                    set1.append(wholescores[namex[m]][dat])
+                    set2.append(wholescores[namex[n]][dat])
+                    if wholescores[namex[1]][dat] is None:
+                        setr.append(float('-inf'))
+                    else:
+                        setr.append(wholescores[namex[1]][dat])
+
+            correlation = pcs.correl_matrix(set1, set2, setref=setr)
+            correl_matrix[n][m] = correlation[0][1]
+            correl_matrix[m][n] = correlation[1][0]
+
 
     # Print out results
     for n in range(L):
@@ -163,6 +196,10 @@ def main():
 
     endmsg = pcl.ok(starttime, command=__script__)
     logger.info(endmsg)
+
+    for imtype in plotformats:
+        fout = os.path.join(outdir, 'correlation.' + imtype )
+        pip.plot_correlation_heatmap(data=correl_matrix, outpath=fout, tags=namex, plot_type=imtype)
 
     return
 
