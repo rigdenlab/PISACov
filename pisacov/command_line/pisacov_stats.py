@@ -109,7 +109,13 @@ def main():
                 for n in range(len(row)-1):
                     if n not in ignore:
                         if row[n].lower().strip() != 'nan':
-                            scores[c][0].append(float(row[n]))
+                            try:
+                                scores[c][0].append(float(row[n]))
+                            except Exception:
+                                print(row)
+                                print(c)
+                                print(n)
+                                raise Exception
                             wholescores[names[n-len(ignore)]].append(float(row[n]))
                             if row[-1].lower() == 'true':
                                 scores[c][1].append(True)
@@ -130,7 +136,6 @@ def main():
                             wholescores[row[c].strip()] = []
                         else:
                             ignore.add(c)
-                    print(str(len(scores)) + ", " + str(len(row) - len(ignore)-1))
 
     # Calculate ROCs, areas and correlations
     L = len(names)
