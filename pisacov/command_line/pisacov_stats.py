@@ -110,18 +110,18 @@ def main():
                     if n not in ignore:
                         if row[n].lower().strip() != 'nan':
                             scores[c][0].append(float(row[n]))
-                            wholescores[names[n]].append(float(row[n]))
+                            wholescores[names[n-len(ignore)]].append(float(row[n]))
                             if row[-1].lower() == 'true':
                                 scores[c][1].append(True)
                             else:
                                 scores[c][1].append(False)
                         else:
-                            wholescores[names[n]].append(None)
+                            wholescores[names[n-len(ignore)]].append(None)
                         c += 1
             else:
                 if row[0] == '#PDB_id':
                     for c in range(len(row)):
-                        print(row[c].strip())
+                        # print(row[c].strip())
                         if row[c].strip().endswith(tuple(srcs)):
                             names.append(row[c].strip())
                             scores.append([[], []])
