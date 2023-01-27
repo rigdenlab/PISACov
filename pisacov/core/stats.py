@@ -26,6 +26,12 @@ def tpr_vs_fpr(scores, against):
     :rtype area: float
 
     """
+    if len(scores)==0:
+        fpr = None
+        tpr = None
+        area = 0
+        return fpr, tpr, area
+
     scores, against = zip(*sorted(zip(scores, against), reverse=True))
     thr = (list(set(scores)))
 

@@ -63,9 +63,9 @@ def main():
         outdir = ppaths.check_path(os.path.join(args.outdir[0], ''))
         ppaths.mdir(outdir)
 
-    fcurves = os.path.splitext(os.path.basename(csvfile))[0] + "TPRvFPR.rocs.csv"
+    fcurves = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.rocs.csv"
     fcurves = os.path.join(outdir, fcurves)
-    fareas = os.path.splitext(os.path.basename(csvfile))[0] + "TPRvFPR.roc_areas.csv"
+    fareas = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.roc_areas.csv"
     fareas = os.path.join(outdir, fareas)
 
     if args.plot_formats is None:
@@ -109,14 +109,7 @@ def main():
                 for n in range(len(row)-1):
                     if n not in ignore:
                         if row[n].lower().strip() != 'nan':
-                            try:
-                                scores[c][0].append(float(row[n]))
-                            except Exception:
-                                print(row)
-                                print(len(row))
-                                print(c)
-                                print(n)
-                                raise Exception
+                            scores[c][0].append(float(row[n]))
                             wholescores[names[n-len(ignore)]].append(float(row[n]))
                             if row[-1].lower() == 'true':
                                 scores[c][1].append(True)
@@ -171,9 +164,12 @@ def main():
                     else:
                         setr.append(wholescores[namex[1]][dat])
 
-            correlation = pcs.correl_matrix(set1, set2, setref=setr)
-            correl_matrix[n][m] = correlation[0][1]
-            correl_matrix[m][n] = correlation[1][0]
+            if len(set1)>0:
+                correlation = pcs.correl_matrix(set1, set2, setref=setr)
+                correl_matrix[n][m] = correlation[0][1]
+                correl_matrix[m][n] = correlation[1][0]
+            else:
+                correl_matrix[n][m] = 0
 
 
     # Print out results
@@ -198,11 +194,15 @@ def main():
         if len(ignore) == len(names):
             break
 
+    fname = os.path.splitext(os.path.basename(csvfile))[0]
+    fout = os.path.join(outdir, fname + '.correlations.csv')
+    pic.npmatrix(inmatrix = correl_matrix, outpath=fout)
+
     endmsg = pcl.ok(starttime, command=__script__)
     logger.info(endmsg)
 
     for imtype in plotformats:
-        fout = os.path.join(outdir, 'correlation.' + imtype )
+        fout = os.path.join(outdir, fname + '.correlations.' + imtype )
         pip.plot_correlation_heatmap(data=correl_matrix, outpath=fout, tags=namex, plot_type=imtype)
 
     return
