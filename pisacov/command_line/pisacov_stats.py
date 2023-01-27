@@ -148,7 +148,7 @@ def main():
     # Calculate correlation matrices
     correl_matrix = np.identity(L+1)
 
-    namex = ['PISAscore'] + names
+    namex = tuple(['PISAscore'] + list(names))
     for n in range(len(namex)-1):
         for m in range(n, len(namex)):
             set1 = []
