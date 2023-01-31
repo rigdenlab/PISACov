@@ -100,24 +100,39 @@ def main():
         for row in signals:
             if row[0].startswith('#') is False:
                 c = 0
-                if row[-1].lower() == 'true':
+                if row[-1].lower().strip() == 'true':
                     wholescores['PISAscore'].append(1.0)
-                elif row[-1].lower() == 'false':
+                elif row[-1].lower().strip() == 'false':
                     wholescores['PISAscore'].append(0.0)
                 else:
                     wholescores['PISAscore'].append(None)
                 for n in range(len(row)-1):
-                    if n not in ignore:
+                    if row[c].strip().endswith(srcs):
                         if row[n].lower().strip() != 'nan':
                             scores[c][0].append(float(row[n]))
-                            wholescores[names[n -len(ignore)]].append(float(row[n]))
-                            if row[-1].lower() == 'true':
+                            wholescores[names[c]].append(float(row[n]))
+                            if row[-1].lower().strip() == 'true':
                                 scores[c][1].append(True)
-                            else:
+                            elif row[-1].lower().strip() == 'false':
                                 scores[c][1].append(False)
+                            else:
+                                scores[c][1].append(None)
                         else:
-                            wholescores[names[n-len(ignore)]].append(None)
+                            wholescores[names[c]].append(None)
                         c += 1
+
+#                for n in range(len(row)-1):
+#                    if n not in ignore:
+#                        if row[n].lower().strip() != 'nan':
+#                            scores[c][0].append(float(row[n]))
+#                            wholescores[names[n-len(ignore)]].append(float(row[n]))
+#                            if row[-1].lower().strip() == 'true':
+#                                scores[c][1].append(True)
+#                            else:
+#                                scores[c][1].append(False)
+#                        else:
+#                            wholescores[names[n-len(ignore)]].append(None)
+#                        c += 1
             else:
                 if row[0] == '#PDB_id':
                     for c in range(len(row)):
@@ -132,7 +147,9 @@ def main():
                             ignore.add(c)
 
     # Calculate ROCs, areas and correlations
+    # TO DO: Calcultate TOCs too! https://en.wikipedia.org/wiki/Total_operating_characteristic
     L = len(names)
+    print(names)
     rates = {}
     unsrtdareas = []  # 0.5*(TPR[n]-TPR[n-1])*(FPR[n]+FPR[n-1])
 
@@ -149,22 +166,31 @@ def main():
     correl_matrix = np.identity(L+1)
 
     namex = tuple(['PISAscore'] + list(names))
+    print(namex)
     for n in range(len(namex)-1):
         for m in range(n+1, len(namex)):
             set1 = []
             set2 = []
             setr = []
             for dat in range(len(wholescores[namex[n]])):
-                if (wholescores[namex[m]][dat] is not None and
-                        wholescores[namex[n]][dat] is not None):
-                    set1.append(wholescores[namex[m]][dat])
-                    set2.append(wholescores[namex[n]][dat])
-                    if wholescores[namex[1]][dat] is None:
-                        setr.append(float('-inf'))
-                    else:
-                        setr.append(wholescores[namex[1]][dat])
+                print(wholescores[namex[0]][dat])
+                print(wholescores[namex[len(namex)-1]][0])
+                try:
+                    if (wholescores[namex[m]][dat] is not None and
+                            wholescores[namex[n]][dat] is not None):
+                        set1.append(wholescores[namex[m]][dat])
+                        set2.append(wholescores[namex[n]][dat])
+                        if wholescores[namex[1]][dat] is None:
+                            setr.append(float('-inf'))
+                        else:
+                            setr.append(wholescores[namex[1]][dat])
+                except Exception:
+                    print('max = (', str(len(namex)-2) + ', ' +
+                          str(len(namex)-1) + ', ' +
+                          str(len(wholescores[namex[n]])-1) + ')')
+                    print(n, m, dat)
 
-            if len(set1)>0:
+            if len(set1) > 0:
                 correlation = pcs.correl_matrix(set1, set2, setref=setr)
                 correl_matrix[n][m] = correlation[0][1]
                 correl_matrix[m][n] = correlation[1][0]
