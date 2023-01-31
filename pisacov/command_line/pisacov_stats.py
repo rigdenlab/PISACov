@@ -110,7 +110,7 @@ def main():
                     if n not in ignore:
                         if row[n].lower().strip() != 'nan':
                             scores[c][0].append(float(row[n]))
-                            wholescores[names[n-len(ignore)]].append(float(row[n]))
+                            wholescores[names[n -len(ignore)]].append(float(row[n]))
                             if row[-1].lower() == 'true':
                                 scores[c][1].append(True)
                             else:
@@ -150,7 +150,7 @@ def main():
 
     namex = tuple(['PISAscore'] + list(names))
     for n in range(len(namex)-1):
-        for m in range(n, len(namex)):
+        for m in range(n+1, len(namex)):
             set1 = []
             set2 = []
             setr = []
