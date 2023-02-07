@@ -11,7 +11,7 @@ import copy
 
 def tpr_vs_fpr(scores, against):
     """
-    Produce True Positive rate and False Positive rate data by comparing results against standard.
+    Produce True Positive rate and False Positive rate data by comparing results against standard (ROCs).
 
     :param scores: Numeric scores.
     :type scores: list [float]
@@ -72,6 +72,71 @@ def tpr_vs_fpr(scores, against):
             area += 0.5*(tpr[-1]-tpr[p-1])*(fpr[-1]+fpr[p-1])
 
     return fpr, tpr, area
+
+
+def hits_vs_total(scores, against):
+    """
+    Produce True Positive hits and Total hits and misses data by comparing results against standard (TOCs).
+
+    :param scores: Numeric scores.
+    :type scores: list [float]
+    :param against: Standard for scores to be compared against.
+    :type against: list [bool]
+
+    :return ntot: Hits (TPs) + False Alarms (FPs) data.
+    :rtype ntot: set [float]
+    :return hits: Hits (TPs) data.
+    :rtype hits: set [float]
+    :return area: Area under the ROC curve.
+    :rtype area: float
+
+    """
+    if len(scores)==0:
+        ntot = None
+        hits = None
+        # area = 0
+        return ntot, hits  # , area
+
+    scores, against = zip(*sorted(zip(scores, against), reverse=True))
+    thr = (list(set(scores)))
+
+    tlist = sorted(thr, reverse=True)
+    hits = []
+    ntot = []
+    ntot.append(0)
+    hits.append(0)
+    # area = 0
+    for t in tlist:
+        FP = 0
+        TP = 0
+        FN = 0
+        TN = 0
+        for s in range(len(scores)):
+            if scores[s] < t:
+                if against[s]:
+                    FN += 1
+                else:
+                    TN += 1
+            else:
+                if against[s]:
+                    TP += 1
+                else:
+                    FP += 1
+        if (FP+TN) == 0 or (TP+FN) == 0:
+            ntot.append(None)
+            hits.append(None)
+        else:
+            ntot.append(FP+TP)
+            hits.append(TP)
+            # p = -1
+            # while True:
+            #     if ntot[-1] is None:
+            #         p -= 1
+            #     else:
+            #         break
+            # area += 0.5*(tpr[-1]-tpr[p-1])*(fpr[-1]+fpr[p-1])
+
+    return ntot, hits  # , area
 
 
 def correl_matrix(set1, set2, setref=None):

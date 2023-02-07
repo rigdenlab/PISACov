@@ -11,6 +11,82 @@ import matplotlib as mpl
 import logging
 import numpy as np
 
+
+def gen_cmap(value, scheme='rocs'):
+    # https://github.com/frankligy/scTriangulate/blob/main/image/colors_module/README.md
+    if scheme == 'correlations' and (value < -1.0 or value > 1.0):
+        logging.critical('Value must be within the interval associated to the given scheme ("correlations" [-1, 1]).')
+        raise ValueError
+    elif scheme == 'rocs' and (value < 0.0 or value > 1.0):
+        logging.critical('Value must be within the interval associated to the given scheme ("rocs" [0, 1]).')
+        raise ValueError
+
+    if scheme == 'rocs':
+        name = 'roc_grad'
+        cdict = {'red':
+                 ((0.0, 0.5, 0.5),
+                  (0.5, 1.0, 1.0),
+                  (0.6, 1.0, 1.0),
+                  (0.7, 0.6, 0.6),
+                  (0.8, 0.0, 0.0),
+                  (1.0, 0.0, 0.0)),
+                 'green':
+                 ((0.0, 0.0, 0.0),
+                  (0.5, 0.0, 0.0),
+                  (0.6, 0.91, 0.91),
+                  (0.7, 0.6, 0.6),
+                  (0.8, 0.5, 0.5),
+                  (1.0, 0.0, 0.0)),
+                 'blue':
+                 ((0.0, 0.0, 0.0),
+                  (0.5, 0.0, 0.0),
+                  (0.6, 0.0, 0.0),
+                  (0.7, 0.0, 0.0),
+                  (0.8, 0.5, 0.5),
+                  (1.0, 0.7, 0.7))
+                 }
+    elif scheme == 'correlations':  # TO DO
+        name = 'correl_grad'
+        cdict = {'red':
+                 ((0.0, 0.5, 0.5),
+                  (0.5, 1.0, 1.0),
+                  (0.6, 1.0, 1.0),
+                  (0.7, 0.6, 0.6),
+                  (0.8, 0.0, 0.0),
+                  (1.0, 0.0, 0.0)),
+                 'green':
+                 ((0.0, 0.0, 0.0),
+                  (0.5, 0.0, 0.0),
+                  (0.6, 0.91, 0.91),
+                  (0.7, 0.6, 0.6),
+                  (0.8, 0.5, 0.5),
+                  (1.0, 0.0, 0.0)),
+                 'blue':
+                 ((0.0, 0.0, 0.0),
+                  (0.5, 0.0, 0.0),
+                  (0.6, 0.0, 0.0),
+                  (0.7, 0.0, 0.0),
+                  (0.8, 0.5, 0.5),
+                  (1.0, 0.7, 0.7))
+                 }
+
+    return mpl.colors.LinearSegmentedColormap(name, segmentdata=cdict)
+
+
+class colour_scheme(self, scheme):
+    # https://stackoverflow.com/questions/26108436/how-can-i-get-the-matplotlib-rgb-color-given-the-colormap-name-boundrynorm-an
+    self.name = scheme
+    self.cmap = _colours(scheme)
+    if scheme == 'rocs':
+        self.norm = mpl.colors.Normalize(vmin=0.0, vmax=1.0)
+    elif scheme == 'correlations':
+        self.norm = mpl.colors.Normalize(vmin=-1.0, vmax=1.0)
+    self.scalarMap = mpl.ScalarMappable(norm=self.norm, cmap=self.cmap)
+
+    def get_rgb(self, val):
+        return self.scalarMap.to_rgba(val)
+
+
 def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None):
     """Plot matched contact map.
 
@@ -118,13 +194,17 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
     :param outpath: Output filepath.
     :type outpath: str, optional
     :param areas_for_color: Colour-index assigned to each label, defaults to None.
-    :type areas_for_color: dict [float], optional
+    :type areas_for_color: dict[float], optional
     :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'agr' in raw grace format, defaults to 'png'.
     :type plot_type: str, optional
     :param roc_type: Type of ROC curve, tprvsfpr' only, defaults to 'tprvsfpr'
     :type roc_type: str, optional
 
     """
+    if not isinstance(areas_for_color, dict):
+        logging.critical('Input must be a dictionary.')
+        raise TypeError
+
     if roc_type == 'tprvsfpr':
         xaxis = 'False Positive Rate (FPR)'
         yaxis = 'True Positive Rate (TPR)'
@@ -143,9 +223,14 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
         logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
         fig, ax = plt.subplots(dpi=141)
 
-    ax.plot([0,1], [0,1], linestyle=":", color="dimgray")
+    ax.plot([0, 1], [0, 1], linestyle=":", color="dimgray")
     for key in data:
-        ax.plot(data[key][0], data[key][1], linestyle="-", label=key)
+        if areas_for_color is None:
+            clr = 'k'
+        else:
+            clr = _colours(areas_for_color[key], scheme='rocs')
+
+        ax.plot(data[key][0], data[key][1], linestyle="-", label=key, color=clr)
 
     ax.set_title(title, y=1.08)
 
@@ -154,6 +239,67 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
     ax.axis([vmin, vmax, vmin, vmax])
     ax.set_xlim(vmin, vmax)
     ax.set_ylim(vmin, vmax)
+
+    ax.set_xlabel(xaxis)
+    ax.set_ylabel(yaxis)
+
+    ax.legend();
+    if plot_type == 'png' or plot_type == 'eps':
+        fig.savefig(outpath, format=plot_type, overwrite=True)
+        plt.close(fig)
+
+
+def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
+    """
+    Plot TOC curve.
+
+    :param data: X, Y values of TOC.
+    :type data: list[list[float], list[float]]
+    :param datatag: Data description of TOC.
+    :type datatag: str
+    :param outpath: Output filepath.
+    :type outpath: str, optional
+    :param areas_for_color: Colour-index assigned to each label, defaults to None.
+    :type areas_for_color: dict [float], optional
+    :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'agr' in raw grace format, defaults to 'png'.
+    :type plot_type: str, optional
+
+    """
+    if not isinstance(areas_for_color, dict):
+        logging.critical('Input must be a dictionary.')
+        raise TypeError
+
+    xaxis = 'Hits + False Alarms (FP + TP)'
+    yaxis = 'Hits (TP)'
+    title = ('Total operating characteristic (TOC) curve.')
+
+    if plot_type == 'png':
+        fig, ax = plt.subplots(dpi=141)
+    elif plot_type == 'eps':
+        fig, ax = plt.subplots(dpi=1200)
+    else:
+        logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
+        fig, ax = plt.subplots(dpi=141)
+
+    xmax = max(data[0])
+    ymax = max(data[1])
+    ax.plot([0, xmax], [0, ymax], linestyle=":", color="dimgray")
+    ax.plot([0, xmax], [0, xmax], linestyle=":", color="seagreen")
+    ax.plot([0, ymax], [0, ymax], linestyle=":", color="indianred")
+
+
+    if areas_for_color is None:
+        clr = 'k'
+    else:
+        clr = _colours(areas_for_color[key], scheme='rocs')
+
+    ax.plot(data[0], data[1], linestyle="-", label=datatag)
+
+    ax.set_title(title, y=1.08)
+
+    ax.axis([0, xmax, 0, ymax])
+    ax.set_xlim(0, xmax)
+    ax.set_ylim(0, ymax)
 
     ax.set_xlabel(xaxis)
     ax.set_ylabel(yaxis)
