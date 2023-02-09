@@ -11,80 +11,78 @@ import matplotlib as mpl
 import logging
 import numpy as np
 
+_cschemes = {
+    'roc_grad':
+        {'red':
+         ((0.0, 0.5, 0.5),
+          (0.5, 1.0, 1.0),
+          (0.6, 1.0, 1.0),
+          (0.7, 0.6, 0.6),
+          (0.8, 0.0, 0.0),
+          (1.0, 0.0, 0.0)),
+         'green':
+         ((0.0, 0.0, 0.0),
+          (0.5, 0.0, 0.0),
+          (0.6, 0.91, 0.91),
+          (0.7, 0.6, 0.6),
+          (0.8, 0.5, 0.5),
+          (1.0, 0.0, 0.0)),
+         'blue':
+         ((0.0, 0.0, 0.0),
+          (0.5, 0.0, 0.0),
+          (0.6, 0.0, 0.0),
+          (0.7, 0.0, 0.0),
+          (0.8, 0.5, 0.5),
+          (1.0, 0.7, 0.7))},
+    'correl_grad':
+        {'red':
+         ((0.0, 1.0, 1.0),
+          (0.25, 0.5, 0.5),
+          (0.5, 0.0, 0.0),
+          (0.75, 0.0, 0.0),
+          (1.0, 0.0, 0.0)),
+         'green':
+         ((0.0, 1.0, 1.0),
+          (0.25, 0.0, 0.0),
+          (0.5, 0.0, 0.0),
+          (0.75, 0.0, 0.0),
+          (1.0, 1.0, 1.0)),
+         'blue':
+         ((0.0, 0.0, 0.0),
+          (0.25, 0.0, 0.0),
+          (0.5, 0.0, 0.0),
+          (0.75, 0.5, 0.5),
+          (1.0, 1.0, 1.0))}
+    }
 
-def gen_cmap(value, scheme='rocs'):
+def gen_cmap(scheme='rocs'):
     # https://github.com/frankligy/scTriangulate/blob/main/image/colors_module/README.md
-    if scheme == 'correlations' and (value < -1.0 or value > 1.0):
-        logging.critical('Value must be within the interval associated to the given scheme ("correlations" [-1, 1]).')
-        raise ValueError
-    elif scheme == 'rocs' and (value < 0.0 or value > 1.0):
-        logging.critical('Value must be within the interval associated to the given scheme ("rocs" [0, 1]).')
-        raise ValueError
-
     if scheme == 'rocs':
         name = 'roc_grad'
-        cdict = {'red':
-                 ((0.0, 0.5, 0.5),
-                  (0.5, 1.0, 1.0),
-                  (0.6, 1.0, 1.0),
-                  (0.7, 0.6, 0.6),
-                  (0.8, 0.0, 0.0),
-                  (1.0, 0.0, 0.0)),
-                 'green':
-                 ((0.0, 0.0, 0.0),
-                  (0.5, 0.0, 0.0),
-                  (0.6, 0.91, 0.91),
-                  (0.7, 0.6, 0.6),
-                  (0.8, 0.5, 0.5),
-                  (1.0, 0.0, 0.0)),
-                 'blue':
-                 ((0.0, 0.0, 0.0),
-                  (0.5, 0.0, 0.0),
-                  (0.6, 0.0, 0.0),
-                  (0.7, 0.0, 0.0),
-                  (0.8, 0.5, 0.5),
-                  (1.0, 0.7, 0.7))
-                 }
-    elif scheme == 'correlations':  # TO DO
+    elif scheme == 'correlations':
         name = 'correl_grad'
-        cdict = {'red':
-                 ((0.0, 0.5, 0.5),
-                  (0.5, 1.0, 1.0),
-                  (0.6, 1.0, 1.0),
-                  (0.7, 0.6, 0.6),
-                  (0.8, 0.0, 0.0),
-                  (1.0, 0.0, 0.0)),
-                 'green':
-                 ((0.0, 0.0, 0.0),
-                  (0.5, 0.0, 0.0),
-                  (0.6, 0.91, 0.91),
-                  (0.7, 0.6, 0.6),
-                  (0.8, 0.5, 0.5),
-                  (1.0, 0.0, 0.0)),
-                 'blue':
-                 ((0.0, 0.0, 0.0),
-                  (0.5, 0.0, 0.0),
-                  (0.6, 0.0, 0.0),
-                  (0.7, 0.0, 0.0),
-                  (0.8, 0.5, 0.5),
-                  (1.0, 0.7, 0.7))
-                 }
+
+    cdict = _cschemes[name]
 
     return mpl.colors.LinearSegmentedColormap(name, segmentdata=cdict)
 
 
-class colour_scheme(self, scheme):
+class colour_scheme:
     # https://stackoverflow.com/questions/26108436/how-can-i-get-the-matplotlib-rgb-color-given-the-colormap-name-boundrynorm-an
-    self.name = scheme
-    self.cmap = _colours(scheme)
-    if scheme == 'rocs':
-        self.norm = mpl.colors.Normalize(vmin=0.0, vmax=1.0)
-    elif scheme == 'correlations':
-        self.norm = mpl.colors.Normalize(vmin=-1.0, vmax=1.0)
-    self.scalarMap = mpl.ScalarMappable(norm=self.norm, cmap=self.cmap)
+    def __init__(self, scheme):
+        self.name = scheme
+        self.cmap = gen_cmap(scheme)
+        if scheme == 'rocs':
+            self.norm = mpl.colors.Normalize(vmin=0.0, vmax=1.0)
+        elif scheme == 'correlations':
+            self.norm = mpl.colors.Normalize(vmin=-1.0, vmax=1.0)
+        self.scalarMap = mpl.cm.ScalarMappable(norm=self.norm, cmap=self.cmap)
 
     def get_rgb(self, val):
         return self.scalarMap.to_rgba(val)
+
+
+color_scheme=colour_scheme
 
 
 def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None):
@@ -223,12 +221,15 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
         logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
         fig, ax = plt.subplots(dpi=141)
 
+    if plot_type == 'png' or plot_type == 'eps':
+        cmap = colour_scheme('rocs')
+
     ax.plot([0, 1], [0, 1], linestyle=":", color="dimgray")
     for key in data:
         if areas_for_color is None:
             clr = 'k'
         else:
-            clr = _colours(areas_for_color[key], scheme='rocs')
+            clr = cmap.get_rgb(areas_for_color[key])
 
         ax.plot(data[key][0], data[key][1], linestyle="-", label=key, color=clr)
 
@@ -265,8 +266,8 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     :type plot_type: str, optional
 
     """
-    if not isinstance(areas_for_color, dict):
-        logging.critical('Input must be a dictionary.')
+    if not isinstance(area_for_color, float):
+        logging.critical('Input must be a float.')
         raise TypeError
 
     xaxis = 'Hits + False Alarms (FP + TP)'
@@ -281,6 +282,10 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
         logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
         fig, ax = plt.subplots(dpi=141)
 
+    if plot_type == 'png' or plot_type == 'eps':
+        cmap = colour_scheme('rocs')
+
+
     xmax = max(data[0])
     ymax = max(data[1])
     ax.plot([0, xmax], [0, ymax], linestyle=":", color="dimgray")
@@ -288,12 +293,12 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     ax.plot([0, ymax], [0, ymax], linestyle=":", color="indianred")
 
 
-    if areas_for_color is None:
+    if area_for_color is None:
         clr = 'k'
     else:
-        clr = _colours(areas_for_color[key], scheme='rocs')
+        clr = cmap.get_rgb(area_for_color)
 
-    ax.plot(data[0], data[1], linestyle="-", label=datatag)
+    ax.plot(data[0], data[1], linestyle="-", label=datatag, color=clr)
 
     ax.set_title(title, y=1.08)
 
