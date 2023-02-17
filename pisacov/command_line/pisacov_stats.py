@@ -65,6 +65,8 @@ def main():
 
     fcurves = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.rocs.csv"
     fcurves = os.path.join(outdir, fcurves)
+    fcurves2 = os.path.splitext(os.path.basename(csvfile))[0] + ".HitsvTotal.tocs.csv"
+    fcurves2 = os.path.join(outdir, fcurves2)
     fareas = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.roc_areas.csv"
     fareas = os.path.join(outdir, fareas)
 
@@ -93,6 +95,7 @@ def main():
         crp = None
 
     pic.csvheader(fcurves, cropped=crp, csvtype='rocs')
+    pic.csvheader(fcurves, cropped=crp, csvtype='tocs')
     pic.csvheader(fareas, cropped=crp, csvtype='rocareas')
 
     with open(csvfile, newline='') as csvin:
@@ -151,6 +154,7 @@ def main():
     L = len(names)
     print(names)
     rates = {}
+    tocs = {}
     unsrtdareas = []  # 0.5*(TPR[n]-TPR[n-1])*(FPR[n]+FPR[n-1])
 
     for n in range(L):
@@ -158,6 +162,10 @@ def main():
         rates[names[n]] = [[], []]  # FPR, TPR
         rates[names[n]][0], rates[names[n]][1], area = pcs.tpr_vs_fpr(scores[n][0], scores[n][1])
         unsrtdareas.append(area)
+
+        tocs[names[n]] = [[], []]  # Tots, Hits
+        tocs[names[n]][0], tocs[names[n]][1] = pcs.hits_vs_total(scores[n][0], scores[n][1])
+
 
     areas, names = zip(*sorted(zip(unsrtdareas, names), reverse=True))
     areas_dict = {names[i]: areas[i] for i in range(len(names))}
@@ -200,6 +208,8 @@ def main():
 
     # Print out results
     for n in range(L):
+        pic.csvheader(fcurves2, cropped=crp, csvtype='toc') # MUST BE ONE BY ONE AND HAVE OWN HEADER
+
         pic.lineout([names[n], areas[n]], fareas)
 
     ignore = ()
@@ -216,6 +226,7 @@ def main():
                 if len(rates[name][0]) == p + 1:
                     ignore.add(name)
         pic.lineout(listline, fcurves)
+        pic.lineout(listline, fcurves2)
         p += 1
         if len(ignore) == len(names):
             break

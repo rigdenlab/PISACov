@@ -16,13 +16,13 @@ import logging
 
 
 def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
-              upth=False, scoreth=False):
+              upth=False, scoreth=False, singularID=None):
     """
     Create a new CSV file with only the header.
 
     :param outpath: CSV filepath.
     :type outpath: str
-    :param csvtype: 'scores' or 'rocs' or 'rocareas', defaults to 'scores'.
+    :param csvtype: 'scores' or 'rocs' or 'tocs' or 'rocareas', defaults to 'scores'.
     :type csvtype: str, optional
     :param cropped: True when results have been obtained from crops_cropstr inputs, defaults to False.
     :type cropped: bool, optional
@@ -32,11 +32,17 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
     :type upth: float, optional
     :param scoreth: Low Threshold for predicted contacts' scores [psicov, ccmpred, dmp], defaults to False.
     :type scoreth: list [float], optional
+    :param singularID: If the file contains information for a single system, include information of the ID in the header, defaults to None.
+    :type singularID: str
     """
     begin = datetime.datetime.now()
     tzbegin = begin.astimezone().strftime("%d %B %Y - %H:%M:%S %Z")
+    if singularID is None:
+        sID = ''
+    else:
+        sID = singularID + '. '
     if csvtype == 'scores':
-        csvline = '# PISACov run. ' + tzbegin + ". Using "
+        csvline = '# PISACov run. ' + sID + tzbegin + ". Using "
         if cropped is True:
             csvline += "cropped "
         elif cropped is False:
@@ -58,10 +64,12 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
             csvline += "; DeepMetaPSICOV = " + str(scoreth[2]) +"."
     elif csvtype == 'rocs':
         csvline = "# PISACov stats: TPR vs FPR Receiver operating characteristic curves (ROCs). Sorted by area." + tzbegin + "."
+    elif csvtype == 'toc':
+        csvline = "# PISACov stats: Hits (TPs) vs total (TPs+FPs) Total operating characteristic curves (TOCs)." + tzbegin + "."
     elif csvtype == 'rocareas':
         csvline = "# PISACov stats: Areas under TPR vs FPR Receiver operating characteristic curves (ROC areas). Sorted by area." + tzbegin + "."
     else:
-        logging.critical("        pisacov.iomod.csvheader input 'csvtype' must be one of scores' or 'rocs' or 'rocareas'.")
+        logging.critical("        pisacov.iomod.csvheader input 'csvtype' must be one of scores' or rocs' or 'tocs' or 'rocareas'.")
         raise ValueError
 
     csvline += os.linesep
