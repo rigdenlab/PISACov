@@ -32,7 +32,17 @@ def tpr_vs_fpr(scores, against):
         area = 0
         return fpr, tpr, area
 
-    scores, against = zip(*sorted(zip(scores, against), reverse=True))
+    numagainst = []
+    for b in against:
+        if b is True:
+            numagainst.append(1)
+        elif b is False:
+            numagainst.append(0)
+        elif b is None:
+            numagainst.append(-1)
+
+    scores, against = zip(*sorted(zip(scores, numagainst), reverse=True))
+
     thr = (list(set(scores)))
 
     tlist = sorted(thr, reverse=True)
@@ -48,12 +58,12 @@ def tpr_vs_fpr(scores, against):
         TN = 0
         for s in range(len(scores)):
             if scores[s] < t:
-                if against[s]:
+                if against[s] == 1:
                     FN += 1
                 else:
                     TN += 1
             else:
-                if against[s]:
+                if against[s] == 1:
                     TP += 1
                 else:
                     FP += 1
@@ -97,7 +107,17 @@ def hits_vs_total(scores, against):
         # area = 0
         return ntot, hits  # , area
 
-    scores, against = zip(*sorted(zip(scores, against), reverse=True))
+    numagainst = []
+    for b in against:
+        if b is True:
+            numagainst.append(1)
+        elif b is False:
+            numagainst.append(0)
+        elif b is None:
+            numagainst.append(-1)
+
+    scores, against = zip(*sorted(zip(scores, numagainst), reverse=True))
+
     thr = (list(set(scores)))
 
     tlist = sorted(thr, reverse=True)
@@ -113,12 +133,12 @@ def hits_vs_total(scores, against):
         TN = 0
         for s in range(len(scores)):
             if scores[s] < t:
-                if against[s]:
+                if against[s] == 1:
                     FN += 1
                 else:
                     TN += 1
             else:
-                if against[s]:
+                if against[s] == 1:
                     TP += 1
                 else:
                     FP += 1

@@ -175,7 +175,7 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
-html_title = project + ' v{0}'.format(version)
+html_title = project + ' v{0}'.format(release)
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 html_short_title = project

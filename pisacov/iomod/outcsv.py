@@ -64,12 +64,12 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
             csvline += "; DeepMetaPSICOV = " + str(scoreth[2]) +"."
     elif csvtype == 'rocs':
         csvline = "# PISACov stats: TPR vs FPR Receiver operating characteristic curves (ROCs). Sorted by area." + tzbegin + "."
-    elif csvtype == 'toc':
+    elif csvtype == 'tocs':
         csvline = "# PISACov stats: Hits (TPs) vs total (TPs+FPs) Total operating characteristic curves (TOCs)." + tzbegin + "."
     elif csvtype == 'rocareas':
         csvline = "# PISACov stats: Areas under TPR vs FPR Receiver operating characteristic curves (ROC areas). Sorted by area." + tzbegin + "."
     else:
-        logging.critical("        pisacov.iomod.csvheader input 'csvtype' must be one of scores' or rocs' or 'tocs' or 'rocareas'.")
+        logging.critical("        pisacov.iomod.csvheader input 'csvtype' must be one of scores' or rocs' or 'toc' or 'rocareas'.")
         raise ValueError
 
     csvline += os.linesep

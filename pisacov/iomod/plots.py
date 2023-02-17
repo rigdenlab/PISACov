@@ -279,7 +279,7 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     elif plot_type == 'eps':
         fig, ax = plt.subplots(dpi=1200)
     else:
-        logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
+        logging.warning('Unrecognised plot_type in plot_toc. Using default PNG.')
         fig, ax = plt.subplots(dpi=141)
 
     if plot_type == 'png' or plot_type == 'eps':
@@ -317,7 +317,7 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
 
 def plot_correlation_heatmap(data, outpath, tags=None, plot_type='png'):
     """
-    Plot ROC curves.
+    Plot correlation heatmap.
 
     :param data: Correlation matrix.
     :type data: :class:`~np.array`
@@ -325,7 +325,7 @@ def plot_correlation_heatmap(data, outpath, tags=None, plot_type='png'):
     :type outpath: str, optional
     :param labels: Label list, defaults to None.
     :type labels: list[str], optional
-    :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'agr' in raw grace format, defaults to 'png'.
+    :param plot_type: Plot either as a 'png' image or 'eps' vector image, defaults to 'png'.
     :type plot_type: str, optional
 
     """

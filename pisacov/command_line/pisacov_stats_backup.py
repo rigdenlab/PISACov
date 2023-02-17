@@ -58,25 +58,22 @@ def main():
 
     csvfile = ppaths.check_path(args.scores[0], 'file')
     if args.outdir is None:
-        outdir = ppaths.check_path(os.path.join(os.path.dirname(csvfile), 'stats', ''))
+        outdir = ppaths.check_path(os.path.join(os.path.dirname(csvfile),'stats',''))
     else:
-        if os.path.basename(os.path.dirname(os.path.abspath(args.outdir[0]))) == 'stats':
-            outdir = ppaths.check_path(os.path.join(args.outdir[0], ''))
-        else:
-            outdir = ppaths.check_path(os.path.join(args.outdir[0], 'stats', ''))
+        outdir = ppaths.check_path(os.path.join(args.outdir[0], 'stats', ''))
         ppaths.mdir(outdir)
 
     fcurves = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.rocs.csv"
     fcurves = os.path.join(outdir, fcurves)
-    fcurves2 = os.path.splitext(os.path.basename(csvfile))[0] + ".HitsvTotal.tocs.csv"
+    fcurves2 = os.path.splitext(os.path.basename(csvfile))[0] + ".replaceme.HitsvTotal.toc.csv"
     fcurves2 = os.path.join(outdir, fcurves2)
     fareas = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.roc_areas.csv"
     fareas = os.path.join(outdir, fareas)
 
     if args.plot_formats is None:
-        plotformats = {'png'}
+        plotformats={'png'}
     else:
-        plotformats = set()
+        plotformats=set()
         for element in args.plot_formats:
             if element.lower() in {'png', 'eps'}:
                 plotformats.add(element.lower())
@@ -93,30 +90,27 @@ def main():
         crp = True
     elif 'full' in os.path.basename(csvfile):
         crpd = False
-        crp = False
     else:
         crpd = None
         crp = None
 
     pic.csvheader(fcurves, cropped=crp, csvtype='rocs')
-    pic.csvheader(fcurves, cropped=crp, csvtype='tocs')
+    pic.csvheader(fcurves, cropped=crp, csvtype='toc')
     pic.csvheader(fareas, cropped=crp, csvtype='rocareas')
 
     with open(csvfile, newline='') as csvin:
         signals = csv.reader(csvin, delimiter=',', quotechar='|')
-        col = []
         for row in signals:
             if row[0].startswith('#') is False:
+                c = 0
                 if row[-1].lower().strip() == 'true':
                     wholescores['PISAscore'].append(1.0)
                 elif row[-1].lower().strip() == 'false':
                     wholescores['PISAscore'].append(0.0)
                 else:
                     wholescores['PISAscore'].append(None)
-                c = 0
                 for n in range(len(row)-1):
-                    if col[n] is not None:
-                        scores.append([[], []])
+                    if row[c].strip().endswith(srcs):
                         if row[n].lower().strip() != 'nan':
                             scores[c][0].append(float(row[n]))
                             wholescores[names[c]].append(float(row[n]))
@@ -129,20 +123,33 @@ def main():
                         else:
                             wholescores[names[c]].append(None)
                         c += 1
+
+#                for n in range(len(row)-1):
+#                    if n not in ignore:
+#                        if row[n].lower().strip() != 'nan':
+#                            scores[c][0].append(float(row[n]))
+#                            wholescores[names[n-len(ignore)]].append(float(row[n]))
+#                            if row[-1].lower().strip() == 'true':
+#                                scores[c][1].append(True)
+#                            else:
+#                                scores[c][1].append(False)
+#                        else:
+#                            wholescores[names[n-len(ignore)]].append(None)
+#                        c += 1
             else:
-                if row[0] == '#PDB_id' :
-                    for n in range(len(row)):
-                        if row[n].strip().endswith(srcs):
-                            col.append(row[n].strip())
-                            names.append(row[n].strip())
-                            wholescores[row[n].strip()] = []
-                        elif row[n].strip().lower() == 'pisascore':
-                            wholescores['PISAscore'] = []
+                if row[0] == '#PDB_id':
+                    for c in range(len(row)):
+                        # print(row[c].strip())
+                        if row[c].strip().endswith(srcs):
+                            names.append(row[c].strip())
+                            scores.append([[], []])
+                            wholescores[row[c].strip()] = []
+                        elif row[c].strip() == 'PISAscore':
+                            wholescores[row[c].strip()] = []
                         else:
-                            col.append(None)
+                            ignore.add(c)
 
-
-    # Calculate ROCs, TOCs areas and correlations
+    # Calculate ROCs, areas and correlations
     # TO DO: Calcultate TOCs too! https://en.wikipedia.org/wiki/Total_operating_characteristic
     L = len(names)
     print(names)
@@ -158,6 +165,7 @@ def main():
 
         tocs[names[n]] = [[], []]  # Tots, Hits
         tocs[names[n]][0], tocs[names[n]][1] = pcs.hits_vs_total(scores[n][0], scores[n][1])
+
 
     areas, names = zip(*sorted(zip(unsrtdareas, names), reverse=True))
     areas_dict = {names[i]: areas[i] for i in range(len(names))}
