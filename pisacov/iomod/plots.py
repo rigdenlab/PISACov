@@ -315,7 +315,7 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
         plt.close(fig)
 
 
-def plot_correlation_heatmap(data, outpath, tags=None, plot_type='png'):
+def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
     """
     Plot correlation heatmap.
 
@@ -365,3 +365,8 @@ def plot_correlation_heatmap(data, outpath, tags=None, plot_type='png'):
     if plot_type == 'png' or plot_type == 'eps':
         fig.savefig(outpath, format=plot_type, overwrite=True)
         plt.close(fig)
+
+
+def area_histogram(data, outpath, labels=None, plot_type='png'):
+#https://www.tutorialspoint.com/matplotlib/matplotlib_bar_plot.htm
+#https://stackoverflow.com/questions/28129606/how-to-create-a-matplotlib-bar-chart-with-a-threshold-line
