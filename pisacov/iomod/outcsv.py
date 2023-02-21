@@ -69,7 +69,7 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
     elif csvtype == 'rocareas':
         csvline = "# PISACov stats: Areas under TPR vs FPR Receiver operating characteristic curves (ROC areas). Sorted by area." + tzbegin + "."
     else:
-        logging.critical("        pisacov.iomod.csvheader input 'csvtype' must be one of scores' or rocs' or 'toc' or 'rocareas'.")
+        logging.critical("        pisacov.iomod.csvheader input 'csvtype' must be one of scores' or rocs' or 'tocs' or 'rocareas'.")
         raise ValueError
 
     csvline += os.linesep

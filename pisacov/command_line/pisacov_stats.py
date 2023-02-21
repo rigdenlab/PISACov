@@ -108,6 +108,7 @@ def main():
         for row in signals:
             if row[0].startswith('#') is False:
                 if row[-1].lower().strip() == 'true':
+                    print('true')
                     wholescores['PISAscore'].append(1.0)
                 elif row[-1].lower().strip() == 'false':
                     wholescores['PISAscore'].append(0.0)
@@ -118,6 +119,8 @@ def main():
                     if col[n] is not None:
                         scores.append([[], []])
                         if row[n].lower().strip() != 'nan':
+                            if names[c] == 'MCC_cropseq_dmp':
+                                print('pares')
                             scores[c][0].append(float(row[n]))
                             wholescores[names[c]].append(float(row[n]))
                             if row[-1].lower().strip() == 'true':
@@ -127,6 +130,8 @@ def main():
                             else:
                                 scores[c][1].append(None)
                         else:
+                            if names[c] == 'MCC_cropseq_dmp':
+                                print('nones')
                             wholescores[names[c]].append(None)
                         c += 1
             else:
@@ -141,7 +146,8 @@ def main():
                         else:
                             col.append(None)
 
-
+    print('look at this:')
+    print(wholescores['PISAscore'], len(wholescores['PISAscore']))
     # Calculate ROCs, TOCs areas and correlations
     # TO DO: Calcultate TOCs too! https://en.wikipedia.org/wiki/Total_operating_characteristic
     L = len(names)
@@ -166,29 +172,23 @@ def main():
     correl_matrix = np.identity(L+1)
 
     namex = tuple(['PISAscore'] + list(names))
-    print(namex)
+
     for n in range(len(namex)-1):
         for m in range(n+1, len(namex)):
             set1 = []
             set2 = []
             setr = []
+            print(namex[n], len(wholescores[namex[n]]))
+            print(namex[m], len(wholescores[namex[m]]))
             for dat in range(len(wholescores[namex[n]])):
-                print(wholescores[namex[0]][dat])
-                print(wholescores[namex[len(namex)-1]][0])
-                try:
-                    if (wholescores[namex[m]][dat] is not None and
-                            wholescores[namex[n]][dat] is not None):
-                        set1.append(wholescores[namex[m]][dat])
-                        set2.append(wholescores[namex[n]][dat])
-                        if wholescores[namex[1]][dat] is None:
-                            setr.append(float('-inf'))
-                        else:
-                            setr.append(wholescores[namex[1]][dat])
-                except Exception:
-                    print('max = (', str(len(namex)-2) + ', ' +
-                          str(len(namex)-1) + ', ' +
-                          str(len(wholescores[namex[n]])-1) + ')')
-                    print(n, m, dat)
+                if (wholescores[namex[m]][dat] is not None and
+                        wholescores[namex[n]][dat] is not None):
+                    set1.append(wholescores[namex[m]][dat])
+                    set2.append(wholescores[namex[n]][dat])
+                    if wholescores[namex[1]][dat] is None:
+                        setr.append(float('-inf'))
+                    else:
+                        setr.append(wholescores[namex[1]][dat])
 
             if len(set1) > 0:
                 correlation = pcs.correl_matrix(set1, set2, setref=setr)
@@ -201,7 +201,7 @@ def main():
     # Print out results
     for n in range(L):
         f2 = fcurves2.replace("replaceme", names[n])
-        pic.csvheader(f2, cropped=crp, csvtype='toc') # MUST BE ONE BY ONE AND HAVE OWN HEADER
+        pic.csvheader(f2, cropped=crp, csvtype='tocs') # MUST BE ONE BY ONE AND HAVE OWN HEADER
 
         pic.lineout([names[n], areas[n]], fareas)
 

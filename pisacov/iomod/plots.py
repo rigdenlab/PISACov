@@ -367,6 +367,6 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
         plt.close(fig)
 
 
-def area_histogram(data, outpath, labels=None, plot_type='png'):
+#def area_histogram(data, outpath, labels=None, plot_type='png'):
 #https://www.tutorialspoint.com/matplotlib/matplotlib_bar_plot.htm
 #https://stackoverflow.com/questions/28129606/how-to-create-a-matplotlib-bar-chart-with-a-threshold-line
