@@ -83,8 +83,39 @@ def filter_contacts(cmap, threshold=0.2):
 
     return cmap[:cnt-1]
 
+def map_intersection(conpredmap, strcon):
+    """Generate a Contact map with the common contacts of conpredmap and strcon.
 
-def map_intersection(conpredmap, strconarray):
+    :param conpredmap: Conkit Contact Map (contact prediction).
+    :type conpredmap: :class:`~conkit.core.contactmap.ContactMap`
+    :param strcon: Structural contact map (generated from pdb structure).
+    :type strcon: :class:`~conkit.core.contactmap.ContactMap`
+    :return: Intersection map.
+    :rtype: :class:`~conkit.core.contactmap.ContactMap`
+
+    """
+    newmap = ContactMap(id=strcon.id)
+
+    for ic2 in conpredmap:
+        for ic1 in strcon:
+            if (int(ic2.res1_seq) == int(ic1.res1_seq) and
+                    int(ic2.res2_seq) == int(ic1.res2_seq)):
+                try:
+                    newmap.add(ic2)
+                except Exception:
+                    pass
+            elif (int(ic2.res2_seq) == int(ic1.res1_seq) and
+                  int(ic2.res1_seq) == int(ic1.res2_seq)):
+                try:
+                    newmap.add(ic2)
+                except Exception:
+                    pass
+
+    newmap.sort("raw_score", reverse=True, inplace=True)
+
+    return newmap
+
+def map_intersection_array(conpredmap, strconarray):
     """Generate a Contact map with the common contacts of conpredmap and strconarray.
 
     :param conpredmap: Conkit Contact Map (contact prediction).

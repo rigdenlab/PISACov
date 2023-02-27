@@ -521,6 +521,8 @@ def main():
         results.append(str(seq.imer[sid].ncrops()))
         results.append(str(seq.imer[sid].full_length()))
         results.append(str(seq.imer[sid].msa.meff))
+        results.append(str(len(iflist[i].interface.structure[1])))
+        results.append(str(len(iflist[i].interface.contactmap)))
         for source, attribs in sources.items():
             appresults = pcs.list_scores(matches[i][source], tag=source)
             results.extend(appresults)

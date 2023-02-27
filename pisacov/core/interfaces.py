@@ -151,12 +151,12 @@ class interface:
 
     :ivar name: Name of the interface.
     :vartype name: str
-    :ivar structure: Save parsed Structure Contact maps here.
+    :ivar structure: Save parsed Structure Contact maps here. Intended as a backup.
     :vartype structure: list [:class:`~conkit.core.contactmap.ContactMap`] or :class:`~conkit.core.contactfile.ContactFile`
     :ivar chains: A list containing the two chain objects making up the interface.
     :vartype seq: list [:class:`~pisacov.core.interfaces.chain_info`]
-    :ivar contactmap: Numpy-read contact list (generated from pdb structure).
-    :vartype contactmap: :class:`~numpy.ndarray`
+    :ivar contactmap: Interface Contact map (generated from pdb structure). Intended to be edited.
+    :vartype contactmap: :class:`~conkit.core.contactmap.ContactMap`
     :ivar stable: Stability of the interface
     :vartype stable: bool, str
 
@@ -173,8 +173,9 @@ class interface:
             did = mycontacts[1].id[n]
             mychains.append(pci.chain_info(dimer_id=did, seqid='1', biotype='Protein')
     >>> myIF = pci.interface('My interface',
-                             structure=mymaplist[1],
+                             structure=mymaplist,
                              chains=mychains)
+    >>> myIF.contacmap = mymaplist[1]
     >>> myIF
     Interface object My interface (chains=AB(in dimer), type=Protein-Protein, stable=Unknown)
 
