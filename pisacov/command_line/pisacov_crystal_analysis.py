@@ -82,7 +82,7 @@ def create_argument_parser():
                         help="Path to CSV file where pisacov signals will be appended. Default: outdir/evcovsignal.cropped.pisacov.csv and outdir/evcovsignal.full.pisacov.csv.")
     parser.add_argument("-p", "--plot_formats", nargs='+',
                         metavar=("Plot file format(s)"),
-                        help="One or more formats of 'png', 'eps' and 'agr' of figures/data to be produced.")
+                        help="One or more formats of 'png', 'eps', 'svg' and 'agr' of figures/data to be produced.")
 
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
@@ -175,8 +175,11 @@ def main():
     else:
         plotformats=set()
         for element in args.plot_formats:
-            if element.lower() in {'png', 'eps', 'agr'}:
+            if element.lower() in {'png', 'eps', 'svg', 'agr'}:
                 plotformats.add(element.lower())
+            else:
+                msg = element + " is not a valid plot format. Ignored."
+                logger.warning(msg)
 
     # Define formats used
     sources = pco._sources(lowth=invals['LOWTHRESHOLD'])
@@ -521,8 +524,8 @@ def main():
         results.append(str(seq.imer[sid].ncrops()))
         results.append(str(seq.imer[sid].full_length()))
         results.append(str(seq.imer[sid].msa.meff))
-        results.append(str(len(iflist[i].interface.structure[1])))
-        results.append(str(len(iflist[i].interface.contactmap)))
+        results.append(str(len(iflist[i].structure[1])))
+        results.append(str(len(iflist[i].contactmap)))
         for source, attribs in sources.items():
             appresults = pcs.list_scores(matches[i][source], tag=source)
             results.extend(appresults)

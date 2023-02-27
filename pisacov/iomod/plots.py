@@ -94,7 +94,7 @@ def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None)
     :type outpath: str
     :param mode: Mode, if any, defaults to 'raw'.
     :type mode: str, optional
-    :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'agr' in raw grace format, defaults to 'png'.
+    :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'svg' vector image, defaults to 'png'.
     :type plot_type: str, optional
     :param xL: Number of contacts plotted as a function of L, defaults to None (all contacts).
     :type xL: int or float, optional
@@ -139,6 +139,8 @@ def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None)
         fig, ax = plt.subplots(dpi=141)
     elif plot_type == 'eps':
         fig, ax = plt.subplots(dpi=1200)
+    elif plot_type == 'svg':
+        fig, ax = plt.subplots(dpi=1200)
     elif plot_type == 'agr':
         tpx, tpy = (list(e) for e in zip(*sorted(zip(tpx, tpy))))
         fpx, fpy = (list(e) for e in zip(*sorted(zip(fpx, fpy))))
@@ -178,7 +180,7 @@ def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None)
               borderaxespad=0.0)
     for n in range(len(ax.legend_.legendHandles)):
         ax.legend_.legendHandles[n]._sizes = [30]
-    if plot_type == 'png' or plot_type == 'eps':
+    if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
         fig.savefig(outpath, format=plot_type, overwrite=True)
         plt.close(fig)
 
@@ -193,7 +195,7 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
     :type outpath: str, optional
     :param areas_for_color: Colour-index assigned to each label, defaults to None.
     :type areas_for_color: dict[float], optional
-    :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'agr' in raw grace format, defaults to 'png'.
+    :param plot_type: Plot either as a 'png' image, 'eps' vector image, 'svg' vector image, or 'agr' in raw grace format, defaults to 'png'.
     :type plot_type: str, optional
     :param roc_type: Type of ROC curve, tprvsfpr' only, defaults to 'tprvsfpr'
     :type roc_type: str, optional
@@ -216,6 +218,8 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
     if plot_type == 'png':
         fig, ax = plt.subplots(dpi=141)
     elif plot_type == 'eps':
+        fig, ax = plt.subplots(dpi=1200)
+    elif plot_type == 'svg':
         fig, ax = plt.subplots(dpi=1200)
     else:
         logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
@@ -245,7 +249,7 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
     ax.set_ylabel(yaxis)
 
     ax.legend();
-    if plot_type == 'png' or plot_type == 'eps':
+    if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
         fig.savefig(outpath, format=plot_type, overwrite=True)
         plt.close(fig)
 
@@ -262,7 +266,7 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     :type outpath: str, optional
     :param areas_for_color: Colour-index assigned to each label, defaults to None.
     :type areas_for_color: dict [float], optional
-    :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'agr' in raw grace format, defaults to 'png'.
+    :param plot_type: Plot either as a 'png' image, 'eps' vector image, 'svg' vector image, or 'agr' in raw grace format, defaults to 'png'.
     :type plot_type: str, optional
 
     """
@@ -277,6 +281,8 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     if plot_type == 'png':
         fig, ax = plt.subplots(dpi=141)
     elif plot_type == 'eps':
+        fig, ax = plt.subplots(dpi=1200)
+    elif plot_type == 'svg':
         fig, ax = plt.subplots(dpi=1200)
     else:
         logging.warning('Unrecognised plot_type in plot_toc. Using default PNG.')
@@ -310,7 +316,7 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     ax.set_ylabel(yaxis)
 
     ax.legend();
-    if plot_type == 'png' or plot_type == 'eps':
+    if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
         fig.savefig(outpath, format=plot_type, overwrite=True)
         plt.close(fig)
 
@@ -325,7 +331,7 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
     :type outpath: str, optional
     :param labels: Label list, defaults to None.
     :type labels: list[str], optional
-    :param plot_type: Plot either as a 'png' image or 'eps' vector image, defaults to 'png'.
+    :param plot_type: Plot either as a 'png' image, 'eps' vector image, or 'svg' vector image, defaults to 'png'.
     :type plot_type: str, optional
 
     """
@@ -333,13 +339,15 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
 
     title = ('Correlation matrix for PISACov scores.')
 
-    if tags is None:
-        tags = list(range(len(data)))
-        tags = [str(a) for a in tags]
+    if labels is None:
+        labels = list(range(len(data)))
+        labels = [str(a) for a in labels]
 
     if plot_type == 'png':
         fig, ax = plt.subplots(dpi=141)
     elif plot_type == 'eps':
+        fig, ax = plt.subplots(dpi=1200)
+    elif plot_type == 'svg':
         fig, ax = plt.subplots(dpi=1200)
     else:
         logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
@@ -347,22 +355,22 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
 
     im = ax.imshow(data)
 
-    ax.set_xticks(np.arange(len(tags)), labels=tags)
-    ax.set_yticks(np.arange(len(tags)), labels=tags)
+    ax.set_xticks(np.arange(len(labels)), labels=labels)
+    ax.set_yticks(np.arange(len(labels)), labels=labels)
 
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
              rotation_mode="anchor")
 
     # Loop over data dimensions and create text annotations.
-    for n in range(len(tags)):
-        for m in range(len(tags)):
+    for n in range(len(labels)):
+        for m in range(len(labels)):
             text = ax.text(m, n, data[n, m],
                            ha="center", va="center", color="w")
 
     ax.set_title(title, y=1.08)
 
-    if plot_type == 'png' or plot_type == 'eps':
+    if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
         fig.savefig(outpath, format=plot_type, overwrite=True)
         plt.close(fig)
 
