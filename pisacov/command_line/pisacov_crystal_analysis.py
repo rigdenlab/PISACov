@@ -43,17 +43,16 @@ def create_argument_parser():
     parser.add_argument("seqpath", nargs=1, metavar=("Seqfile"),
                         help="Input original sequence filepath.")
     parser.add_argument("crystalpath", nargs=1,
-                         metavar=("Crystal_structure"),
-                         help="Input original crystal structure filepath.")
+                        metavar=("Crystal_structure"),
+                        help="Input original crystal structure filepath.")
 
     # Use CROPS
-    parser.add_argument("-r", "--remove_insertions", action='store_true', # DO IT FOR SIFTS AND ALSO OPTIONALLY FOR CUSTOM CSV
-                             default=False,
-                             help="Use CROPS and SIFTS database to remove insertions from crystal structure.")
+    parser.add_argument("-r", "--remove_insertions", action='store_true',  # DO IT FOR SIFTS AND ALSO OPTIONALLY FOR CUSTOM CSV
+                        default=False,
+                        help="Use CROPS and SIFTS database to remove insertions from crystal structure.")
     parser.add_argument("-u", "--uniprot_threshold", nargs=1,
-                            metavar=("Uniprot_ratio_threshold"),
-                            help='If Uniprot sequence contribution to crystal sequence is below threshold ( %% ), all its residues are removed. [MIN,MAX)=[0,100).')
-
+                        metavar=("Uniprot_ratio_threshold"),
+                        help='If Uniprot sequence contribution to crystal sequence is below threshold ( %% ), all its residues are removed. [MIN,MAX)=[0,100).')
 
     # HHBLITS modification
     parser.add_argument("-a", "--hhblits_arguments", nargs=5,
@@ -64,7 +63,7 @@ def create_argument_parser():
                               "DeepMetaPSICOV & PISACOV DEFAULT: [3, 0.001, 'inf', 50, 99]. " +
                               os.linesep + "HHBlits DEEFAULT: [2, 0.001, 1000, 0, 90]"))
 
-    #THRESHOLD ABOVE WHICH CONTACTS COUNT
+    # THRESHOLD ABOVE WHICH CONTACTS COUNT
     parser.add_argument("-l", "--lower_threshold", nargs=3,
                         metavar=("psicov", "ccmpred", "dmp"),
                         help=("Remove predicted contacts scored below these values. Use '-inf' for no lower cutoff."))
