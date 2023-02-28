@@ -142,9 +142,12 @@ def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None)
     elif plot_type == 'svg':
         fig, ax = plt.subplots(dpi=1200)
     elif plot_type == 'agr':
-        tpx, tpy = (list(e) for e in zip(*sorted(zip(tpx, tpy))))
-        fpx, fpy = (list(e) for e in zip(*sorted(zip(fpx, fpy))))
-        fnx, fny = (list(e) for e in zip(*sorted(zip(fnx, fny))))
+        if len(tpx) > 0:
+            tpx, tpy = (list(e) for e in zip(*sorted(zip(tpx, tpy))))
+        if len(fpx) > 0:
+            fpx, fpy = (list(e) for e in zip(*sorted(zip(fpx, fpy))))
+        if len(fnx) > 0:
+            fnx, fny = (list(e) for e in zip(*sorted(zip(fnx, fny))))
         xdat = [tpx, fpx, fnx]
         ydat = [tpy, fpy, fny]
         with open(outpath, 'w') as fout:
@@ -166,7 +169,7 @@ def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None)
     ax.set_xlabel('Residues from Chain 1')
     ax.set_ylabel('Residues from Chain 2')
 
-    s = ((ax.get_window_extent().width  / (vmax-vmin+1.) * 50./fig.dpi) ** 2)
+    s = ((ax.get_window_extent().width / (vmax-vmin+1.) * 50./fig.dpi) ** 2)
     ax.scatter(tpx, tpy, s=s, marker='o', linewidth=0, c='k', label='Matched (TP)')
     ax.scatter(fpx, fpy, s=s, marker='o', linewidth=0, c='r', label='Unmatched (FP)')
     ax.scatter(fnx, fny, s=s, marker='o', linewidth=0, c='lightgrey', label='Structure (FN)')
@@ -221,6 +224,8 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
         fig, ax = plt.subplots(dpi=1200)
     elif plot_type == 'svg':
         fig, ax = plt.subplots(dpi=1200)
+    elif plot_type == 'agr':
+        return
     else:
         logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
         fig, ax = plt.subplots(dpi=141)
@@ -284,6 +289,8 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
         fig, ax = plt.subplots(dpi=1200)
     elif plot_type == 'svg':
         fig, ax = plt.subplots(dpi=1200)
+    elif plot_type == 'agr':
+        return
     else:
         logging.warning('Unrecognised plot_type in plot_toc. Using default PNG.')
         fig, ax = plt.subplots(dpi=141)
@@ -335,8 +342,6 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
     :type plot_type: str, optional
 
     """
-
-
     title = ('Correlation matrix for PISACov scores.')
 
     if labels is None:
@@ -349,6 +354,8 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
         fig, ax = plt.subplots(dpi=1200)
     elif plot_type == 'svg':
         fig, ax = plt.subplots(dpi=1200)
+    elif plot_type == 'agr':
+        return
     else:
         logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
         fig, ax = plt.subplots(dpi=141)
