@@ -11,7 +11,7 @@ import matplotlib as mpl
 import logging
 import numpy as np
 
-_cschemes = {
+_cschemes_backup = {
     'roc_grad':
         {'red':
          ((0.0, 0.5, 0.5),
@@ -55,7 +55,92 @@ _cschemes = {
           (1.0, 1.0, 1.0))}
     }
 
-def gen_cmap(scheme='rocs'):
+_cschemes_backup2 = {
+    'roc_grad':
+        {'red':
+         ((0.0, 0.5, 0.5),
+          (0.5, 1.0, 1.0),
+          (0.6, 1.0, 1.0),
+          (0.7, 0.75, 0.0),
+          (0.8, 0.0, 0.0),
+          (1.0, 0.0, 0.0)),
+         'green':
+         ((0.0, 0.0, 0.0),
+          (0.5, 0.0, 0.6),
+          (0.6, 0.91, 0.91),
+          (0.7, 0.65, 0.8),
+          (0.8, 0.5, 0.0),
+          (1.0, 0.0, 0.0)),
+         'blue':
+         ((0.0, 0.0, 0.0),
+          (0.5, 0.0, 0.0),
+          (0.6, 0.0, 0.0),
+          (0.7, 0.0, 0.0),
+          (0.8, 0.3, 1.0),
+          (1.0, 0.5, 0.5))},
+    'correl_grad':
+        {'red':
+         ((0.0, 1.0, 1.0),
+          (0.25, 0.5, 0.5),
+          (0.5, 0.0, 0.0),
+          (0.75, 0.0, 0.0),
+          (1.0, 0.0, 0.0)),
+         'green':
+         ((0.0, 1.0, 1.0),
+          (0.25, 0.0, 0.0),
+          (0.5, 0.0, 0.0),
+          (0.75, 0.0, 0.0),
+          (1.0, 1.0, 1.0)),
+         'blue':
+         ((0.0, 0.0, 0.0),
+          (0.25, 0.0, 0.0),
+          (0.5, 0.0, 0.0),
+          (0.75, 0.5, 0.5),
+          (1.0, 1.0, 1.0))}
+    }
+
+_cschemes = {
+    'roc_grad':
+        {'red':
+         ((0.0, 0.5, 0.5),
+          (0.5, 1.0, 1.0),
+          (0.7, 1.0, 0.0),
+          (0.8, 0.0, 0.0),
+          (1.0, 0.0, 0.0)),
+         'green':
+         ((0.0, 0.0, 0.0),
+          (0.5, 0.0, 0.0),
+          (0.7, 0.91, 0.5),
+          (0.8, 1.0, 0.0),
+          (1.0, 0.0, 0.0)),
+         'blue':
+         ((0.0, 0.0, 0.0),
+          (0.5, 0.0, 0.0),
+          (0.7, 0.0, 0.3),
+          (0.8, 0.0, 0.5),
+          (1.0, 1.0, 1.0))},
+    'correl_grad':
+        {'red':
+         ((0.0, 1.0, 1.0),
+          (0.25, 0.5, 0.5),
+          (0.5, 0.0, 0.0),
+          (0.75, 0.0, 0.0),
+          (1.0, 0.0, 0.0)),
+         'green':
+         ((0.0, 1.0, 1.0),
+          (0.25, 0.0, 0.0),
+          (0.5, 0.0, 0.0),
+          (0.75, 0.0, 0.0),
+          (1.0, 1.0, 1.0)),
+         'blue':
+         ((0.0, 0.0, 0.0),
+          (0.25, 0.0, 0.0),
+          (0.5, 0.0, 0.0),
+          (0.75, 0.5, 0.5),
+          (1.0, 1.0, 1.0))}
+    }
+
+def _gen_cmap(scheme='rocs'):
     # https://github.com/frankligy/scTriangulate/blob/main/image/colors_module/README.md
     if scheme == 'rocs':
         name = 'roc_grad'
@@ -67,19 +152,62 @@ def gen_cmap(scheme='rocs'):
     return mpl.colors.LinearSegmentedColormap(name, segmentdata=cdict)
 
 
+def _set_dpi(ptype='png'):
+    """
+    Creates figure and axes according to plot type.
+
+    :param ptype: Figure's file format. 'png' or 'eps' or 'svg', defaults to 'png'.
+    :type ptype: str, optional
+
+    :return: Figure and axis (Matplotlib)
+    :rtype: :class:`~matplotlib.figure.Figure`, :class:`~matplotlib.axes.Axes`
+
+    """
+    if ptype == 'png':
+        fig, ax = plt.subplots(dpi=141)
+    elif ptype == 'eps':
+        fig, ax = plt.subplots(dpi=1200)
+    elif ptype == 'svg':
+        fig, ax = plt.subplots(dpi=1200)
+    else:
+        logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
+        fig, ax = plt.subplots(dpi=141)
+
+    return fig, ax
+
+
 class colour_scheme:
     # https://stackoverflow.com/questions/26108436/how-can-i-get-the-matplotlib-rgb-color-given-the-colormap-name-boundrynorm-an
     def __init__(self, scheme):
         self.name = scheme
-        self.cmap = gen_cmap(scheme)
+        self.cmap = _gen_cmap(scheme)
         if scheme == 'rocs':
             self.norm = mpl.colors.Normalize(vmin=0.0, vmax=1.0)
         elif scheme == 'correlations':
             self.norm = mpl.colors.Normalize(vmin=-1.0, vmax=1.0)
         self.scalarMap = mpl.cm.ScalarMappable(norm=self.norm, cmap=self.cmap)
 
-    def get_rgb(self, val):
-        return self.scalarMap.to_rgba(val)
+    def get_rgb(self, val, pos=None):
+        """
+        Get RGBA colour coordinates from colour map.
+
+        :param val: Input value.
+        :type val: float
+        :param pos: If two values correspond to coordinate in the colour scheme, use 'h' or 'l' to retrieve higher or lower value, respectively, defaults to 'l'.
+        :type pos: str, optional
+
+        :return: RGBA coordinates.
+        :rtype: set[float]
+
+        """
+        if pos == 'h':
+            plus = 0.05
+        elif pos == 'l':
+            plus = -0.05
+        else:
+            plus = 0.0
+
+        return self.scalarMap.to_rgba(val+plus)
 
 
 color_scheme=colour_scheme
@@ -135,13 +263,7 @@ def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None)
             fnx.append(c1)
             fny.append(c2)
 
-    if plot_type == 'png':
-        fig, ax = plt.subplots(dpi=141)
-    elif plot_type == 'eps':
-        fig, ax = plt.subplots(dpi=1200)
-    elif plot_type == 'svg':
-        fig, ax = plt.subplots(dpi=1200)
-    elif plot_type == 'agr':
+    if plot_type == 'agr':
         if len(tpx) > 0:
             tpx, tpy = (list(e) for e in zip(*sorted(zip(tpx, tpy))))
         if len(fpx) > 0:
@@ -157,6 +279,8 @@ def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None)
                     fout.write(str(xdat[p][n]) + '  ' + str(ydat[p][n]) + '\n')
                 fout.write('&\n')
         return
+    else:
+        fig, ax = _set_dpi(ptype=plot_type)
 
     ax.set_title(title, y=1.08)
 
@@ -183,6 +307,7 @@ def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None)
               borderaxespad=0.0)
     for n in range(len(ax.legend_.legendHandles)):
         ax.legend_.legendHandles[n]._sizes = [30]
+    fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
         fig.savefig(outpath, format=plot_type, overwrite=True)
         plt.close(fig)
@@ -195,7 +320,7 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
     :param data: X, Y values of ROCs.
     :type data: dict[list[float], list[float]]
     :param outpath: Output filepath.
-    :type outpath: str, optional
+    :type outpath: str
     :param areas_for_color: Colour-index assigned to each label, defaults to None.
     :type areas_for_color: dict[float], optional
     :param plot_type: Plot either as a 'png' image, 'eps' vector image, 'svg' vector image, or 'agr' in raw grace format, defaults to 'png'.
@@ -218,19 +343,11 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
         yaxis = 'True Positive Rate (TPR)'
         title = ('Receiver operating characteristic (ROC) curves: TPR vs. FPR.')
 
-    if plot_type == 'png':
-        fig, ax = plt.subplots(dpi=141)
-    elif plot_type == 'eps':
-        fig, ax = plt.subplots(dpi=1200)
-    elif plot_type == 'svg':
-        fig, ax = plt.subplots(dpi=1200)
-    elif plot_type == 'agr':
+    if plot_type == 'agr':
+        # TO DO
         return
     else:
-        logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
-        fig, ax = plt.subplots(dpi=141)
-
-    if plot_type == 'png' or plot_type == 'eps':
+        fig, ax = _set_dpi(ptype=plot_type)
         cmap = colour_scheme('rocs')
 
     ax.plot([0, 1], [0, 1], linestyle=":", color="dimgray")
@@ -254,6 +371,7 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
     ax.set_ylabel(yaxis)
 
     ax.legend();
+    fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
         fig.savefig(outpath, format=plot_type, overwrite=True)
         plt.close(fig)
@@ -268,7 +386,7 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     :param datatag: Data description of TOC.
     :type datatag: str
     :param outpath: Output filepath.
-    :type outpath: str, optional
+    :type outpath: str
     :param areas_for_color: Colour-index assigned to each label, defaults to None.
     :type areas_for_color: dict [float], optional
     :param plot_type: Plot either as a 'png' image, 'eps' vector image, 'svg' vector image, or 'agr' in raw grace format, defaults to 'png'.
@@ -283,28 +401,18 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     yaxis = 'Hits (TP)'
     title = ('Total operating characteristic (TOC) curve.')
 
-    if plot_type == 'png':
-        fig, ax = plt.subplots(dpi=141)
-    elif plot_type == 'eps':
-        fig, ax = plt.subplots(dpi=1200)
-    elif plot_type == 'svg':
-        fig, ax = plt.subplots(dpi=1200)
-    elif plot_type == 'agr':
+    if plot_type == 'agr':
+        # TO DO
         return
     else:
-        logging.warning('Unrecognised plot_type in plot_toc. Using default PNG.')
-        fig, ax = plt.subplots(dpi=141)
-
-    if plot_type == 'png' or plot_type == 'eps':
+        fig, ax = _set_dpi(ptype=plot_type)
         cmap = colour_scheme('rocs')
-
 
     xmax = max(data[0])
     ymax = max(data[1])
     ax.plot([0, xmax], [0, ymax], linestyle=":", color="dimgray")
     ax.plot([0, xmax], [0, xmax], linestyle=":", color="seagreen")
     ax.plot([0, ymax], [0, ymax], linestyle=":", color="indianred")
-
 
     if area_for_color is None:
         clr = 'k'
@@ -323,6 +431,7 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     ax.set_ylabel(yaxis)
 
     ax.legend();
+    fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
         fig.savefig(outpath, format=plot_type, overwrite=True)
         plt.close(fig)
@@ -335,53 +444,113 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
     :param data: Correlation matrix.
     :type data: :class:`~np.array`
     :param outpath: Output filepath.
-    :type outpath: str, optional
+    :type outpath: str
     :param labels: Label list, defaults to None.
     :type labels: list[str], optional
     :param plot_type: Plot either as a 'png' image, 'eps' vector image, or 'svg' vector image, defaults to 'png'.
     :type plot_type: str, optional
 
     """
+
     title = ('Correlation matrix for PISACov scores.')
 
     if labels is None:
         labels = list(range(len(data)))
         labels = [str(a) for a in labels]
 
-    if plot_type == 'png':
-        fig, ax = plt.subplots(dpi=141)
-    elif plot_type == 'eps':
-        fig, ax = plt.subplots(dpi=1200)
-    elif plot_type == 'svg':
-        fig, ax = plt.subplots(dpi=1200)
-    elif plot_type == 'agr':
+    if plot_type == 'agr':
+        # TO DO
         return
     else:
-        logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
-        fig, ax = plt.subplots(dpi=141)
+        fig, ax = _set_dpi(ptype=plot_type)
+        cmap = colour_scheme('correlations')
 
-    im = ax.imshow(data)
+    ax.imshow(np.fliplr(data), cmap=cmap.cmap)
+    # ax.imshow(data, cmap=cmap.cmap)
 
-    ax.set_xticks(np.arange(len(labels)), labels=labels)
+    # ax.set_xticks(np.arange(len(labels)), labels=labels)
+    ax.set_xticks(np.flip(np.arange(len(labels))), labels=labels)
     ax.set_yticks(np.arange(len(labels)), labels=labels)
+
+    ax.axhline(0.5, color="white", lw=2)
+    ax.axvline(len(labels)-1.5, color="white", lw=2)
 
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
              rotation_mode="anchor")
+    plt.setp(ax.get_yticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
 
     # Loop over data dimensions and create text annotations.
+    datar=np.around(data,decimals=2)
     for n in range(len(labels)):
         for m in range(len(labels)):
-            text = ax.text(m, n, data[n, m],
-                           ha="center", va="center", color="w")
+            ax.text(m, n, np.fliplr(datar)[n, m],
+                    ha="center", va="center", color="w")
 
     ax.set_title(title, y=1.08)
 
+    cb=fig.colorbar(cmap.scalarMap, ax=ax)
+    cb.set_ticks(np.arange(-1.0, 1.01, 0.25))
+
+    fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
         fig.savefig(outpath, format=plot_type, overwrite=True)
         plt.close(fig)
 
 
-#def area_histogram(data, outpath, labels=None, plot_type='png'):
-#https://www.tutorialspoint.com/matplotlib/matplotlib_bar_plot.htm
-#https://stackoverflow.com/questions/28129606/how-to-create-a-matplotlib-bar-chart-with-a-threshold-line
+def area_histogram(data, outpath, plot_type='png'):
+    """
+    Plot histogram with scores' areas.
+
+    :param data: Data (areas).
+    :type data: dict[float]
+    :param outpath: Output filepath.
+    :type outpath: str, optional
+    :param plot_type: Plot either as a 'png' image, 'eps' vector image, 'svg' vector image, or 'agr' in raw grace format, defaults to 'png'.
+    :type plot_type: str, optional
+
+    """
+    # https://www.tutorialspoint.com/matplotlib/matplotlib_bar_plot.htm
+    # https://stackoverflow.com/questions/28129606/how-to-create-a-matplotlib-bar-chart-with-a-threshold-line
+
+    title = 'Histogram of ROC areas per score.'
+    xaxis = "Score"
+    yaxis = "ROC area"
+
+    if plot_type == 'agr':
+        # TO DO
+        return
+    else:
+        fig, ax = _set_dpi(ptype=plot_type)
+        cmap = colour_scheme('rocs')
+
+    clist = [cmap.get_rgb(data[i]) for i in data]
+
+    # Plot histogram data
+    ax.bar(list(data.keys()), list(data.values()), color=clist)
+
+    ax.xticks(np.arange(0.0, 1.05, 0.1))
+    ax.set_ylim([0, 1])
+
+    cb = fig.colorbar(cmap.scalarMap, ax=ax)
+    cb.set_ticks(np.arange(0.0, 1.01, 0.1))
+
+    # Add horizontal lines
+    # ax.axhline(y=0.5, color = cmap.get_rgb(0.5), linestyle="--")
+    ax.axhline(y=0.7, color = cmap.get_rgb(0.75), linestyle="--")
+    ax.axhline(y=0.8, color = cmap.get_rgb(0.90), linestyle="--")
+
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+    plt.setp(ax, yticks=np.arange(0.0, 1.01, 0.1))
+
+    ax.set_title(title, y=1.08)
+    ax.set_xlabel(xaxis)
+    ax.set_ylabel(yaxis)
+
+    fig.tight_layout()
+    if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
+        fig.savefig(outpath, format=plot_type, overwrite=True)
+        plt.close(fig)
