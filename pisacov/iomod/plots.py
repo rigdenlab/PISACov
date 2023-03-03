@@ -391,11 +391,13 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
              rotation_mode="anchor")
 
     # Loop over data dimensions and create text annotations.
-    datar=np.around(data,decimals=2)
+    fdatar = np.fliplr(np.around(data,decimals=2))
     for n in range(len(labels)):
         for m in range(len(labels)):
-            ax.text(m, n, np.fliplr(datar)[n, m],
-                    ha="center", va="center", color="w")
+            v = fdatar[n,m]
+            c = "k" if abs(v) > 0.8 else "w"
+            ax.text(m, n, v,
+                    ha="center", va="center", color=c)
 
     ax.set_title(title, y=1.08)
 
