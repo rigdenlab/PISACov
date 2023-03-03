@@ -11,94 +11,6 @@ import matplotlib as mpl
 import logging
 import numpy as np
 
-_cschemes_backup = {
-    'roc_grad':
-        {'red':
-         ((0.0, 0.5, 0.5),
-          (0.5, 1.0, 1.0),
-          (0.6, 1.0, 1.0),
-          (0.7, 0.6, 0.6),
-          (0.8, 0.0, 0.0),
-          (1.0, 0.0, 0.0)),
-         'green':
-         ((0.0, 0.0, 0.0),
-          (0.5, 0.0, 0.0),
-          (0.6, 0.91, 0.91),
-          (0.7, 0.6, 0.6),
-          (0.8, 0.5, 0.5),
-          (1.0, 0.0, 0.0)),
-         'blue':
-         ((0.0, 0.0, 0.0),
-          (0.5, 0.0, 0.0),
-          (0.6, 0.0, 0.0),
-          (0.7, 0.0, 0.0),
-          (0.8, 0.5, 0.5),
-          (1.0, 0.7, 0.7))},
-    'correl_grad':
-        {'red':
-         ((0.0, 1.0, 1.0),
-          (0.25, 0.5, 0.5),
-          (0.5, 0.0, 0.0),
-          (0.75, 0.0, 0.0),
-          (1.0, 0.0, 0.0)),
-         'green':
-         ((0.0, 1.0, 1.0),
-          (0.25, 0.0, 0.0),
-          (0.5, 0.0, 0.0),
-          (0.75, 0.0, 0.0),
-          (1.0, 1.0, 1.0)),
-         'blue':
-         ((0.0, 0.0, 0.0),
-          (0.25, 0.0, 0.0),
-          (0.5, 0.0, 0.0),
-          (0.75, 0.5, 0.5),
-          (1.0, 1.0, 1.0))}
-    }
-
-_cschemes_backup2 = {
-    'roc_grad':
-        {'red':
-         ((0.0, 0.5, 0.5),
-          (0.5, 1.0, 1.0),
-          (0.6, 1.0, 1.0),
-          (0.7, 0.75, 0.0),
-          (0.8, 0.0, 0.0),
-          (1.0, 0.0, 0.0)),
-         'green':
-         ((0.0, 0.0, 0.0),
-          (0.5, 0.0, 0.6),
-          (0.6, 0.91, 0.91),
-          (0.7, 0.65, 0.8),
-          (0.8, 0.5, 0.0),
-          (1.0, 0.0, 0.0)),
-         'blue':
-         ((0.0, 0.0, 0.0),
-          (0.5, 0.0, 0.0),
-          (0.6, 0.0, 0.0),
-          (0.7, 0.0, 0.0),
-          (0.8, 0.3, 1.0),
-          (1.0, 0.5, 0.5))},
-    'correl_grad':
-        {'red':
-         ((0.0, 1.0, 1.0),
-          (0.25, 0.5, 0.5),
-          (0.5, 0.0, 0.0),
-          (0.75, 0.0, 0.0),
-          (1.0, 0.0, 0.0)),
-         'green':
-         ((0.0, 1.0, 1.0),
-          (0.25, 0.0, 0.0),
-          (0.5, 0.0, 0.0),
-          (0.75, 0.0, 0.0),
-          (1.0, 1.0, 1.0)),
-         'blue':
-         ((0.0, 0.0, 0.0),
-          (0.25, 0.0, 0.0),
-          (0.5, 0.0, 0.0),
-          (0.75, 0.5, 0.5),
-          (1.0, 1.0, 1.0))}
-    }
-
 _cschemes = {
     'roc_grad':
         {'red':
@@ -151,31 +63,6 @@ def _gen_cmap(scheme='rocs'):
 
     return mpl.colors.LinearSegmentedColormap(name, segmentdata=cdict)
 
-
-def _set_dpi(ptype='png'):
-    """
-    Creates figure and axes according to plot type.
-
-    :param ptype: Figure's file format. 'png' or 'eps' or 'svg', defaults to 'png'.
-    :type ptype: str, optional
-
-    :return: Figure and axis (Matplotlib)
-    :rtype: :class:`~matplotlib.figure.Figure`, :class:`~matplotlib.axes.Axes`
-
-    """
-    if ptype == 'png':
-        fig, ax = plt.subplots(dpi=141)
-    elif ptype == 'eps':
-        fig, ax = plt.subplots(dpi=1200)
-    elif ptype == 'svg':
-        fig, ax = plt.subplots(dpi=1200)
-    else:
-        logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
-        fig, ax = plt.subplots(dpi=141)
-
-    return fig, ax
-
-
 class colour_scheme:
     # https://stackoverflow.com/questions/26108436/how-can-i-get-the-matplotlib-rgb-color-given-the-colormap-name-boundrynorm-an
     def __init__(self, scheme):
@@ -209,8 +96,30 @@ class colour_scheme:
 
         return self.scalarMap.to_rgba(val+plus)
 
-
 color_scheme=colour_scheme
+
+def _set_dpi(ptype='png'):
+    """
+    Creates figure and axes according to plot type.
+
+    :param ptype: Figure's file format. 'png' or 'eps' or 'svg', defaults to 'png'.
+    :type ptype: str, optional
+
+    :return: Figure and axis (Matplotlib)
+    :rtype: :class:`~matplotlib.figure.Figure`, :class:`~matplotlib.axes.Axes`
+
+    """
+    if ptype == 'png':
+        fig, ax = plt.subplots(dpi=141)
+    elif ptype == 'eps':
+        fig, ax = plt.subplots(dpi=1200)
+    elif ptype == 'svg':
+        fig, ax = plt.subplots(dpi=1200)
+    else:
+        logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
+        fig, ax = plt.subplots(dpi=141)
+
+    return fig, ax
 
 
 def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None):
@@ -465,7 +374,7 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
         fig, ax = _set_dpi(ptype=plot_type)
         cmap = colour_scheme('correlations')
 
-    ax.imshow(np.fliplr(data), cmap=cmap.cmap)
+    ax.imshow(np.fliplr(data), cmap=cmap.cmap, norm=cmap.norm)
     # ax.imshow(data, cmap=cmap.cmap)
 
     # ax.set_xticks(np.arange(len(labels)), labels=labels)
