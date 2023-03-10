@@ -58,6 +58,8 @@ def _gen_cmap(scheme='rocs'):
         name = 'roc_grad'
     elif scheme == 'correlations':
         name = 'correl_grad'
+    elif scheme == 'RdBu':
+        return scheme
 
     cdict = _cschemes[name]
 
@@ -70,7 +72,7 @@ class colour_scheme:
         self.cmap = _gen_cmap(scheme)
         if scheme == 'rocs':
             self.norm = mpl.colors.Normalize(vmin=0.0, vmax=1.0)
-        elif scheme == 'correlations':
+        elif scheme == 'correlations' or scheme == 'RdBu':
             self.norm = mpl.colors.Normalize(vmin=-1.0, vmax=1.0)
         self.scalarMap = mpl.cm.ScalarMappable(norm=self.norm, cmap=self.cmap)
 
@@ -346,7 +348,7 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
         plt.close(fig)
 
 
-def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
+def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png', light0=False):
     """
     Plot correlation heatmap.
 
@@ -358,8 +360,11 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
     :type labels: list[str], optional
     :param plot_type: Plot either as a 'png' image, 'eps' vector image, or 'svg' vector image, defaults to 'png'.
     :type plot_type: str, optional
+    :param light0: Use 'RdBu' colour map if True, custom yellow-black-cyan map if False, defaults to False.
+    :type light0: bool
 
     """
+    colours = 'RdBu' if light0 is True else 'correlations'
 
     title = ('Correlation matrix for PISACov scores.')
 
@@ -372,7 +377,7 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
         return
     else:
         fig, ax = _set_dpi(ptype=plot_type)
-        cmap = colour_scheme('correlations')
+        cmap = colour_scheme(colours)
 
     ax.imshow(np.fliplr(data), cmap=cmap.cmap, norm=cmap.norm)
     # ax.imshow(data, cmap=cmap.cmap)
@@ -395,7 +400,10 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png'):
     for n in range(len(labels)):
         for m in range(len(labels)):
             v = fdatar[n,m]
-            c = "k" if abs(v) > 0.8 else "w"
+            if light0:
+                c = "k" if abs(v) < 0.3 else "w"
+            else:
+                c = "k" if abs(v) > 0.8 else "w"
             ax.text(m, n, v,
                     ha="center", va="center", color=c)
 

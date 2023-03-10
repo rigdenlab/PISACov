@@ -235,7 +235,8 @@ def main():
 
     for imtype in plotformats:
         fout = os.path.join(outdir, fname + '.correlations.' + imtype )
-        pip.plot_correlation_heatmap(data=correl_matrix, outpath=fout, tags=namex, plot_type=imtype)
+        pip.plot_correlation_heatmap(data=correl_matrix, outpath=fout,
+                                     tags=namex, plot_type=imtype, light0=True)
 
     return
 
