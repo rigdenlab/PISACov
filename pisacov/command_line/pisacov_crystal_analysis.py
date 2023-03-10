@@ -297,7 +297,7 @@ def main():
         fcropseq = {}
         fcropmsa = {}
         for i, iseq in seq.imer.items():
-            if iseq.type == 'Protein':
+            if iseq.biotype == 'Protein':
                 fprefix = pdbid + '_' + i + '.crops.to_uniprot'
                 fmap = os.path.join(invals['OUTROOT'], pdbid,
                                     fprefix + os.extsep + 'cropmap')
@@ -338,7 +338,7 @@ def main():
             logger.info('Generating Multiple Sequence Alignment using user-custom parameters...')
 
         for i, iseq in seq.imer.items():
-            if iseq.type == 'Protein':
+            if iseq.biotype == 'Protein':
                 sfile = fcropseq[i] if cropping is True else fseq[i]
                 afile = fcropmsa[i] if cropping is True else fmsa[i]
                 logger.info(pcl.running('HHBlits'))
@@ -362,7 +362,7 @@ def main():
     if skipexec is False:
         logger.info('Generating contact prediction lists via DeepMetaPSICOV...')
         for i, iseq in seq.imer.items():
-            if iseq.type == 'Protein':
+            if iseq.biotype == 'Protein':
                 sfile = fcropseq[i] if cropping is True else fseq[i]
                 afile = fcropmsa[i] if cropping is True else fmsa[i]
                 nsfile = os.path.join(dmpdir, os.path.basename(sfile))
@@ -377,7 +377,7 @@ def main():
     if skipexec is True:
         logger.info('Parsing already generated files...')
         for i, iseq in seq.imer.items():
-            if iseq.type == 'Protein':
+            if iseq.biotype == 'Protein':
                 sfile = fcropstr if cropping is True else fstr
                 afile = fcropmsa[i] if cropping is True else fmsa[i]
                 if cropping is True:
@@ -425,7 +425,7 @@ def main():
     conpred = {}
     matches = []
     for s in seq.imer:
-        if seq.imer[i].type == 'Protein':
+        if seq.imer[s].biotype == 'Protein':
             if s not in conpred:
                 conpred[s] = {}
             fs = fcropseq[s] if cropping else fseq[s]
