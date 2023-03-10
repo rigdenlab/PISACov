@@ -251,36 +251,6 @@ def main():
         if skipexec is False:
             iseq.dump(fseq[i])
 
-    # Parse cropped sequences and maps
-    if cropping is True:
-        amap = {}
-        fcropseq = {}
-        fcropmsa = {}
-        for i, iseq in seq.imer.items():
-            fprefix = pdbid + '_' + i + '.crops.to_uniprot'
-            fmap = os.path.join(invals['OUTROOT'], pdbid,
-                                fprefix + os.extsep + 'cropmap')
-            amap.update(cps.parsemapfile(fmap)[pdbid])
-            fcropseq[i] = os.path.join(invals['OUTROOT'], pdbid,
-                                       fprefix + os.extsep + 'fasta')
-            fcropmsa[i] = os.path.join(invals['OUTROOT'], pdbid, 'hhblits',
-                                       (fprefix + os.extsep +
-                                        'msa' + os.extsep + 'aln'))
-            seq.set_cropmaps(amap, cropmain=True)
-            if iseq.ncrops() == 0:
-                logger.info('    Cropped sequence ' +
-                            iseq.oligomer_id + '_' + iseq.name +
-                            ' is identical to the original sequence.')
-            else:
-                logger.info('    Cropped sequence ' +
-                            iseq.oligomer_id + '_' + iseq.name +
-                            ' is ' + str(iseq.ncrops()) + ' residues ' +
-                            'shorter than the original sequence.')
-
-    # EXECUTION OF EXTERNAL PROGRAMS
-    hhdir = os.path.join(invals['OUTROOT'], pdbid, 'hhblits', '')
-    dmpdir = os.path.join(invals['OUTROOT'], pdbid, 'dmp', '')
-    pisadir = os.path.join(invals['OUTROOT'], pdbid, 'pisa', '')
     fstr = os.path.join(invals['OUTROOT'], (pdbid + os.extsep + 'crops' +
                                             os.extsep + 'seq' +
                                             os.extsep + 'pdb'))
@@ -290,6 +260,73 @@ def main():
                                  os.extsep + 'oldids' +
                                  os.extsep + 'to_uniprot' +
                                  os.path.splitext(invals['INSTR'])[1]))
+
+    # EXECUTION OF PISA, INTERFACE FILES GENERATION AND PARSING
+    pisadir = os.path.join(invals['OUTROOT'], pdbid, 'pisa', '')
+    ppaths.mdir(pisadir)
+    if skipexec is False:
+        logger.info('Generating interface files via PISA...')
+        sfile = fcropstr if cropping is True else fstr
+        logger.info(pcl.running('PISA'))
+        itime = datetime.datetime.now()
+        iflist = psp.runpisa(sfile, pisadir, sessionid = pdbid)
+        logger.info(pcl.running('PISA', done=itime))
+    else:
+        ixml = os.path.join(pisadir,
+                            (os.path.splitext(os.path.basename(sfile))[0] +
+                             os.extsep + 'interface' +
+                             os.extsep + 'xml'))
+        axml = os.path.join(pisadir,
+                            (os.path.splitext(os.path.basename(sfile))[0] +
+                             os.extsep + 'assembly' +
+                             os.extsep + 'xml'))
+
+        iflist = pci.parse_interface_xml(ixml, axml)
+
+    for i in range(len(iflist)):
+        iflist[i].chains[0].seq_id = seq.whatseq(iflist[i].chains[0].crystal_id)
+        iflist[i].chains[1].seq_id = seq.whatseq(iflist[i].chains[1].crystal_id)
+        if iflist[i].chains[0].type == 'Protein':
+            seq.imer[iflist[i].chains[0].seq_id].biotype = 'Protein'
+        if iflist[i].chains[1].type == 'Protein':
+            seq.imer[iflist[i].chains[1].seq_id].biotype = 'Protein'
+
+    # Parse cropped sequences and maps
+    if cropping is True:
+        amap = {}
+        fcropseq = {}
+        fcropmsa = {}
+        for i, iseq in seq.imer.items():
+            if iseq.type == 'Protein':
+                fprefix = pdbid + '_' + i + '.crops.to_uniprot'
+                fmap = os.path.join(invals['OUTROOT'], pdbid,
+                                    fprefix + os.extsep + 'cropmap')
+                amap.update(cps.parsemapfile(fmap)[pdbid])
+                fcropseq[i] = os.path.join(invals['OUTROOT'], pdbid,
+                                           fprefix + os.extsep + 'fasta')
+                fcropmsa[i] = os.path.join(invals['OUTROOT'], pdbid, 'hhblits',
+                                           (fprefix + os.extsep +
+                                            'msa' + os.extsep + 'aln'))
+                seq.set_cropmaps(amap, cropmain=True)
+                if iseq.ncrops() == 0:
+                    logger.info('    Cropped sequence ' +
+                                iseq.oligomer_id + '_' + iseq.name +
+                                ' is identical to the original sequence.')
+                else:
+                    logger.info('    Cropped sequence ' +
+                                iseq.oligomer_id + '_' + iseq.name +
+                                ' is ' + str(iseq.ncrops()) + ' residues ' +
+                                'shorter than the original sequence.')
+            else:
+                logger.info('    Cropped sequence ' +
+                            iseq.oligomer_id + '_' + iseq.name +
+                            ' is not a Protein chain. Ignoring.')
+
+
+    # EXECUTION OF CONTACT PREDICTION PROGRAMS
+    hhdir = os.path.join(invals['OUTROOT'], pdbid, 'hhblits', '')
+    dmpdir = os.path.join(invals['OUTROOT'], pdbid, 'dmp', '')
+
     if skipexec is False:
         # MSA GENERATOR
         ppaths.mdir(hhdir)
@@ -301,75 +338,59 @@ def main():
             logger.info('Generating Multiple Sequence Alignment using user-custom parameters...')
 
         for i, iseq in seq.imer.items():
-            sfile = fcropseq[i] if cropping is True else fseq[i]
-            afile = fcropmsa[i] if cropping is True else fmsa[i]
-            logger.info(pcl.running('HHBlits'))
-            itime = datetime.datetime.now()
-            themsa = psm.runhhblits(sfile,
-                                    invals['HHBLITS_PARAMETERS'],
-                                    hhdir)
-            logger.info(pcl.running('HHBlits', done=itime))
-            if cropping is True:
-                iseq.cropmsa = themsa
-                if iseq.ncrops() == 0:
-                    iseq.msa = iseq.cropmsa
-                    continue
+            if iseq.type == 'Protein':
+                sfile = fcropseq[i] if cropping is True else fseq[i]
+                afile = fcropmsa[i] if cropping is True else fmsa[i]
+                logger.info(pcl.running('HHBlits'))
+                itime = datetime.datetime.now()
+                themsa = psm.runhhblits(sfile,
+                                        invals['HHBLITS_PARAMETERS'],
+                                        hhdir)
+                logger.info(pcl.running('HHBlits', done=itime))
+                if cropping is True:
+                    iseq.cropmsa = themsa
+                    if iseq.ncrops() == 0:
+                        iseq.msa = iseq.cropmsa
+                        continue
+                    else:
+                        pass
                 else:
-                    pass
-            else:
-                iseq.msa = themsa
+                    iseq.msa = themsa
 
     # DEEP META PSICOV RUN
     ppaths.mdir(dmpdir)
     if skipexec is False:
         logger.info('Generating contact prediction lists via DeepMetaPSICOV...')
         for i, iseq in seq.imer.items():
-            sfile = fcropseq[i] if cropping is True else fseq[i]
-            afile = fcropmsa[i] if cropping is True else fmsa[i]
-            nsfile = os.path.join(dmpdir, os.path.basename(sfile))
-            if sfile != nsfile:
-                copyfile(sfile, nsfile)
-            logger.info(pcl.running('DeepMetaPSICOV'))
-            itime = datetime.datetime.now()
-            psd.rundmp(nsfile, afile, dmpdir)
-            logger.info(pcl.running('DeepMetaPSICOV', done=itime))
-
-    # INTERFACE GENERATION, PISA
-    ppaths.mdir(pisadir)
-    if skipexec is False:
-        logger.info('Generating interface files via PISA...')
-        sfile = fcropstr if cropping is True else fstr
-        logger.info(pcl.running('PISA'))
-        itime = datetime.datetime.now()
-        iflist = psp.runpisa(sfile, pisadir, sessionid = pdbid)
-        logger.info(pcl.running('PISA', done=itime))
+            if iseq.type == 'Protein':
+                sfile = fcropseq[i] if cropping is True else fseq[i]
+                afile = fcropmsa[i] if cropping is True else fmsa[i]
+                nsfile = os.path.join(dmpdir, os.path.basename(sfile))
+                if sfile != nsfile:
+                    copyfile(sfile, nsfile)
+                logger.info(pcl.running('DeepMetaPSICOV'))
+                itime = datetime.datetime.now()
+                psd.rundmp(nsfile, afile, dmpdir)
+                logger.info(pcl.running('DeepMetaPSICOV', done=itime))
 
     # READ DATA IF SKIPEXEC USED
     if skipexec is True:
         logger.info('Parsing already generated files...')
         for i, iseq in seq.imer.items():
-            sfile = fcropstr if cropping is True else fstr
-            afile = fcropmsa[i] if cropping is True else fmsa[i]
-            if cropping is True:
-                # iseq.cropmsa = ckio.read(afile, 'jones')
-                iseq.cropmsa = pio.read(afile, 'jones')
-                if iseq.ncrops() == 0:
-                    scoring[1] = True
+            if iseq.type == 'Protein':
+                sfile = fcropstr if cropping is True else fstr
+                afile = fcropmsa[i] if cropping is True else fmsa[i]
+                if cropping is True:
+                    # iseq.cropmsa = ckio.read(afile, 'jones')
+                    iseq.cropmsa = pio.read(afile, 'jones')
+                    if iseq.ncrops() == 0:
+                        scoring[1] = True
+                        # iseq.msa = ckio.read(afile, 'jones')
+                        iseq.msa = ckio.read(afile, 'jones')
+                else:
                     # iseq.msa = ckio.read(afile, 'jones')
-                    iseq.msa = ckio.read(afile, 'jones')
-            else:
-                # iseq.msa = ckio.read(afile, 'jones')
-                iseq.msa = pio.read(afile, 'jones')
-        ixml = os.path.join(pisadir,
-                            (os.path.splitext(os.path.basename(sfile))[0] +
-                             os.extsep + 'interface' +
-                             os.extsep + 'xml'))
-        axml = os.path.join(pisadir,
-                            (os.path.splitext(os.path.basename(sfile))[0] +
-                             os.extsep + 'assembly' +
-                             os.extsep + 'xml'))
+                    iseq.msa = pio.read(afile, 'jones')
 
-        iflist = pci.parse_interface_xml(ixml, axml)
 
     # CONTACT ANALYSIS AND MATCH
     logger.info('Opening output csv files...')
@@ -404,15 +425,16 @@ def main():
     conpred = {}
     matches = []
     for s in seq.imer:
-        if s not in conpred:
-            conpred[s] = {}
-        fs = fcropseq[s] if cropping else fseq[s]
-        for source, attribs in sources.items():
-            fc = os.path.splitext(os.path.basename(fs))[0]
-            fc += os.extsep + attribs[1]
-            confile = os.path.join(dmpdir, fc)
-            # conpred[s][source] = ckio.read(confile, attribs[2])[0]
-            conpred[s][source] = pio.read(confile, attribs[2], ck=True)[0]
+        if seq.imer[i].type == 'Protein':
+            if s not in conpred:
+                conpred[s] = {}
+            fs = fcropseq[s] if cropping else fseq[s]
+            for source, attribs in sources.items():
+                fc = os.path.splitext(os.path.basename(fs))[0]
+                fc += os.extsep + attribs[1]
+                confile = os.path.join(dmpdir, fc)
+                # conpred[s][source] = ckio.read(confile, attribs[2])[0]
+                conpred[s][source] = pio.read(confile, attribs[2], ck=True)[0]
 
     logger.info('Parsing crystal structure contacts...')
     for i in range(len(iflist)):
@@ -424,10 +446,6 @@ def main():
         # inputmap = ckio.read(spath, 'pdb')
         inputmap = pio.read(spath, 'pdb', ck=True)
         if len(inputmap) == 4:
-            chnames = [iflist[i].chains[0].crystal_id,
-                       iflist[i].chains[1].crystal_id]
-            iflist[i].chains[0].seq_id = seq.whatseq(chnames[0])
-            iflist[i].chains[1].seq_id = seq.whatseq(chnames[1])
             chseqs = [iflist[i].chains[0].seq_id,
                        iflist[i].chains[1].seq_id]
 
