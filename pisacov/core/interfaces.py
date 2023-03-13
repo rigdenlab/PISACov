@@ -109,7 +109,7 @@ class chain_info:
     >>> from pisacov.core import interfaces as pci
     >>> mychain = pci.chain_info(dimer_id='B', pisa_id='1', crystal_id='A', seqid='1', biotype='Protein')
     >>> mychain
-    Chain Info object: (Dimer ID = B, PISA xml ID = 1, Monomer ID in assymmetric unit = A, Sequence ID = 1, Bio Protein)
+    Chain Info object: (Dimer ID = B, PISA xml ID = 1, Monomer ID in assymmetric unit = A, Sequence ID = 1, Biotype = Protein)
     """
 
     _kind = 'Chain Info'
