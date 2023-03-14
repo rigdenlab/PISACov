@@ -348,7 +348,8 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
         plt.close(fig)
 
 
-def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png', light0=False):
+def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
+                             light0=False, cluster=False):
     """
     Plot correlation heatmap.
 
@@ -362,11 +363,19 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png', light0
     :type plot_type: str, optional
     :param light0: Use 'RdBu' colour map if True, custom yellow-black-cyan map if False, defaults to False.
     :type light0: bool
+    :param cluster: Cluster scores by similarity and produce dendograms on heatmap, defaults to False.
+    :type cluster: bool
 
     """
+    # CHECK https://stackoverflow.com/questions/2982929/plotting-results-of-hierarchical-clustering-on-top-of-a-matrix-of-data
+    # CHECK https://www.python-graph-gallery.com/405-dendrogram-with-heatmap-and-coloured-leaves
     colours = 'RdBu' if light0 is True else 'correlations'
 
-    title = ('Correlation matrix for PISACov scores.')
+    title = 'Correlation matrix for PISACov scores.'
+    if cluster:
+        title += ' Clustered by similarity.'
+    else:
+        title += ' Sorted by Area under the ROC.'
 
     if labels is None:
         labels = list(range(len(data)))
