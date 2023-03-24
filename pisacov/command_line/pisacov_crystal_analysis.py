@@ -264,9 +264,9 @@ def main():
     # EXECUTION OF PISA, INTERFACE FILES GENERATION AND PARSING
     pisadir = os.path.join(invals['OUTROOT'], pdbid, 'pisa', '')
     ppaths.mdir(pisadir)
+    sfile = fcropstr if cropping is True else fstr
     if skipexec is False:
         logger.info('Generating interface files via PISA...')
-        sfile = fcropstr if cropping is True else fstr
         logger.info(pcl.running('PISA'))
         itime = datetime.datetime.now()
         iflist = psp.runpisa(sfile, pisadir, sessionid = pdbid)
