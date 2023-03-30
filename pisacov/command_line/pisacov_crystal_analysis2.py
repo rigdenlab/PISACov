@@ -322,6 +322,205 @@ def main():
                             iseq.oligomer_id + '_' + iseq.name +
                             ' is not a Protein chain. Ignoring.')
 
+    # EXECUTION OF CONTACT PREDICTION PROGRAMS
+    hhdir = os.path.join(invals['OUTROOT'], pdbid, 'hhblits', '')
+    dmpdir = os.path.join(invals['OUTROOT'], pdbid, 'dmp', '')
+
+    if skipexec is False:
+        # MSA GENERATOR
+        ppaths.mdir(hhdir)
+        if invals['HHBLITS_PARAMETERS'] == ['3', '0.001', 'inf', '50', '99']:
+            logger.info('Generating Multiple Sequence Alignment using DeepMetaPSICOV default parameters... [RECOMMENDED OPTION]')
+        elif invals['HHBLITS_PARAMETERS'] == ['2', '0.001', '1000', '0', '90']:
+            logger.info('Generating Multiple Sequence Alignment using HHBlits default parameters...')
+        else:
+            logger.info('Generating Multiple Sequence Alignment using user-custom parameters...')
+
+        for i, iseq in seq.imer.items():
+            if iseq.biotype == 'Protein':
+                sfile = fcropseq[i] if cropping is True else fseq[i]
+                afile = fcropmsa[i] if cropping is True else fmsa[i]
+                logger.info(pcl.running('HHBlits'))
+                itime = datetime.datetime.now()
+                themsa = psm.runhhblits(sfile,
+                                        invals['HHBLITS_PARAMETERS'],
+                                        hhdir)
+                logger.info(pcl.running('HHBlits', done=itime))
+                if cropping is True:
+                    iseq.cropmsa = themsa
+                    if iseq.ncrops() == 0:
+                        iseq.msa = iseq.cropmsa
+                        continue
+                    else:
+                        pass
+                else:
+                    iseq.msa = themsa
+
+    # DEEP META PSICOV RUN
+    ppaths.mdir(dmpdir)
+    if skipexec is False:
+        logger.info('Generating contact prediction lists via DeepMetaPSICOV...')
+        for i, iseq in seq.imer.items():
+            if iseq.biotype == 'Protein':
+                sfile = fcropseq[i] if cropping is True else fseq[i]
+                afile = fcropmsa[i] if cropping is True else fmsa[i]
+                nsfile = os.path.join(dmpdir, os.path.basename(sfile))
+                if sfile != nsfile:
+                    copyfile(sfile, nsfile)
+                logger.info(pcl.running('DeepMetaPSICOV'))
+                itime = datetime.datetime.now()
+                psd.rundmp(nsfile, afile, dmpdir)
+                logger.info(pcl.running('DeepMetaPSICOV', done=itime))
+
+    # READ DATA IF SKIPEXEC USED
+    if skipexec is True:
+        logger.info('Parsing already generated files...')
+        for i, iseq in seq.imer.items():
+            if iseq.biotype == 'Protein':
+                sfile = fcropstr if cropping is True else fstr
+                afile = fcropmsa[i] if cropping is True else fmsa[i]
+                if cropping is True:
+                    # iseq.cropmsa = ckio.read(afile, 'jones')
+                    iseq.cropmsa = pio.read(afile, 'jones')
+                    if iseq.ncrops() == 0:
+                        scoring[1] = True
+                        # iseq.msa = ckio.read(afile, 'jones')
+                        iseq.msa = ckio.read(afile, 'jones')
+                else:
+                    # iseq.msa = ckio.read(afile, 'jones')
+                    iseq.msa = pio.read(afile, 'jones')
+
+
+    # CONTACT ANALYSIS AND MATCH
+    logger.info('Opening output csv files...')
+    resultdir = os.path.join(invals['OUTROOT'], pdbid, 'pisacov', '')
+    ppaths.mdir(resultdir)
+    csvfile = []
+    csvfile.append(os.path.join(resultdir,
+                                (pdbid + os.extsep + "evcovsignal" +
+                                 os.extsep + "cropped" +
+                                 os.extsep + "pisacov" +
+                                 os.extsep + "csv")))
+    csvfile.append(os.path.join(resultdir,
+                                (pdbid + os.extsep + "evcovsignal" +
+                                 os.extsep + "full" +
+                                 os.extsep + "pisacov" +
+                                 os.extsep + "csv")))
+
+    for n in range(2):
+        if scoring[n] is True:
+            cpd = True if cropping else False
+            pic.csvheader(csvfile[n], cropped=cpd, pisascore=True)
+            if invals['OUTCSVPATH'][n] is not None:
+                if os.path.isfile(invals['OUTCSVPATH'][n]) is False:
+                    pic.csvheader(invals['OUTCSVPATH'][n], cropped=cpd, pisascore=True)
+
+    logger.info('Parsing sequence files...')
+    for i, fpath in fseq.items():
+        # seq.imer[i].seqs['conkit'] = ckio.read(fpath, 'fasta')[0]
+        seq.imer[i].seqs['conkit'] = pio.read(fpath, 'fasta', ck=True)[0]
+
+    logger.info('Parsing contact predictions lists...')
+    conpred = {}
+    matches = []
+    for s in seq.imer:
+        if seq.imer[s].biotype == 'Protein':
+            if s not in conpred:
+                conpred[s] = {}
+            fs = fcropseq[s] if cropping else fseq[s]
+            for source, attribs in sources.items():
+                fc = os.path.splitext(os.path.basename(fs))[0]
+                fc += os.extsep + attribs[1]
+                confile = os.path.join(dmpdir, fc)
+                # conpred[s][source] = ckio.read(confile, attribs[2])[0]
+                conpred[s][source] = pio.read(confile, attribs[2], ck=True)[0]
+
+    logger.info('Parsing crystal structure contacts...')
+    for i in range(len(iflist)):
+        logger.info(os.linesep + str(iflist[i]))
+        fs = fcropstr if cropping else fstr
+        fs = (os.path.splitext(os.path.basename(fs))[0] +
+              os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "pdb")
+        spath = os.path.join(pisadir, fs)
+        # inputmap = ckio.read(spath, 'pdb')
+        inputmap = pio.read(spath, 'pdb', ck=True)
+        if len(inputmap) == 4:
+            chseqs = [iflist[i].chains[0].seq_id,
+                       iflist[i].chains[1].seq_id]
+
+            logger.info(iflist[i].chains)
+            chtypes = [iflist[i].chains[0].type,
+                       iflist[i].chains[1].type]
+            if (chseqs[0] != chseqs[1] or
+                    (chtypes[0] != 'Protein' or chtypes[1] != 'Protein')):
+                if chtypes[0] != "Protein" or chtypes[1] != "Protein":
+                    logger.info('Interface ' + str(i) +
+                                ' is not a Protein-Protein interface. Ignoring.')
+                else:
+                    logger.info('Interface ' + str(i) +
+                                ' is not a homodimer. Ignoring.')
+                iflist[i].structure = None
+                matches.append(None)
+                continue
+            s = chseqs[0]
+
+            try:
+                iflist[i].structure = []
+                for m in range(len(inputmap)):
+                    iflist[i].structure.append(inputmap[m].as_contactmap())
+                    iflist[i].structure[m].id = inputmap[m].id
+            except Exception:
+                logger.warning('Contact Maps obtained from a legacy ConKit ' +
+                               'version with no Distograms implemented.')
+                for m in range(len(inputmap)):
+                    iflist[i].structure.append(inputmap[m])  # ConKit LEGACY.
+            #fs = fcropstr if cropping else fstr
+            #fs = (os.path.splitext(os.path.basename(fs))[0] +
+            #      os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "con")
+            #spath = os.path.join(pisadir, fs)
+            #pio.write(spath, 'psicov', indata=iflist[i].structure[1])
+            #iflist[i].contactmap = pio.read(spath, 'array')
+            iflist[i].contactmap = iflist[i].structure[1].deepcopy()
+            matches.append({})
+            for source, attribs in sources.items():
+                matches[i][source] = pcc.contact_atlas(
+                                            name=pdbid+'_'+str(s),
+                                            dimer_interface=iflist[i],
+                                            conpredmap=conpred[s][source],
+                                            conpredtype=source,
+                                            sequence=seq.imer[s])
+                if cropping is True:
+                    matches[i][source].set_cropmap()
+                matches[i][source].remove_neighbours(mindist=2)
+                matches[i][source].set_conpred_seq()
+                matches[i][source].remove_intra()
+                matches[i][source].make_match(filterout = attribs[3])
+                for cmode, cmap in matches[i][source].conkitmatch.items():
+                    if (len(cmap) > 0 and
+                            len(matches[i][source].interface.structure[1]) > 0):
+                        for imtype in plotformats:
+                            if len(matches[i][source].conkitmatch) > 1:
+                                pout = (os.path.splitext(fs)[0] + os.extsep + 'match' +
+                                        os.extsep + cmode + os.extsep + source +
+                                        os.extsep + 'con' + os.extsep + imtype)
+                            else:
+                                pout = (os.path.splitext(fs)[0] + os.extsep +
+                                        'match' + os.extsep + source +
+                                        os.extsep + 'con' + os.extsep + imtype)
+                            plotpath = os.path.join(os.path.dirname(csvfile[0]), pout)
+                            pip.plot_matched_map(input_atlas=matches[i][source],
+                                                 outpath=plotpath,
+                                                 mode = cmode,
+                                                 plot_type = imtype)
+                            #matches[i][source].plot_map_alt(plotpath,
+                            #                                mode = cmode,
+                            #                                plot_type = imtype)
+        else:
+            iflist[i].structure = None
+            iflist[i].contactmap = None
+            matches.append(None)
+            continue
+
     endmsg = pcl.ok(starttime, command=__script__)
     logger.info(endmsg)
 
