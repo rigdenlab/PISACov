@@ -248,7 +248,7 @@ def main():
         fseq[i] = os.path.join(invals['OUTROOT'], pdbid, fiseq)
         fiseq = pdbid + '_' + i + '.msa.aln'
         fmsa[i] = os.path.join(invals['OUTROOT'], pdbid, 'hhblits', fiseq)
-        if not os.isfile(fseq[i]):
+        if not os.path.isfile(fseq[i]):
             iseq.dump(fseq[i])
 
     fstr = os.path.join(invals['OUTROOT'], (pdbid + os.extsep + 'crops' +
