@@ -228,7 +228,7 @@ def main():
 
     fname = os.path.splitext(os.path.basename(csvfile))[0]
     fout = os.path.join(outdir, fname + '.correlations.csv')
-    pic.npmatrix(inmatrix = correl_matrix, outpath=fout)
+    # pic.npmatrix(inmatrix = correl_matrix, outpath=fout)
 
     endmsg = pcl.ok(starttime, command=__script__)
     logger.info(endmsg)
@@ -236,7 +236,11 @@ def main():
     for imtype in plotformats:
         fout = os.path.join(outdir, fname + '.correlations.' + imtype )
         pip.plot_correlation_heatmap(data=correl_matrix, outpath=fout,
-                                     tags=namex, plot_type=imtype, light0=True)
+                                     labels=namex, plot_type=imtype, light0=True)
+        fout = os.path.join(outdir, fname + '.clusters.' + imtype )
+        pip.plot_correlation_sns(data=correl_matrix, outpath=fout,
+                                 labels=namex, plot_type=imtype, light0=True,
+                                 clustered=True)
 
     return
 

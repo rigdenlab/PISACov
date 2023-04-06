@@ -100,7 +100,28 @@ class colour_scheme:
 
 color_scheme=colour_scheme
 
-def _set_dpi(ptype='png'):
+def _get_dpi(ptype):
+    """
+    Return the resolution of the figure in dpi units.
+
+    :param ptype: Figure's file format. 'png' or 'eps' or 'svg', defaults to 'png'.
+    :type ptype: str, optional
+
+    :return: Resolution in dpi units.
+    :rtype: int
+
+    """
+    if ptype == 'png':
+        r = 141
+    elif ptype == 'eps' or ptype == 'svg':
+        r = 1200
+    else:
+        logging.warning('Unrecognised plot_type in _get_dpi. Using default PNG.')
+        r = 141
+
+    return r
+
+def _set_dpi(ptype='png', seaborn=False):
     """
     Creates figure and axes according to plot type.
 
@@ -111,18 +132,13 @@ def _set_dpi(ptype='png'):
     :rtype: :class:`~matplotlib.figure.Figure`, :class:`~matplotlib.axes.Axes`
 
     """
-    if ptype == 'png':
-        fig, ax = plt.subplots(dpi=141)
-    elif ptype == 'eps':
-        fig, ax = plt.subplots(dpi=1200)
-    elif ptype == 'svg':
-        fig, ax = plt.subplots(dpi=1200)
+    if ptype == 'png' or ptype == 'eps' or ptype == 'svg':
+        fig, ax = plt.subplots(dpi=_get_dpi(ptype))
     else:
         logging.warning('Unrecognised plot_type in plot_rocs. Using default PNG.')
-        fig, ax = plt.subplots(dpi=141)
+        fig, ax = plt.subplots(dpi=_get_dpi('png'))
 
     return fig, ax
-
 
 def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None):
     """Plot matched contact map.
@@ -347,9 +363,8 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
         fig.savefig(outpath, format=plot_type, overwrite=True)
         plt.close(fig)
 
-
-def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
-                             light0=False, cluster=False):
+def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
+                     light0=False, clustered=False):
     """
     Plot correlation heatmap.
 
@@ -363,19 +378,76 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
     :type plot_type: str, optional
     :param light0: Use 'RdBu' colour map if True, custom yellow-black-cyan map if False, defaults to False.
     :type light0: bool
-    :param cluster: Cluster scores by similarity and produce dendograms on heatmap, defaults to False.
-    :type cluster: bool
+    :param clustered: Cluster scores by similarity and produce dendogram on heatmap, defaults to False.
+    :type clustered: bool
+
+    """
+    # CHECK https://seaborn.pydata.org/generated/seaborn.clustermap.html
+    # CHECK https://seaborn.pydata.org/generated/seaborn.heatmap.html
+    import seaborn as sns; sns.set(color_codes=True)
+    import pandas as pd
+    import copy
+
+    colours = 'RdBu' if light0 is True else 'correlations'
+    cmap = colour_scheme(colours)
+
+    title = 'Correlation matrix for PISACov scores.'
+
+    if labels is None:
+        labels = list(range(len(data)))
+        labels = [str(a) for a in labels]
+
+    labels_orig = copy.deepcopy(labels)
+    labels.reverse()
+    labels_rev = copy.deepcopy(labels)
+
+    if clustered:
+        title += ' Clustered by similarity.'
+
+        df = pd.DataFrame(data=data, index=labels, columns=labels)
+        cg = sns.clustermap(df, vmin=-1, vmax=1, cmap=cmap.cmap, annot=True,
+                            cbar_pos=(1.05, 0, 0.08, 0.8))
+
+        #cg.ax_row_dendrogram.set_visible(False)
+        #cg.ax_row_dendrogram.set_xlim([0,0])
+    else:
+        title += ' Sorted by Area under the ROC.'
+
+        df = pd.DataFrame(data=np.fliplr(data),
+                          index=labels_rev,
+                          columns=labels_orig)
+        cg = sns.heatmap(df, vmin=-1, vmax=1, annot=True, cmap=cmap.cmap)
+
+    #plt.tight_layout()
+    #plt.title(title)
+    if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
+        plt.savefig(outpath, format=plot_type, overwrite=True)
+        plt.close()
+
+def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
+                             light0=False, show_values=False):
+    """
+    Plot correlation heatmap.
+
+    :param data: Correlation matrix.
+    :type data: :class:`~np.array`
+    :param outpath: Output filepath.
+    :type outpath: str
+    :param labels: Label list, defaults to None.
+    :type labels: list[str], optional
+    :param plot_type: Plot either as a 'png' image, 'eps' vector image, or 'svg' vector image, defaults to 'png'.
+    :type plot_type: str, optional
+    :param light0: Use 'RdBu' colour map if True, custom yellow-black-cyan map if False, defaults to False.
+    :type light0: bool
+    :param show_values: Show correlation values in each cell, defaults to False.
+    :type show_values: bool
 
     """
     # CHECK https://stackoverflow.com/questions/2982929/plotting-results-of-hierarchical-clustering-on-top-of-a-matrix-of-data
     # CHECK https://www.python-graph-gallery.com/405-dendrogram-with-heatmap-and-coloured-leaves
     colours = 'RdBu' if light0 is True else 'correlations'
 
-    title = 'Correlation matrix for PISACov scores.'
-    if cluster:
-        title += ' Clustered by similarity.'
-    else:
-        title += ' Sorted by Area under the ROC.'
+    title = 'Correlation matrix for PISACov scores. Sorted by Area under the ROC.'
 
     if labels is None:
         labels = list(range(len(data)))
@@ -405,21 +477,23 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
              rotation_mode="anchor")
 
     # Loop over data dimensions and create text annotations.
-    fdatar = np.fliplr(np.around(data,decimals=2))
-    for n in range(len(labels)):
-        for m in range(len(labels)):
-            v = fdatar[n,m]
-            if light0:
-                c = "k" if abs(v) < 0.3 else "w"
-            else:
-                c = "k" if abs(v) > 0.8 else "w"
-            ax.text(m, n, v,
-                    ha="center", va="center", color=c)
+    if show_values is True:
+        fdatar = np.fliplr(np.around(data,decimals=2))
+        for n in range(len(labels)):
+            for m in range(len(labels)):
+                v = fdatar[n,m]
+                if light0:
+                    c = "k" if abs(v) < 0.3 else "w"
+                else:
+                    c = "k" if abs(v) > 0.8 else "w"
+                ax.text(m, n, v,
+                        ha="center", va="center", color=c)
 
     ax.set_title(title, y=1.08)
 
     cb=fig.colorbar(cmap.scalarMap, ax=ax)
     cb.set_ticks(np.arange(-1.0, 1.01, 0.25))
+    cb.outline.set_visible(False)
 
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
