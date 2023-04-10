@@ -39,7 +39,7 @@ def create_argument_parser():
                         help="Set output directory path. If not supplied, default is the one containing the input data.")
     parser.add_argument("-p", "--plot_formats", nargs='+',
                         metavar=("Plot file format(s)"),
-                        help="One or more formats of 'png' and 'eps' of figures to be produced.")
+                        help="One or more formats of 'png' and 'eps' and 'svg' of figures to be produced.")
 
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
@@ -78,7 +78,7 @@ def main():
     else:
         plotformats = set()
         for element in args.plot_formats:
-            if element.lower() in {'png', 'eps'}:
+            if element.lower() in {'png', 'eps', 'svg'}:
                 plotformats.add(element.lower())
 
     # Parsing scores
