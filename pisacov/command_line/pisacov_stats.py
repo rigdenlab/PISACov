@@ -108,7 +108,7 @@ def main():
         for row in signals:
             if row[0].startswith('#') is False:
                 if row[-1].lower().strip() == 'true':
-                    print('true')
+                    #print('true')
                     wholescores['PISAscore'].append(1.0)
                 elif row[-1].lower().strip() == 'false':
                     wholescores['PISAscore'].append(0.0)
@@ -119,8 +119,8 @@ def main():
                     if col[n] is not None:
                         scores.append([[], []])
                         if row[n].lower().strip() != 'nan':
-                            if names[c] == 'MCC_cropseq_dmp':
-                                print('pares')
+                            #if names[c] == 'MCC_cropseq_dmp':
+                                #print('pares')
                             scores[c][0].append(float(row[n]))
                             wholescores[names[c]].append(float(row[n]))
                             if row[-1].lower().strip() == 'true':
@@ -130,8 +130,8 @@ def main():
                             else:
                                 scores[c][1].append(None)
                         else:
-                            if names[c] == 'MCC_cropseq_dmp':
-                                print('nones')
+                            #if names[c] == 'MCC_cropseq_dmp':
+                                #print('nones')
                             wholescores[names[c]].append(None)
                         c += 1
             else:
@@ -146,12 +146,12 @@ def main():
                         else:
                             col.append(None)
 
-    print('look at this:')
-    print(wholescores['PISAscore'], len(wholescores['PISAscore']))
+    #print('look at this:')
+    #print(wholescores['PISAscore'], len(wholescores['PISAscore']))
     # Calculate ROCs, TOCs areas and correlations
     # TO DO: Calcultate TOCs too! https://en.wikipedia.org/wiki/Total_operating_characteristic
     L = len(names)
-    print(names)
+    #print(names)
     rates = {}
     tocs = {}
     unsrtdareas = []  # 0.5*(TPR[n]-TPR[n-1])*(FPR[n]+FPR[n-1])
@@ -178,8 +178,8 @@ def main():
             set1 = []
             set2 = []
             setr = []
-            print(namex[n], len(wholescores[namex[n]]))
-            print(namex[m], len(wholescores[namex[m]]))
+            #print(namex[n], len(wholescores[namex[n]]))
+            #print(namex[m], len(wholescores[namex[m]]))
             for dat in range(len(wholescores[namex[n]])):
                 if (wholescores[namex[m]][dat] is not None and
                         wholescores[namex[n]][dat] is not None):
@@ -205,7 +205,7 @@ def main():
 
         pic.lineout([names[n], areas[n]], fareas)
 
-    ignore = ()
+    ignore = []
     p = 0
     while True:
         listline = []
@@ -218,7 +218,7 @@ def main():
                 listline.append(rates[name][0][p])
                 listline.append(rates[name][1][p])
                 if len(rates[name][0]) == p + 1:
-                    ignore.add(name)
+                    ignore.append(name)
 
             pic.lineout(listline, f2)
         pic.lineout(listline, fcurves)
