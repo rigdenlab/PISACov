@@ -261,7 +261,7 @@ def main():
                                  os.extsep + 'to_uniprot' +
                                  os.path.splitext(invals['INSTR'])[1]))
         if os.path.isfile(fcropstr) is False:
-            fcropstr = fstr
+            copyfile(fstr, fcropstr)
 
     # EXECUTION OF PISA, INTERFACE FILES GENERATION AND PARSING
     pisadir = os.path.join(invals['OUTROOT'], pdbid, 'pisa', '')
