@@ -52,7 +52,9 @@ def runhhblits(spath, hhparam, outdirmsa):
                   ' -cov ' + str(hhparam[3]) + ' -id ' + str(hhparam[4]) +
                   ' -oa3m ' + msaa3mpath + ' -o ' + hhrpath)
     try:
-        os.system(execstring)
+        oc = os.system(execstring)
+        if oc != 0:
+            raise Exception
     except Exception:
         logging.critical('        An error occurred while executing HHBLITS.')
         raise OSError

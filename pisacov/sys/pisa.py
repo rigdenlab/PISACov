@@ -33,14 +33,18 @@ def runpisa(instr, outdir, sessionid=None):
         sname += '_' + sessionid
     # CLEAR SESSION
     try:
-        os.system(pisa_exec + ' ' + sname + ' -erase')
+        oc = os.system(pisa_exec + ' ' + sname + ' -erase')
+        if oc != 0:
+            raise Exception
     except Exception:
         logging.critical('        An error occurred while executing PISA -erase.')
         raise OSError
 
     # ANALYSE PDB STRUCTURE
     try:
-        os.system(pisa_exec + ' ' + sname + ' -analyse ' + instr)
+        oc = os.system(pisa_exec + ' ' + sname + ' -analyse ' + instr)
+        if oc != 0:
+            raise Exception
     except Exception:
         logging.critical('        An error occurred while executing PISA -analyse.')
         raise OSError
@@ -50,7 +54,9 @@ def runpisa(instr, outdir, sessionid=None):
                os.extsep + "interface" + os.extsep + "xml")
     ixmlpath = os.path.join(outdir, xmlfile)
     try:
-        os.system(pisa_exec + ' ' + sname + ' -xml interface > ' + ixmlpath)
+        oc = os.system(pisa_exec + ' ' + sname + ' -xml interface > ' + ixmlpath)
+        if oc != 0:
+            raise Exception
     except Exception:
         logging.critical('        An error occurred while executing PISA -xml interface.')
         raise OSError
@@ -59,7 +65,9 @@ def runpisa(instr, outdir, sessionid=None):
                os.extsep + "assembly" + os.extsep + "xml")
     axmlpath = os.path.join(outdir, xmlfile)
     try:
-        os.system(pisa_exec + ' ' + sname + ' -xml assembly > ' + axmlpath)
+        oc = os.system(pisa_exec + ' ' + sname + ' -xml assembly > ' + axmlpath)
+        if oc != 0:
+            raise Exception
     except Exception:
         logging.critical('        An error occurred while executing PISA -xml assembly.')
         raise OSError
@@ -74,8 +82,10 @@ def runpisa(instr, outdir, sessionid=None):
         pdbfile = (os.path.splitext(os.path.basename(instr))[0] + os.extsep +
                    "interface" + os.extsep + str(nif) + os.extsep + "pdb")
         try:
-            os.system(pisa_exec + ' ' + sname +' -pdb interface ' +
-                      str(nif) + ' > ' + os.path.join(outdir, pdbfile))
+            oc = os.system(pisa_exec + ' ' + sname +' -pdb interface ' +
+                           str(nif) + ' > ' + os.path.join(outdir, pdbfile))
+            if oc != 0:
+                raise Exception
         except Exception:
             logging.critical("ERROR: An error occurred during the execution of PISA (interface pdb files production).")
             raise OSError

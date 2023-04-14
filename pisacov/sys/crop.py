@@ -45,7 +45,9 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
         command += ' -u ' + thin + ' ' + upin
     command += ' -o ' + outdirin + ' -i'
     try:
-        os.system(command)  # + ' > ' + loggingfile)
+        oc = os.system(command)  # + ' > ' + loggingfile)
+        if oc != 0:
+            raise Exception
     except Exception:
         logging.critical('        An error occurred while executing crops_cropstr')
         raise OSError
@@ -80,7 +82,9 @@ def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
     command = (pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + strin + ' ' +
                ' -o ' + outdirin)
     try:
-        os.system(command)  # + ' > ' + loggingfile)
+        oc = os.system(command)  # + ' > ' + loggingfile)
+        if oc != 0:
+            raise Exception
     except Exception:
         logging.critical('        An error occurred while executing crops_renumber')
         raise OSError
@@ -113,7 +117,9 @@ def splitseqs(seqin, outdirin = None):#, loggingfile):
     command = (pythonexec + ' ' + cropspy + ' ' + seqin + ' '  + ' -i'
                ' -o ' + outdirin)
     try:
-        os.system(command)  # + ' > ' + loggingfile)
+        oc = os.system(command)  # + ' > ' + loggingfile)
+        if oc != 0:
+            raise Exception
     except Exception:
         logging.critical('        An error occurred while executing crops_renumber')
         raise OSError

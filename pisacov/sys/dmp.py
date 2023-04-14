@@ -23,7 +23,9 @@ def rundmp(spath, msapath, outdir):
     """
     dmp_exec = '"'+ppaths.check_path(DMP_PATH, 'file')+'"'
     try:
-        os.system(dmp_exec + ' -i ' + spath + ' -a ' + msapath)
+        oc = os.system(dmp_exec + ' -i ' + spath + ' -a ' + msapath)
+        if oc != 0:
+            raise Exception
     except Exception:
         logging.critical('        An error occurred while executing DeepMetaPSICOV.')
         raise OSError
