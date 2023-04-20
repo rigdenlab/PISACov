@@ -68,6 +68,10 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
         csvline = "# PISACov stats: Hits (TPs) vs total (TPs+FPs) Total operating characteristic curves (TOCs)." + tzbegin + "."
     elif csvtype == 'rocareas':
         csvline = "# PISACov stats: Areas under TPR vs FPR Receiver operating characteristic curves (ROC areas). Sorted by area." + tzbegin + "."
+        csvline += os.linesep
+        csvline += "# Score, Area under ROC"
+        csvline += os.linesep
+        return
     else:
         logging.critical("        pisacov.iomod.csvheader input 'csvtype' must be one of scores' or rocs' or 'tocs' or 'rocareas'.")
         raise ValueError
@@ -89,6 +93,8 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
     for source in names:
         for score in scnames[source]:
             csvline += score + ', '
+            if csvtype == 'rocs' or csvtype == 'tocs':
+                csvline += ', '
 
     csvline = csvline[:-2]
 
@@ -96,6 +102,12 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
         csvline += ', PISAscore'
 
     csvline += os.linesep
+    if csvtype == 'rocs' or csvtype == 'tocs':
+        csvline += '#'
+        for score in scnames[source]:
+            csvline += "FPR, TPR, "
+        csvline = csvline[:-2]
+        csvline += os.linesep
 
     with open(outpath, "w") as outcsv:
         outcsv.write(csvline)
