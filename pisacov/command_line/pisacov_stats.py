@@ -234,9 +234,22 @@ def main():
     logger.info(endmsg)
 
     for imtype in plotformats:
-        fout = os.path.join(outdir, fname + '.correlations.' + imtype )
+        # ROC AREAS - HISTOGRAM
+        fout = os.path.join(outdir, fname + '.roc_areas.' + imtype)
+        pip.area_histogram(data=areas_dict, outpath=fout, plot_type=imtype)
+        # RO CURVES
+        fout = os.path.join(outdir, fname + '.rocs.' + imtype)
+        pip.plot_rocs(data=rates, outpath=fout, areas_for_color=areas_dict, plot_type=imtype)
+        # TO CURVES
+        for name in names:
+            fout = os.path.join(outdir, fname + '.' + name + '.toc.' + imtype)
+            pip.plot_toc(data=rates[name], datatag=name, outpath=fout,
+                         areas_for_color=areas_dict, plot_type=imtype)
+        # CORRELATION HEATMAP
+        fout = os.path.join(outdir, fname + '.correlations.' + imtype)
         pip.plot_correlation_heatmap(data=correl_matrix, outpath=fout,
                                      labels=namex, plot_type=imtype, light0=True)
+        # CLUSTERED CORRELATIONS - HEATMAP + DENDROGRAM
         fout = os.path.join(outdir, fname + '.clusters.' + imtype )
         pip.plot_correlation_sns(data=correl_matrix, outpath=fout,
                                  labels=namex, plot_type=imtype, light0=True,

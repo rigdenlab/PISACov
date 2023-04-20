@@ -464,8 +464,10 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
     # ax.imshow(data, cmap=cmap.cmap)
 
     # ax.set_xticks(np.arange(len(labels)), labels=labels)
-    ax.set_xticks(np.flip(np.arange(len(labels))), labels=labels)
-    ax.set_yticks(np.arange(len(labels)), labels=labels)
+    ax.set_xticks(np.flip(np.arange(len(labels))),
+                  labels=labels, fontsize='x-small')
+    ax.set_yticks(np.arange(len(labels)),
+                  labels=labels, fontsize='x-small')
 
     ax.axhline(0.5, color="white", lw=2)
     ax.axvline(len(labels)-1.5, color="white", lw=2)
@@ -505,7 +507,7 @@ def area_histogram(data, outpath, plot_type='png'):
     """
     Plot histogram with scores' areas.
 
-    :param data: Data (areas).
+    :param data: Data (areas) and labels (dictionary), added by area.
     :type data: dict[float]
     :param outpath: Output filepath.
     :type outpath: str, optional
@@ -533,6 +535,7 @@ def area_histogram(data, outpath, plot_type='png'):
     ax.bar(list(data.keys()), list(data.values()), color=clist)
 
     ax.xticks(np.arange(0.0, 1.05, 0.1))
+    ax.set_xticks(np.arange(len(data)), labels=list(data.values()))
     ax.set_ylim([0, 1])
 
     cb = fig.colorbar(cmap.scalarMap, ax=ax)
