@@ -72,6 +72,8 @@ def main():
     fcurves2 = os.path.join(outdir, fcurves2)
     fareas = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.roc_areas.csv"
     fareas = os.path.join(outdir, fareas)
+    fareas2 = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.roc_areas.unsorted.csv"
+    fareas2 = os.path.join(outdir, fareas2)
 
     if args.plot_formats is None:
         plotformats = {'png'}
@@ -101,6 +103,7 @@ def main():
     pic.csvheader(fcurves, cropped=crp, csvtype='rocs')
     pic.csvheader(fcurves, cropped=crp, csvtype='tocs')
     pic.csvheader(fareas, cropped=crp, csvtype='rocareas')
+    pic.csvheader(fareas2, cropped=crp, csvtype='rocareas')
 
     with open(csvfile, newline='') as csvin:
         signals = csv.reader(csvin, delimiter=',', quotechar='|')
@@ -165,6 +168,7 @@ def main():
         tocs[names[n]] = [[], []]  # Tots, Hits
         tocs[names[n]][0], tocs[names[n]][1] = pcs.hits_vs_total(scores[n][0], scores[n][1])
 
+    unsrtdnames = copy.deepcopy(names)
     areas, names = zip(*sorted(zip(unsrtdareas, names), reverse=True))
     areas_dict = {names[i]: areas[i] for i in range(len(names))}
 
@@ -204,6 +208,7 @@ def main():
         pic.csvheader(f2, cropped=crp, csvtype='tocs') # MUST BE ONE BY ONE AND HAVE OWN HEADER
 
         pic.lineout([names[n], areas[n]], fareas)
+        pic.lineout([unsrtdnames[n], unsrtdareas[n]], fareas2)
 
     ignore = []
     p = 0
