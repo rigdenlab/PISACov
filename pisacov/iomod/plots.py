@@ -534,8 +534,7 @@ def area_histogram(data, outpath, plot_type='png'):
     # Plot histogram data
     ax.bar(list(data.keys()), list(data.values()), color=clist)
 
-    ax.xticks(np.arange(0.0, 1.05, 0.1))
-    ax.set_xticks(np.arange(len(data)), labels=list(data.values()))
+    ax.set_xticks(np.arange(len(data)), labels=list(data.keys()))
     ax.set_ylim([0, 1])
 
     cb = fig.colorbar(cmap.scalarMap, ax=ax)
