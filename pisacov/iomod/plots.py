@@ -236,7 +236,7 @@ def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None)
         ax.legend_.legendHandles[n]._sizes = [30]
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
-        fig.savefig(outpath, format=plot_type, overwrite=True)
+        fig.savefig(outpath, format=plot_type)
         plt.close(fig)
 
 
@@ -300,7 +300,7 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
     ax.legend();
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
-        fig.savefig(outpath, format=plot_type, overwrite=True)
+        fig.savefig(outpath, format=plot_type)
         plt.close(fig)
 
 
@@ -360,7 +360,7 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     ax.legend();
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
-        fig.savefig(outpath, format=plot_type, overwrite=True)
+        fig.savefig(outpath, format=plot_type)
         plt.close(fig)
 
 def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
@@ -421,7 +421,7 @@ def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
     #plt.tight_layout()
     #plt.title(title)
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
-        plt.savefig(outpath, format=plot_type, overwrite=True)
+        plt.savefig(outpath, format=plot_type)
         plt.close()
 
 def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
@@ -499,7 +499,7 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
 
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
-        fig.savefig(outpath, format=plot_type, overwrite=True)
+        fig.savefig(outpath, format=plot_type)
         plt.close(fig)
 
 
@@ -543,7 +543,7 @@ def area_histogram(data, outpath, plot_type='png'):
     # Add horizontal lines
     # ax.axhline(y=0.5, color = cmap.get_rgb(0.5), linestyle="--")
     ax.axhline(y=0.7, color = cmap.get_rgb(0.75), linestyle="--")
-    ax.axhline(y=0.8, color = cmap.get_rgb(0.90), linestyle="--")
+    ax.axhline(y=0.8, color = cmap.get_rgb(1.00), linestyle="--")
 
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
@@ -556,5 +556,5 @@ def area_histogram(data, outpath, plot_type='png'):
 
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
-        fig.savefig(outpath, format=plot_type, overwrite=True)
+        fig.savefig(outpath, format=plot_type)
         plt.close(fig)

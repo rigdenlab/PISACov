@@ -512,7 +512,7 @@ class contact_atlas:
                                           reference=self.interface.structure[1],
                                           legend=True,
                                           lim=(1, self.sequence.full_length()))
-            fig.savefig(outpath, overwrite=True)
+            fig.savefig(outpath)
             plt.close(fig.fig)
         except Exception:
             logging.warning('Something went wrong with ConKit ' +
@@ -526,7 +526,7 @@ class contact_atlas:
         :type outpath: str
         :param mode: Mode, if any, defaults to 'raw'.
         :type mode: str, optional
-        :param plot_type: Plot either as a 'png' image, 'eps' vector image or 'agr' in raw grace format, defaults to 'png'.
+        :param plot_type: Plot either as a 'png' image, 'eps' or 'svg' vector image, or 'agr' in raw grace format, defaults to 'png'.
         :type plot_type: str, optional
         :param xL: Number of contacts plotted as a function of L, defaults to None (all contacts).
         :type xL: int or float, optional
@@ -571,7 +571,7 @@ class contact_atlas:
 
         if plot_type == 'png':
             fig, ax = plt.subplots(dpi=141)
-        elif plot_type == 'eps':
+        elif plot_type == 'eps' or plot_type == 'svg':
             fig, ax = plt.subplots(dpi=1200)
         elif plot_type == 'agr':
             tpx, tpy = (list(e) for e in zip(*sorted(zip(tpx, tpy))))
@@ -613,5 +613,5 @@ class contact_atlas:
         for n in range(len(ax.legend_.legendHandles)):
             ax.legend_.legendHandles[n]._sizes = [30]
         if plot_type == 'png' or plot_type == 'eps':
-            fig.savefig(outpath, format=plot_type, overwrite=True)
+            fig.savefig(outpath, format=plot_type)
             plt.close(fig)
