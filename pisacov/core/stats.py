@@ -74,12 +74,19 @@ def tpr_vs_fpr(scores, against):
             fpr.append(FP/(FP+TN))
             tpr.append(TP/(TP+FN))
             p = -1
+            cont = False
             while True:
-                if fpr[-1] is None:
+                if fpr[p-1] is None:
                     p -= 1
                 else:
                     break
-            area += 0.5*(tpr[-1]-tpr[p-1])*(fpr[-1]+fpr[p-1])
+                if p-1 == -len(tpr):
+                    cont = True
+                    break
+            if cont:
+                continue
+            else:
+                area += 0.5*(tpr[-1]+tpr[p-1])*(fpr[-1]-fpr[p-1])
 
     return fpr, tpr, area
 
