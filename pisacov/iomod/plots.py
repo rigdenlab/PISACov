@@ -6,6 +6,8 @@ of proteins from evolutionary covariance.
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
 
+from pisacov.core import scores as psc
+from pisacov.iomod import _conf_ops as pco
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import logging
@@ -364,29 +366,9 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
         plt.close(fig)
 
 def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
-                     light0=False, clustered=False, show_values=False):
-    """
-
-    :param data: DESCRIPTION
-    :type data: TYPE
-    :param outpath: DESCRIPTION
-    :type outpath: TYPE
-    :param labels: DESCRIPTION, defaults to None
-    :type labels: TYPE, optional
-    :param plot_type: DESCRIPTION, defaults to 'png'
-    :type plot_type: TYPE, optional
-    :param light0: DESCRIPTION, defaults to False
-    :type light0: TYPE, optional
-    :param clustered: DESCRIPTION, defaults to False
-    :type clustered: TYPE, optional
-    :param show_values: DESCRIPTION, defaults to False
-    :type show_values: TYPE, optional
-    :return: DESCRIPTION
-    :rtype: TYPE
-
-    """
-    """
-    Plot correlation heatmap.
+                     light0=False, clustered=False, show_values=False,
+                     areas_for_color=None):
+    """Plot correlation heatmap with Seaborn. Add dendrograms optionally.
 
     :param data: Correlation matrix.
     :type data: :class:`~np.array`
@@ -402,6 +384,8 @@ def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
     :type clustered: bool
     :param show_values: Show correlation values on each cell, defaults to False.
     :type show_values: bool, optional
+    :param areas_for_color: Area-related colour-index assigned to each label (only when clustered is True), defaults to None.
+    :type areas_for_color: dict[float], optional
 
     """
     # CHECK https://seaborn.pydata.org/generated/seaborn.clustermap.html
@@ -419,30 +403,68 @@ def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
         labels = list(range(len(data)))
         labels = [str(a) for a in labels]
 
-    labels_orig = copy.deepcopy(labels)
-    labels_rev = list(labels).reverse()
+    # labels_orig = copy.deepcopy(labels)
+    # labels_rev = list(labels).reverse()
 
     if clustered:
-        title += ' Clustered by similarity.'
+        row_coloring = []
+        markers1 = pco._sourcenames(short=True)
+        lut1 = dict(zip(set(markers1),
+                        sns.hls_palette(len(set(markers1)), l=0.3, s=0.8)))
+        lut1_long = {}
+        for label in labels:
+            if label == 'PISAscore':
+                lut1_long[label] = (1.0, 1.0, 1.0)
+            else:
+                for m in markers1:
+                    if m in label:
+                        lut1_long[label] = lut1[m]
+        row_coloring.append(pd.DataFrame(labels)[0].map(lut1_long))
+
+        markers2 = ['Nconpred', 'Nconused', 'AccScore', 'AvScore',
+                    'TP', 'PREC', 'COVER', 'MCC', 'JACCARD']
+        lut2 = dict(zip(set(markers2),
+                        sns.hls_palette(len(set(markers2)), l=0.5, s=0.8)))
+        lut2_long = {}
+
+        for label in labels:
+            if label == 'PISAscore':
+                lut2_long[label] = (1.0, 1.0, 1.0)
+            else:
+                for m in markers2:
+                    if m in label:
+                        lut2_long[label] = lut2[m]
+        row_coloring.append(pd.DataFrame(labels)[0].map(lut2_long))
+
+        if areas_for_color is not None:
+            cmap2 = colour_scheme('rocs')
+            lut3_long = {}
+            lut3_long['PISAscore'] = (1.0, 1.0, 1.0)
+            for key in areas_for_color:
+                lut3_long[key] = cmap2.get_rgb(val=areas_for_color[key])
+            row_coloring.append(pd.DataFrame(labels)[0].map(lut3_long))
+
+        title += '\nClustered by similarity.'
 
         df = pd.DataFrame(data=data, index=labels, columns=labels)
         cg = sns.clustermap(df, vmin=-1, vmax=1, cmap=cmap.cmap, annot=False,
                             cbar_pos=(1.05, 0, 0.08, 0.8),
-                            xticklabels=True, yticklabels=True)
+                            xticklabels=True, yticklabels=True,
+                            linewidths=0.1,
+                            row_colors=row_coloring)
 
         #cg.ax_row_dendrogram.set_visible(False)
         #cg.ax_row_dendrogram.set_xlim([0,0])
     else:
-        title += ' Sorted by Area under the ROC.'
+        title += '\nSorted by Area under the ROC.'
 
-        df = pd.DataFrame(data=np.fliplr(data),
-                          index=labels_rev,
-                          columns=labels_orig)
-        cg = sns.heatmap(df, vmin=-1, vmax=1, annot=show_values, cmap=cmap.cmap,
-                         xticklabels=True, yticklabels=True)
+        df = pd.DataFrame(data=data, index=labels, columns=labels)
+        plt.subplots(figsize=(25,25))
+        cg = sns.heatmap(df, vmin=-1, vmax=1, annot=False, cmap=cmap.cmap,
+                         xticklabels=True, yticklabels=True, linewidths=0.1)
 
-    #plt.tight_layout()
-    #plt.title(title)
+        plt.tight_layout()
+    plt.title(title, y=1.40, x=-8)
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
         plt.savefig(outpath, format=plot_type)
         plt.close()
@@ -470,7 +492,7 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
     # CHECK https://www.python-graph-gallery.com/405-dendrogram-with-heatmap-and-coloured-leaves
     colours = 'RdBu' if light0 is True else 'correlations'
 
-    title = 'Correlation matrix for PISACov scores. Sorted by Area under the ROC.'
+    title = 'Correlation matrix for PISACov scores.\nSorted by Area under the ROC.'
 
     if labels is None:
         labels = list(range(len(data)))
@@ -488,13 +510,21 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
 
     # ax.set_xticks(np.arange(len(labels)), labels=labels)
     ax.set_xticks(np.flip(np.arange(len(labels))),
-                  labels=labels, fontsize='xx-small')
+                  labels=labels, fontsize=4)
     ax.set_yticks(np.arange(len(labels)),
-                  labels=labels, fontsize='xx-small')
+                  labels=labels, fontsize=4)
+
+    # Minor ticks
+    ax.set_xticks(np.arange(-.5, len(labels), 1), minor=True)
+    ax.set_yticks(np.arange(-.5, len(labels), 1), minor=True)
 
     #ax.axhline(0.5, color="white", lw=2)
     #ax.axvline(len(labels)-1.5, color="white", lw=2)
     plt.grid(False)
+    plt.grid(which='minor', linewidth=0.1, color='w')
+
+    # Remove minor ticks
+    ax.tick_params(which='minor', bottom=False, left=False)
 
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
@@ -558,7 +588,7 @@ def area_histogram(data, outpath, plot_type='png'):
     # Plot histogram data
     ax.bar(list(data.keys()), list(data.values()), color=clist)
 
-    ax.set_xticks(np.arange(len(data)), labels=list(data.keys()), fontsize='xx-small')
+    ax.set_xticks(np.arange(len(data)), labels=list(data.keys()), fontsize=4)
     ax.set_ylim([0, 1])
 
     cb = fig.colorbar(cmap.scalarMap, ax=ax)
@@ -577,6 +607,7 @@ def area_histogram(data, outpath, plot_type='png'):
     ax.set_title(title, y=1.08)
     ax.set_xlabel(xaxis)
     ax.set_ylabel(yaxis)
+    plt.grid(False)
 
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':

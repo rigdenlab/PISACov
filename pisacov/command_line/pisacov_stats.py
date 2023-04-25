@@ -253,11 +253,15 @@ def main():
         fout = os.path.join(pdir, fname + '.correlations.' + imtype)
         pip.plot_correlation_heatmap(data=correl_matrix, outpath=fout,
                                      labels=namex, plot_type=imtype, light0=True)
+        #fout = os.path.join(pdir, fname + '.correlations2.' + imtype)
+        #pip.plot_correlation_sns(data=correl_matrix, outpath=fout,
+        #                         labels=namex, plot_type=imtype, light0=True,
+        #                         clustered=False)
         # CLUSTERED CORRELATIONS - HEATMAP + DENDROGRAM
         fout = os.path.join(pdir, fname + '.clusters.' + imtype)
         pip.plot_correlation_sns(data=correl_matrix, outpath=fout,
                                  labels=namex, plot_type=imtype, light0=True,
-                                 clustered=True)
+                                 clustered=True, areas_for_color=areas_dict)
 
     endmsg = pcl.ok(starttime, command=__script__)
     logger.info(endmsg)

@@ -54,6 +54,65 @@ def _scorenames(crop=False):
 
     return scorenames
 
+def _score_properties(input_score, descriptor):
+    """Return score markers according to descriptor.
+
+    :param input_score: Score(s) from which markers are generated.
+    :type input_score: str, list[str]
+    :param descriptor: Either 'scores' or 'sources'.
+    :type descriptor: str
+
+    :raises TypeError: If input_score is not a string or a list of strings, or descriptor is not a string.
+    :raises ValueError: If descriptor is not one of the two valid strings.
+
+    :return: The marker(s) for the given score(s) and descriptor.
+    :rtype: str, list[str]
+
+    """
+    if input_score.isinstance(str):
+        i = [input_score]
+    elif input_score.isinstance(list):
+        for n in range(len(input_score)):
+            if input_score[n].isinstance(str):
+                pass
+            else:
+                msg = 'Input must be either a string or a list of strings.'
+                logging.critical(msg)
+                raise TypeError
+        i = input_score
+    else:
+        msg = 'Input must be either a string or a list of strings.'
+        logging.critical(msg)
+        raise TypeError
+
+    if descriptor.isinstance(str):
+        if descriptor.lower() != 'source' and descriptor.lower() != 'score':
+            msg = "Descriptor must be either 'score' or 'source'."
+            logging.critical(msg)
+            raise ValueError
+    else:
+        msg = 'Descriptor must a string.'
+        logging.critical(msg)
+        raise TypeError
+
+    r =[]
+    d = descriptor.lower()
+    if d == 'scores':
+        s = ['PISA', 'Nconpred', 'Nconused', 'AccScore', 'AvScore',
+             'TP', 'PREC', 'COVER', 'MCC', 'JACCARD']
+    elif d == 'sources':
+        s = pco._sourcenames(short=True)
+
+    for n in len(i):
+        for element in s:
+            if element in i[n]:
+                r.append(element)
+
+    if input_score.isinstance(str):
+        return r[0]
+    else:
+        return r
+
 
 def accscore(inatlas, alt=None):
     """Return the cumulative score of the True Positive contacts.
