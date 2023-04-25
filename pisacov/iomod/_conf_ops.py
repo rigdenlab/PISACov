@@ -239,12 +239,14 @@ def _check_hhparams(paramlist):
             logging.critical('One or more of HHblits arguments given are not valid')
             raise ValueError
 
-        outparams=[str(int(float(paramlist[0]))), str(float(paramlist[1])),
-            paramlist[2], str(float(paramlist[4])), str(float(paramlist[5]))]
+        outparams = [str(int(float(paramlist[0]))), str(float(paramlist[1])),
+                     paramlist[2], str(float(paramlist[4])),
+                     str(float(paramlist[5]))]
         if paramlist[2] != 'inf':
             outparams = str(int(float(paramlist[2])))
 
     return outparams
+
 
 def _check_lowth(paramlist):
     """Return a list with the validated scores' lower thresholds.
@@ -276,6 +278,7 @@ def _check_lowth(paramlist):
 
     return outparams
 
+
 def _check_uniprot(inuniprot):
     """Return Uniprot segment threshold value and Uniprot database path.
 
@@ -300,6 +303,7 @@ def _check_uniprot(inuniprot):
 
     return float(inuniprot), dbpath
 
+
 def _sourcenames(short=False):
     """Return a list with the source names.
 
@@ -315,6 +319,7 @@ def _sourcenames(short=False):
         sources = ["psicov", "ccmpred", "dmp"]
 
     return sources
+
 
 def _sources(lowth=[0.2, 0.7, 0.2]):
     """Return the subdir name and extension of each of the contact prediction types.

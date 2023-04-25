@@ -297,7 +297,7 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
     ax.set_xlabel(xaxis)
     ax.set_ylabel(yaxis)
 
-    ax.legend();
+    #ax.legend();
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
         fig.savefig(outpath, format=plot_type)
@@ -314,8 +314,8 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     :type datatag: str
     :param outpath: Output filepath.
     :type outpath: str
-    :param areas_for_color: Colour-index assigned to each label, defaults to None.
-    :type areas_for_color: dict [float], optional
+    :param area_for_color: Colour-index assigned to curve, defaults to None.
+    :type area_for_color: float, optional
     :param plot_type: Plot either as a 'png' image, 'eps' vector image, 'svg' vector image, or 'agr' in raw grace format, defaults to 'png'.
     :type plot_type: str, optional
 
@@ -337,9 +337,9 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
 
     xmax = max(data[0])
     ymax = max(data[1])
-    ax.plot([0, xmax], [0, ymax], linestyle=":", color="dimgray")
-    ax.plot([0, xmax], [0, xmax], linestyle=":", color="seagreen")
-    ax.plot([0, ymax], [0, ymax], linestyle=":", color="indianred")
+    ax.plot([0, xmax], [0, ymax], linestyle=":", color="dimgray")           # RANDOM
+    ax.plot([0, ymax], [0, ymax], linestyle=":", color="seagreen")          # MAX
+    ax.plot([xmax-ymax, xmax], [0, ymax], linestyle=":", color="indianred") # MIN
 
     if area_for_color is None:
         clr = 'k'
@@ -364,7 +364,27 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
         plt.close(fig)
 
 def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
-                     light0=False, clustered=False):
+                     light0=False, clustered=False, show_values=False):
+    """
+
+    :param data: DESCRIPTION
+    :type data: TYPE
+    :param outpath: DESCRIPTION
+    :type outpath: TYPE
+    :param labels: DESCRIPTION, defaults to None
+    :type labels: TYPE, optional
+    :param plot_type: DESCRIPTION, defaults to 'png'
+    :type plot_type: TYPE, optional
+    :param light0: DESCRIPTION, defaults to False
+    :type light0: TYPE, optional
+    :param clustered: DESCRIPTION, defaults to False
+    :type clustered: TYPE, optional
+    :param show_values: DESCRIPTION, defaults to False
+    :type show_values: TYPE, optional
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     """
     Plot correlation heatmap.
 
@@ -380,6 +400,8 @@ def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
     :type light0: bool
     :param clustered: Cluster scores by similarity and produce dendogram on heatmap, defaults to False.
     :type clustered: bool
+    :param show_values: Show correlation values on each cell, defaults to False.
+    :type show_values: bool, optional
 
     """
     # CHECK https://seaborn.pydata.org/generated/seaborn.clustermap.html
@@ -398,15 +420,15 @@ def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
         labels = [str(a) for a in labels]
 
     labels_orig = copy.deepcopy(labels)
-    labels.reverse()
-    labels_rev = copy.deepcopy(labels)
+    labels_rev = list(labels).reverse()
 
     if clustered:
         title += ' Clustered by similarity.'
 
         df = pd.DataFrame(data=data, index=labels, columns=labels)
-        cg = sns.clustermap(df, vmin=-1, vmax=1, cmap=cmap.cmap, annot=True,
-                            cbar_pos=(1.05, 0, 0.08, 0.8))
+        cg = sns.clustermap(df, vmin=-1, vmax=1, cmap=cmap.cmap, annot=False,
+                            cbar_pos=(1.05, 0, 0.08, 0.8),
+                            xticklabels=True, yticklabels=True)
 
         #cg.ax_row_dendrogram.set_visible(False)
         #cg.ax_row_dendrogram.set_xlim([0,0])
@@ -416,7 +438,8 @@ def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
         df = pd.DataFrame(data=np.fliplr(data),
                           index=labels_rev,
                           columns=labels_orig)
-        cg = sns.heatmap(df, vmin=-1, vmax=1, annot=True, cmap=cmap.cmap)
+        cg = sns.heatmap(df, vmin=-1, vmax=1, annot=show_values, cmap=cmap.cmap,
+                         xticklabels=True, yticklabels=True)
 
     #plt.tight_layout()
     #plt.title(title)
@@ -465,12 +488,13 @@ def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
 
     # ax.set_xticks(np.arange(len(labels)), labels=labels)
     ax.set_xticks(np.flip(np.arange(len(labels))),
-                  labels=labels, fontsize='x-small')
+                  labels=labels, fontsize='xx-small')
     ax.set_yticks(np.arange(len(labels)),
-                  labels=labels, fontsize='x-small')
+                  labels=labels, fontsize='xx-small')
 
-    ax.axhline(0.5, color="white", lw=2)
-    ax.axvline(len(labels)-1.5, color="white", lw=2)
+    #ax.axhline(0.5, color="white", lw=2)
+    #ax.axvline(len(labels)-1.5, color="white", lw=2)
+    plt.grid(False)
 
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
@@ -534,7 +558,7 @@ def area_histogram(data, outpath, plot_type='png'):
     # Plot histogram data
     ax.bar(list(data.keys()), list(data.values()), color=clist)
 
-    ax.set_xticks(np.arange(len(data)), labels=list(data.keys()))
+    ax.set_xticks(np.arange(len(data)), labels=list(data.keys()), fontsize='xx-small')
     ax.set_ylim([0, 1])
 
     cb = fig.colorbar(cmap.scalarMap, ax=ax)

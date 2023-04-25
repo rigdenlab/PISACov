@@ -235,30 +235,32 @@ def main():
     fout = os.path.join(outdir, fname + '.correlations.csv')
     # pic.npmatrix(inmatrix = correl_matrix, outpath=fout)
 
-    endmsg = pcl.ok(starttime, command=__script__)
-    logger.info(endmsg)
-
     for imtype in plotformats:
+        pdir = os.path.join(outdir, imtype, '')
+        ppaths.mdir(pdir)
         # ROC AREAS - HISTOGRAM
-        fout = os.path.join(outdir, fname + '.roc_areas.' + imtype)
+        fout = os.path.join(pdir, fname + '.roc_areas.' + imtype)
         pip.area_histogram(data=areas_dict, outpath=fout, plot_type=imtype)
         # RO CURVES
-        fout = os.path.join(outdir, fname + '.rocs.' + imtype)
+        fout = os.path.join(pdir, fname + '.rocs.' + imtype)
         pip.plot_rocs(data=rates, outpath=fout, areas_for_color=areas_dict, plot_type=imtype)
         # TO CURVES
         for name in names:
-            fout = os.path.join(outdir, fname + '.' + name + '.toc.' + imtype)
-            pip.plot_toc(data=rates[name], datatag=name, outpath=fout,
-                         areas_for_color=areas_dict, plot_type=imtype)
+            fout = os.path.join(pdir, fname + '.' + name + '.toc.' + imtype)
+            pip.plot_toc(data=tocs[name], datatag=name, outpath=fout,
+                         area_for_color=areas_dict[name], plot_type=imtype)
         # CORRELATION HEATMAP
-        fout = os.path.join(outdir, fname + '.correlations.' + imtype)
+        fout = os.path.join(pdir, fname + '.correlations.' + imtype)
         pip.plot_correlation_heatmap(data=correl_matrix, outpath=fout,
                                      labels=namex, plot_type=imtype, light0=True)
         # CLUSTERED CORRELATIONS - HEATMAP + DENDROGRAM
-        fout = os.path.join(outdir, fname + '.clusters.' + imtype )
+        fout = os.path.join(pdir, fname + '.clusters.' + imtype)
         pip.plot_correlation_sns(data=correl_matrix, outpath=fout,
                                  labels=namex, plot_type=imtype, light0=True,
                                  clustered=True)
+
+    endmsg = pcl.ok(starttime, command=__script__)
+    logger.info(endmsg)
 
     return
 
@@ -269,7 +271,6 @@ if __name__ == "__main__":
 
     try:
         main()
-        logger.info(pcl.ok())
         sys.exit(0)
     except Exception as e:
         if not isinstance(e, SystemExit):
