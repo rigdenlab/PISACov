@@ -217,28 +217,31 @@ def main():
 
     fseq = {}
     fmsa = {}
+
+    fstr = os.path.join(invals['OUTROOT'], (pdbid + os.extsep + 'crops' +
+                                            os.extsep + 'seq' +
+                                            os.extsep + 'pdb'))
     if skipexec is False:
+        logger.info('Renumbering structure ' +
+                    'according to position in sequence.')
+        logger.info(pcl.running('CROPS-renumber'))
+        itime = datetime.datetime.now()
+        psc.renumcrops(invals['INSEQ'],
+                       invals['INSTR'],
+                       invals['OUTROOT'])
+        logger.info(pcl.running('CROPS-renumber', done=itime))
         if cropping is True:
-            logger.info('Cropping and renumbering sequences, ' +
+            logger.info('Cropping sequences and ' +
                         'structures according to SIFTS database.')
             logger.info(pcl.running('CROPS-cropstr'))
             itime = datetime.datetime.now()
             psc.runcrops(invals['INSEQ'],
-                         invals['INSTR'],
+                         fstr,
                          invals['SIFTS_PATH'],
                          invals['UPTHRESHOLD'],
                          invals['UNICLUST_FASTA_PATH'],
                          invals['OUTROOT'])
             logger.info(pcl.running('CROPS-cropstr', done=itime))
-        else:
-            logger.info('Renumbering structure ' +
-                        'according to position in sequence.')
-            logger.info(pcl.running('CROPS-renumber'))
-            itime = datetime.datetime.now()
-            psc.renumcrops(invals['INSEQ'],
-                           invals['INSTR'],
-                           invals['OUTROOT'])
-            logger.info(pcl.running('CROPS-renumber', done=itime))
 
         ppaths.mdir(outpdbdir)
         copyfile(invals['INSTR'], instrc)
@@ -251,9 +254,6 @@ def main():
         if not os.path.isfile(fseq[i]):
             iseq.dump(fseq[i])
 
-    fstr = os.path.join(invals['OUTROOT'], (pdbid + os.extsep + 'crops' +
-                                            os.extsep + 'seq' +
-                                            os.extsep + 'pdb'))
     if cropping:
         fcropstr = os.path.join(invals['OUTROOT'], pdbid,
                                 (pdbid + os.extsep + 'crops' +
