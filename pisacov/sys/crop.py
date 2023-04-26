@@ -11,7 +11,8 @@ import importlib
 import sys
 import logging
 
-def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggingfile):
+def runcrops(seqin, strin, dbin, thin=None, upin=None,
+             outdirin=None, needleman=False):#, loggingfile):
     """Run CROPS to produce clean sequence and structure files.
 
     :param seqin: Sequence filepath.
@@ -26,11 +27,13 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
     :type upin: str, int, optional
     :param outdirin: Output directory's path. If not given, seqin dir will use instead, defaults to None.
     :type outdirin: str, optional
+    :param needleman: Use Needleman-Wunch algorithm to force alignment if direct alignment fails, defaults to False.
+    :type needleman: bool, optional
 
     """
 
     #cropsdir = os.path.dirname(crops.__file__)
-    pythonexec = '"'+sys.executable+'"'
+    pythonexec = '"' + sys.executable + '"'
 
     #CROP SEQUENCE AND STRUCTURE
 
@@ -44,6 +47,9 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
     if thin is not None:
         command += ' -u ' + thin + ' ' + upin
     command += ' -o ' + outdirin + ' -i'
+
+    if needleman:
+        command += ' -f'
     try:
         oc = os.system(command)  # + ' > ' + loggingfile)
         if oc != 0:
@@ -55,7 +61,7 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None, outdirin = None):#, loggi
     return
 
 
-def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
+def renumcrops(seqin, strin, outdirin=None, needleman=False):#, loggingfile):
     """Run CROPS to produce clean sequence and structure files.
 
     :param seqin: Sequence filepath.
@@ -64,11 +70,13 @@ def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
     :type strin: str
     :param outdirin: Output directory's path. If not given, seqin dir will use instead, defaults to None.
     :type outdirin: str, optional
+    :param needleman: Use Needleman-Wunch algorithm to force alignment if direct alignment fails, defaults to False.
+    :type needleman: bool, optional
 
     """
 
     #cropsdir = os.path.dirname(crops.__file__)
-    pythonexec = '"'+sys.executable+'"'
+    pythonexec = '"' + sys.executable + '"'
 
     #Renumber STRUCTURE
     logging.info('    Running crops_renumber...')
@@ -81,6 +89,9 @@ def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
 
     command = (pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + strin + ' ' +
                ' -o ' + outdirin)
+    if needleman:
+        command += ' -f'
+
     try:
         oc = os.system(command)  # + ' > ' + loggingfile)
         if oc != 0:
@@ -92,7 +103,7 @@ def renumcrops(seqin, strin, outdirin = None):#, loggingfile):
     return
 
 
-def splitseqs(seqin, outdirin = None):#, loggingfile):
+def splitseqs(seqin, outdirin=None):#, loggingfile):
     """Run CROPS to split sequence files.
 
     :param seqin: Sequence filepath.
@@ -103,7 +114,7 @@ def splitseqs(seqin, outdirin = None):#, loggingfile):
     """
 
     #cropsdir = os.path.dirname(crops.__file__)
-    pythonexec = '"'+sys.executable+'"'
+    pythonexec = '"' + sys.executable + '"'
 
     #Renumber STRUCTURE
     logging.info('    Running crops_renumber...')
