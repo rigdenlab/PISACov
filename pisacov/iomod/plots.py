@@ -262,7 +262,7 @@ def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None)
         ax.legend_.legendHandles[n]._sizes = [30]
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
-        fig.savefig(outpath, format=plot_type)
+        fig.savefig(outpath, format=plot_type, facecolor='white', transparent=False)
         plt.close(fig)
 
 
@@ -326,7 +326,7 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
     #ax.legend();
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
-        fig.savefig(outpath, format=plot_type)
+        fig.savefig(outpath, format=plot_type, facecolor='white', transparent=False)
         plt.close(fig)
 
 
@@ -386,7 +386,7 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
     ax.legend();
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
-        fig.savefig(outpath, format=plot_type)
+        fig.savefig(outpath, format=plot_type, facecolor='white', transparent=False)
         plt.close(fig)
 
 def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
@@ -496,7 +496,7 @@ def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
         plt.tight_layout()
     plt.title(title, y=1.40, x=-8)
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
-        plt.savefig(outpath, format=plot_type)
+        plt.savefig(outpath, format=plot_type, facecolor='white', transparent=False)
         plt.close()
 
 def plot_correlation_heatmap(data, outpath, labels=None, plot_type='png',
@@ -641,5 +641,5 @@ def area_histogram(data, outpath, plot_type='png'):
 
     fig.tight_layout()
     if plot_type == 'png' or plot_type == 'eps' or plot_type == 'svg':
-        fig.savefig(outpath, format=plot_type)
+        fig.savefig(outpath, format=plot_type, facecolor='white', transparent=False)
         plt.close(fig)

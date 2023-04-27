@@ -192,7 +192,7 @@ def correl_matrix(set1, set2, setref=None):
         setref = copy.deepcopy(set1)
 
     wref, set1 = zip(*sorted(zip(setref, set1), reverse=True))
-    wref, set1 = zip(*sorted(zip(setref, set2), reverse=True))
+    wref, set2 = zip(*sorted(zip(setref, set2), reverse=True))
 
     set1 = np.asarray(set1)
     set2 = np.asarray(set2)
