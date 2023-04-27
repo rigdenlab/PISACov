@@ -16,6 +16,28 @@ import numpy as np
 _cschemes = {
     'roc_grad':
         {'red':
+         ((0.0, 0.8392156862745098, 0.8392156862745098),
+          (0.2, 0.8392156862745098, 0.9882352941176471),
+          (0.3, 0.9882352941176471, 1.0),
+          (0.7, 1.0, 0.30196078431372547),
+          (0.8, 0.30196078431372547, 0.21568627450980393),
+          (1.0, 0.21568627450980393, 0.21568627450980393)),
+         'green':
+         ((0.0, 0.15294117647058825, 0.15294117647058825),
+          (0.2, 0.15294117647058825, 0.5529411764705883),
+          (0.3, 0.5529411764705883, 0.8509803921568627),
+          (0.7, 0.8509803921568627, 0.6862745098039216),
+          (0.8, 0.6862745098039216, 0.49411764705882355),
+          (1.0, 0.49411764705882355, 0.49411764705882355)),
+         'blue':
+         ((0.0, 0.1568627450980392, 0.1568627450980392),
+          (0.2, 0.1568627450980392, 0.3843137254901961),
+          (0.3, 0.3843137254901961, 0.1843137254901961),
+          (0.7, 0.1843137254901961, 0.2901960784313726),
+          (0.8, 0.2901960784313726, 0.7215686274509804),
+          (1.0, 0.7215686274509804, 0.7215686274509804))},
+    'roc_grad_alt':
+        {'red':
          ((0.0, 0.5, 0.5),
           (0.5, 1.0, 1.0),
           (0.7, 1.0, 0.0),
@@ -58,9 +80,11 @@ def _gen_cmap(scheme='rocs'):
     # https://github.com/frankligy/scTriangulate/blob/main/image/colors_module/README.md
     if scheme == 'rocs':
         name = 'roc_grad'
+    elif scheme == 'rocs2':
+        name = 'roc_grad_alt'
     elif scheme == 'correlations':
         name = 'correl_grad'
-    elif scheme == 'RdBu':
+    elif scheme == 'RdBu' or scheme == 'Pastel1' or scheme == 'Dark2':
         return scheme
 
     cdict = _cschemes[name]
@@ -409,8 +433,11 @@ def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
     if clustered:
         row_coloring = []
         markers1 = pco._sourcenames(short=True)
+        #lut1 = dict(zip(set(markers1),
+        #                sns.hls_palette(len(set(markers1)), l=0.3, s=0.8)))
         lut1 = dict(zip(set(markers1),
-                        sns.hls_palette(len(set(markers1)), l=0.3, s=0.8)))
+                        sns.color_palette(palette='Dark2',
+                                          n_colors=len(set(markers1)))))
         lut1_long = {}
         for label in labels:
             if label == 'PISAscore':
@@ -423,8 +450,11 @@ def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
 
         markers2 = ['Nconpred', 'Nconused', 'AccScore', 'AvScore',
                     'TP', 'PREC', 'COVER', 'MCC', 'JACCARD']
+        #lut2 = dict(zip(set(markers2),
+        #                sns.hls_palette(len(set(markers2)), l=0.5, s=0.8)))
         lut2 = dict(zip(set(markers2),
-                        sns.hls_palette(len(set(markers2)), l=0.5, s=0.8)))
+                        sns.color_palette(palette='Pastel1',
+                                          n_colors=len(set(markers2)))))
         lut2_long = {}
 
         for label in labels:
