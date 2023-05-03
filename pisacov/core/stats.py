@@ -9,7 +9,7 @@ from pisacov import __author__, __date__, __copyright__
 import numpy as np
 import copy
 
-def tpr_vs_fpr(scores, against):
+def tpr_vs_fpr(scores, against, noneisfalse=True):
     """
     Produce True Positive rate and False Positive rate data by comparing results against standard (ROCs).
 
@@ -17,6 +17,8 @@ def tpr_vs_fpr(scores, against):
     :type scores: list [float]
     :param against: Standard for scores to be compared against.
     :type against: list [bool]
+    :param noneisfalse: If True, when PISA score given is None, it is considered False, otherwise it is ignored, defaults to True.
+    :param noneisfalse: bool, optional
 
     :return fpr: False Positive Rate data.
     :rtype fpr: set [float]
@@ -60,13 +62,21 @@ def tpr_vs_fpr(scores, against):
             if scores[s] < t:
                 if against[s] == 1:
                     FN += 1
-                else:
+                elif against[s] == 0:
                     TN += 1
+                elif against[s] == -1 and noneisfalse is True:
+                    TN += 1
+                else:
+                    pass
             else:
                 if against[s] == 1:
                     TP += 1
-                else:
+                elif against[s] == 0:
                     FP += 1
+                elif against[s] == -1 and noneisfalse is True:
+                    FP += 1
+                else:
+                    pass
         if (FP+TN) == 0 or (TP+FN) == 0:
             fpr.append(None)
             tpr.append(None)
@@ -91,7 +101,7 @@ def tpr_vs_fpr(scores, against):
     return fpr, tpr, area
 
 
-def hits_vs_total(scores, against):
+def hits_vs_total(scores, against, noneisfalse=True):
     """
     Produce True Positive hits and Total hits and misses data by comparing results against standard (TOCs).
 
@@ -99,6 +109,8 @@ def hits_vs_total(scores, against):
     :type scores: list [float]
     :param against: Standard for scores to be compared against.
     :type against: list [bool]
+    :param noneisfalse: If True, when PISA score given is None, it is considered False, otherwise it is ignored, defaults to True.
+    :param noneisfalse: bool, optional
 
     :return ntot: Hits (TPs) + False Alarms (FPs) data.
     :rtype ntot: set [float]
@@ -142,13 +154,21 @@ def hits_vs_total(scores, against):
             if scores[s] < t:
                 if against[s] == 1:
                     FN += 1
-                else:
+                elif against[s] == 0:
                     TN += 1
+                elif against[s] == -1 and noneisfalse is True:
+                    TN += 1
+                else:
+                    pass
             else:
                 if against[s] == 1:
                     TP += 1
-                else:
+                elif against[s] == 0:
                     FP += 1
+                elif against[s] == -1 and noneisfalse is True:
+                    FP += 1
+                else:
+                    pass
         if (FP+TN) == 0 or (TP+FN) == 0:
             ntot.append(None)
             hits.append(None)

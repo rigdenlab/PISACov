@@ -31,9 +31,13 @@ def create_argument_parser():
 
     parser.add_argument('scores', nargs=1, metavar=("ScoresCSVFile"),
                         help="Input scores CSV filepath.")
+
     parser.add_argument("-f", "--full_score_analysis", action='store_true',
                         default=False,
                         help="Produce full analysis of beta score list (beta score list required).")
+    parser.add_argument("-n", "--none_is_false_pisa", action='store_true',
+                        default=False,
+                        help="Include additional data with PISA None results considered False.")
 
     parser.add_argument("-o", "--outdir", nargs=1, metavar="Output_Directory",
                         help="Set output directory path. If not supplied, default is the one containing the input data.")
@@ -72,8 +76,8 @@ def main():
     fcurves2 = os.path.join(outdir, fcurves2)
     fareas = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.roc_areas.csv"
     fareas = os.path.join(outdir, fareas)
-    fareas2 = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.roc_areas.unsorted.csv"
-    fareas2 = os.path.join(outdir, fareas2)
+    #fareas2 = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.roc_areas.unsorted.csv"
+    #fareas2 = os.path.join(outdir, fareas2)
 
     if args.plot_formats is None:
         plotformats = {'png'}
@@ -103,7 +107,7 @@ def main():
     pic.csvheader(fcurves, cropped=crp, csvtype='rocs')
     pic.csvheader(fcurves, cropped=crp, csvtype='tocs')
     pic.csvheader(fareas, cropped=crp, csvtype='rocareas')
-    pic.csvheader(fareas2, cropped=crp, csvtype='rocareas')
+    #pic.csvheader(fareas2, cropped=crp, csvtype='rocareas')
 
     with open(csvfile, newline='') as csvin:
         signals = csv.reader(csvin, delimiter=',', quotechar='|')
@@ -159,34 +163,51 @@ def main():
     tocs = {}
     unsrtdareas = []  # 0.5*(TPR[n]-TPR[n-1])*(FPR[n]+FPR[n-1])
 
-    for n in range(L):
-        area = 0
-        rates[names[n]] = [[], []]  # FPR, TPR
-        rates[names[n]][0], rates[names[n]][1], area = pcs.tpr_vs_fpr(scores[n][0], scores[n][1])
-        unsrtdareas.append(area)
+    names2 = []
+    pindex = ("NN", "NF")
+    pbool = (False, True)
+    for p in range(len(pindex)):
+        if args.none_is_false_pisa is False and pindex[p] == "NF":
+            break
+        names2.append(names[n]+'_'+pindex[p])
+        for n in range(L):
+            area = 0
+            rates[names2[L*p+n]] = [[], []]  # FPR, TPR
+            rates[names2[L*p+n]][0], rates[names2[L*p+n]][1], area = (
+                pcs.tpr_vs_fpr(scores[n][0], scores[n][1], noneisfalse=pbool[p]))
+            unsrtdareas.append(area)
 
-        tocs[names[n]] = [[], []]  # Tots, Hits
-        tocs[names[n]][0], tocs[names[n]][1] = pcs.hits_vs_total(scores[n][0], scores[n][1])
+            tocs[names2[L*p+n]] = [[], []]  # Tots, Hits
+            tocs[names2[L*p+n]][0], tocs[names2[L*p+n]][1] = (
+                pcs.hits_vs_total(scores[n][0], scores[n][1], noneisfalse=pbool[p]))
 
-    unsrtdnames = copy.deepcopy(names)
-    areas, names = zip(*sorted(zip(unsrtdareas, names), reverse=True))
-    areas_dict = {names[i]: areas[i] for i in range(len(names))}
+    unsrtdnames = copy.deepcopy(names2)
+    areas, names2 = zip(*sorted(zip(unsrtdareas, names2), reverse=True))
+    areas_dict = {names2[i]: areas[i] for i in range(len(names2))}
 
     # Calculate correlation matrices
     correl_matrix = np.identity(L+1)
 
-    namex = tuple(['PISAscore'] + list(names))
+    if args.none_is_false_pisa is True:
+        namex = tuple(['PISAscore_NN', 'PISAscore_NF'] + list(names2))
+    else:
+        namex = tuple(['PISAscore_NN'] + list(names2))
 
     for n in range(len(namex)-1):
         for m in range(n+1, len(namex)):
             set1 = []
             set2 = []
             setr = []
-            #print(namex[n], len(wholescores[namex[n]]))
-            #print(namex[m], len(wholescores[namex[m]]))
             for dat in range(len(wholescores[namex[n]])):
+                if ((namex[n] == 'PISAscore_NF' and (namex[n].endswith('NF')
+                if ((namex[n].startswith('PISAscore') or namex[m].startswith('PISAscore')) and
+                        (namex[n].endswith('NF') or namex[m].endswith('NF')) and
+                        args.none_is_false_pisa is False and
+                        ):
+                    continue
                 if (wholescores[namex[m]][dat] is not None and
                         wholescores[namex[n]][dat] is not None):
+
                     set1.append(wholescores[namex[m]][dat])
                     set2.append(wholescores[namex[n]][dat])
                     if wholescores[namex[1]][dat] is None:
@@ -208,7 +229,7 @@ def main():
         pic.csvheader(f2, cropped=crp, csvtype='tocs') # MUST BE ONE BY ONE AND HAVE OWN HEADER
 
         pic.lineout([names[n], areas[n]], fareas)
-        pic.lineout([unsrtdnames[n], unsrtdareas[n]], fareas2)
+        #pic.lineout([unsrtdnames[n], unsrtdareas[n]], fareas2)
 
     ignore = []
     p = 0

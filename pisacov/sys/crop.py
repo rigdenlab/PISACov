@@ -46,7 +46,7 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None,
     command = pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + strin + ' ' + dbin
     if thin is not None:
         command += ' -u ' + thin + ' ' + upin
-    command += ' -o ' + outdirin + ' -i'
+    command += ' -o ' + outdirin + ' -i' + ' -r'
 
     if needleman:
         command += ' -f'
