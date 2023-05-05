@@ -239,7 +239,7 @@ def main():
     p = 0
     while True:
         listline = []
-        for name in names:
+        for name in names2:
             f2 = fcurves2.replace("replaceme", name)
             if name in ignore:
                 listline.append("")
@@ -253,7 +253,7 @@ def main():
             pic.lineout(listline, f2)
         pic.lineout(listline, fcurves)
         p += 1
-        if len(ignore) == len(names):
+        if len(ignore) == len(names2):
             break
 
     fname = os.path.splitext(os.path.basename(csvfile))[0]
@@ -270,7 +270,7 @@ def main():
         fout = os.path.join(pdir, fname + '.rocs.' + imtype)
         pip.plot_rocs(data=rates, outpath=fout, areas_for_color=areas_dict, plot_type=imtype)
         # TO CURVES
-        for name in names:
+        for name in names2:
             fout = os.path.join(pdir, fname + '.' + name + '.toc.' + imtype)
             pip.plot_toc(data=tocs[name], datatag=name, outpath=fout,
                          area_for_color=areas_dict[name], plot_type=imtype)
