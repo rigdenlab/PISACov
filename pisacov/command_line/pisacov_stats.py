@@ -120,7 +120,7 @@ def main():
                     if args.none_is_false_pisa is True:
                         wholescores['PISAscore_NF'].append(1.0)
                 elif row[-1].lower().strip() == 'false':
-                    wholescores['PISAscore_NF'].append(0.0)
+                    wholescores['PISAscore_NN'].append(0.0)
                     if args.none_is_false_pisa is True:
                         wholescores['PISAscore_NF'].append(0.0)
                 else:
