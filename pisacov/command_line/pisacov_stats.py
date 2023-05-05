@@ -228,11 +228,11 @@ def main():
 
 
     # Print out results
-    for n in range(L):
-        f2 = fcurves2.replace("replaceme", names[n])
+    for n in range(len(names2)):
+        f2 = fcurves2.replace("replaceme", names2[n])
         pic.csvheader(f2, cropped=crp, csvtype='tocs') # MUST BE ONE BY ONE AND HAVE OWN HEADER
 
-        pic.lineout([names[n], areas[n]], fareas)
+        pic.lineout([names2[n], areas[n]], fareas)
         #pic.lineout([unsrtdnames[n], unsrtdareas[n]], fareas2)
 
     ignore = []
