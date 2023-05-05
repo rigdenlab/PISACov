@@ -12,7 +12,7 @@ import sys
 import logging
 
 def runcrops(seqin, strin, dbin, thin=None, upin=None,
-             outdirin=None, needleman=False):#, loggingfile):
+             outdirin=None, needleman=False, noligs=False):#, loggingfile):
     """Run CROPS to produce clean sequence and structure files.
 
     :param seqin: Sequence filepath.
@@ -29,6 +29,8 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None,
     :type outdirin: str, optional
     :param needleman: Use Needleman-Wunch algorithm to force alignment if direct alignment fails, defaults to False.
     :type needleman: bool, optional
+    :param noligs: Remove ligands and water molecules when running crops, defaults to False.
+    :type noligs: bool, optional
 
     """
 
@@ -46,7 +48,9 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None,
     command = pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + strin + ' ' + dbin
     if thin is not None:
         command += ' -u ' + thin + ' ' + upin
-    command += ' -o ' + outdirin + ' -i' + ' -r'
+    command += ' -o ' + outdirin + ' -i'
+    if noligs:
+        command += ' -r'
 
     if needleman:
         command += ' -f'
@@ -61,7 +65,7 @@ def runcrops(seqin, strin, dbin, thin=None, upin=None,
     return
 
 
-def renumcrops(seqin, strin, outdirin=None, needleman=False):#, loggingfile):
+def renumcrops(seqin, strin, outdirin=None, needleman=False, noligs=False):#, loggingfile):
     """Run CROPS to produce clean sequence and structure files.
 
     :param seqin: Sequence filepath.
@@ -72,6 +76,8 @@ def renumcrops(seqin, strin, outdirin=None, needleman=False):#, loggingfile):
     :type outdirin: str, optional
     :param needleman: Use Needleman-Wunch algorithm to force alignment if direct alignment fails, defaults to False.
     :type needleman: bool, optional
+    :param noligs: Remove ligands and water molecules when running crops, defaults to False.
+    :type noligs: bool, optional
 
     """
 
@@ -89,6 +95,8 @@ def renumcrops(seqin, strin, outdirin=None, needleman=False):#, loggingfile):
 
     command = (pythonexec + ' ' + cropspy + ' ' + seqin + ' ' + strin + ' ' +
                ' -o ' + outdirin)
+    if noligs:
+        command += ' -r'
     if needleman:
         command += ' -f'
 

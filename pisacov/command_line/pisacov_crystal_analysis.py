@@ -56,6 +56,9 @@ def create_argument_parser():
     parser.add_argument("-f", "--force_alignment", action='store_true',
                         default=False,
                         help="Use Needleman-Wunsch algorithm to try to bypass small disagreements between fasta and pdb sequences if direct alignment is not possible.")
+    parser.add_argument("-n", "--no_ligands", action='store_true',
+                        default=False,
+                        help="Remove ligands and water molecules from PDB files while using CROPS.")
 
     # HHBLITS modification
     parser.add_argument("-a", "--hhblits_arguments", nargs=5,
@@ -232,7 +235,8 @@ def main():
                          invals['UPTHRESHOLD'],
                          invals['UNICLUST_FASTA_PATH'],
                          invals['OUTROOT'],
-                         needleman = True)
+                         needleman = True,
+                         noligs = args.no_ligands)
             logger.info(pcl.running('CROPS-cropstr', done=itime))
         else:
             logger.info('Renumbering structure ' +
@@ -242,7 +246,8 @@ def main():
             psc.renumcrops(invals['INSEQ'],
                            invals['INSTR'],
                            invals['OUTROOT'],
-                           needleman = True)
+                           needleman = True,
+                           noligs = args.no_ligands)
             logger.info(pcl.running('CROPS-renumber', done=itime))
 
         ppaths.mdir(outpdbdir)
