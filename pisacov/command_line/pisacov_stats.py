@@ -116,11 +116,17 @@ def main():
             if row[0].startswith('#') is False:
                 if row[-1].lower().strip() == 'true':
                     #print('true')
-                    wholescores['PISAscore'].append(1.0)
+                    wholescores['PISAscore_NN'].append(1.0)
+                    if args.none_is_false_pisa is True:
+                        wholescores['PISAscore_NF'].append(1.0)
                 elif row[-1].lower().strip() == 'false':
-                    wholescores['PISAscore'].append(0.0)
+                    wholescores['PISAscore_NF'].append(0.0)
+                    if args.none_is_false_pisa is True:
+                        wholescores['PISAscore_NF'].append(0.0)
                 else:
-                    wholescores['PISAscore'].append(None)
+                    wholescores['PISAscore_NN'].append(None)
+                    if args.none_is_false_pisa is True:
+                        wholescores['PISAscore_NF'].append(0.0)
                 c = 0
                 for n in range(len(row)-1):
                     if col[n] is not None:
@@ -149,14 +155,15 @@ def main():
                             names.append(row[n].strip())
                             wholescores[row[n].strip()] = []
                         elif row[n].strip().lower() == 'pisascore':
-                            wholescores['PISAscore'] = []
+                            wholescores['PISAscore_NN'] = []
+                            if args.none_is_false_pisa is True:
+                                wholescores['PISAscore_NF'] = []
                         else:
                             col.append(None)
 
     #print('look at this:')
     #print(wholescores['PISAscore'], len(wholescores['PISAscore']))
     # Calculate ROCs, TOCs areas and correlations
-    # TO DO: Calcultate TOCs too! https://en.wikipedia.org/wiki/Total_operating_characteristic
     L = len(names)
     #print(names)
     rates = {}
@@ -186,34 +193,31 @@ def main():
     areas_dict = {names2[i]: areas[i] for i in range(len(names2))}
 
     # Calculate correlation matrices
-    correl_matrix = np.identity(L+1)
-
     if args.none_is_false_pisa is True:
-        namex = tuple(['PISAscore_NN', 'PISAscore_NF'] + list(names2))
+        correl_matrix = np.identity(L+2)
+        correl_matrix[0][1] = 1.
+        correl_matrix[1][0] = 1.
+        namex = tuple(['PISAscore_NN', 'PISAscore_NF'] + list(names))
     else:
-        namex = tuple(['PISAscore_NN'] + list(names2))
+        correl_matrix = np.identity(L+1)
+        namex = tuple(['PISAscore_NN'] + list(names))
 
     for n in range(len(namex)-1):
         for m in range(n+1, len(namex)):
+            if args.none_is_false_pisa is True and n == 0 and m == 1:
+                continue
             set1 = []
             set2 = []
             setr = []
             for dat in range(len(wholescores[namex[n]])):
-                if ((namex[n] == 'PISAscore_NF' and (namex[n].endswith('NF')
-                if ((namex[n].startswith('PISAscore') or namex[m].startswith('PISAscore')) and
-                        (namex[n].endswith('NF') or namex[m].endswith('NF')) and
-                        args.none_is_false_pisa is False and
-                        ):
-                    continue
                 if (wholescores[namex[m]][dat] is not None and
                         wholescores[namex[n]][dat] is not None):
-
                     set1.append(wholescores[namex[m]][dat])
                     set2.append(wholescores[namex[n]][dat])
-                    if wholescores[namex[1]][dat] is None:
+                    if wholescores[namex[0]][dat] is None:
                         setr.append(float('-inf'))
                     else:
-                        setr.append(wholescores[namex[1]][dat])
+                        setr.append(wholescores[namex[0]][dat])
 
             if len(set1) > 0:
                 correlation = pcs.correl_matrix(set1, set2, setref=setr)
