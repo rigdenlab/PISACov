@@ -176,8 +176,8 @@ def main():
     for p in range(len(pindex)):
         if args.none_is_false_pisa is False and pindex[p] == "NF":
             break
-        names2.append(names[n]+'_'+pindex[p])
         for n in range(L):
+            names2.append(names[n] + '_' + pindex[p])
             area = 0
             rates[names2[L*p+n]] = [[], []]  # FPR, TPR
             rates[names2[L*p+n]][0], rates[names2[L*p+n]][1], area = (
