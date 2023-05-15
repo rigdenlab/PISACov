@@ -266,7 +266,7 @@ def plot_matched_map(input_atlas, outpath, mode='raw', plot_type='png', xL=None)
         plt.close(fig)
 
 
-def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tprvsfpr'):
+def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tprvsfpr', norand=False):
     """
     Plot ROC curves.
 
@@ -278,8 +278,10 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
     :type areas_for_color: dict[float], optional
     :param plot_type: Plot either as a 'png' image, 'eps' vector image, 'svg' vector image, or 'agr' in raw grace format, defaults to 'png'.
     :type plot_type: str, optional
-    :param roc_type: Type of ROC curve, tprvsfpr' only, defaults to 'tprvsfpr'
+    :param roc_type: Type of ROC curve, tprvsfpr' only, defaults to 'tprvsfpr'.
     :type roc_type: str, optional
+    :param roc_type: If True, it omits those curves with 0.3 < area < 0.7, defaults to False.
+    :type roc_type: bool, optional
 
     """
     if not isinstance(areas_for_color, dict):
@@ -303,14 +305,22 @@ def plot_rocs(data, outpath, areas_for_color=None, plot_type='png', roc_type='tp
         fig, ax = _set_dpi(ptype=plot_type)
         cmap = colour_scheme('rocs')
 
+    if norand:
+        data2 = dict()
+        for key in data:
+            if areas_for_color[key] <= 0.3 or areas_for_color[key] >= 0.7:
+                data2[key] = data[key]
+    else:
+        data2 = data
+
     ax.plot([0, 1], [0, 1], linestyle=":", color="dimgray")
-    for key in data:
+    for key in data2:
         if areas_for_color is None:
             clr = 'k'
         else:
             clr = cmap.get_rgb(areas_for_color[key])
 
-        ax.plot(data[key][0], data[key][1], linestyle="-", label=key, color=clr)
+        ax.plot(data2[key][0], data2[key][1], linestyle="-", label=key, color=clr)
 
     ax.set_title(title, y=1.08)
 

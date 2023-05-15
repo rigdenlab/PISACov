@@ -269,6 +269,8 @@ def main():
         # RO CURVES
         fout = os.path.join(pdir, fname + '.rocs.' + imtype)
         pip.plot_rocs(data=rates, outpath=fout, areas_for_color=areas_dict, plot_type=imtype)
+        fout = os.path.join(pdir, fname + '.norandom.rocs.' + imtype)
+        pip.plot_rocs(data=rates, outpath=fout, areas_for_color=areas_dict, plot_type=imtype, rand=False)
         # TO CURVES
         for name in names2:
             fout = os.path.join(pdir, fname + '.' + name + '.toc.' + imtype)
