@@ -298,16 +298,16 @@ def main():
            "area"]
     for name in names_best:
         froc = fcurvesB.replace("replaceme", name)
-        for n in range(len(rocs_bezier["param"])):
+        for n in range(len(rocs_bezier[name]["param"])):
             listline = []
             for v in var:
                 if v == "area" and n > 0:
                     listline.append("")
                 elif v.startswith("bezier"):
-                    listline.append(rocs_bezier[v][0])
-                    listline.append(rocs_bezier[v][1])
+                    listline.append(rocs_bezier[name][v][0])
+                    listline.append(rocs_bezier[name][v][1])
                 else:
-                    listline.append(rocs_bezier[v][0])
+                    listline.append(rocs_bezier[name][v][0])
                     pic.lineout(listline, froc)
         pic.lineout(listline, froc)
 
