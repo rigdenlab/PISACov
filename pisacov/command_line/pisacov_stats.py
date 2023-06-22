@@ -306,8 +306,18 @@ def main():
                 elif v == "area" and n == 0:
                     listline.append(rocs_bezier[name][v])
                 elif v.startswith("bezier"):
-                    listline.append(rocs_bezier[name][v][0][n])
-                    listline.append(rocs_bezier[name][v][1][n])
+                    try:
+                        listline.append(rocs_bezier[name][v][0][n])
+                        listline.append(rocs_bezier[name][v][1][n])
+                    except:
+                        print("name="+str(name))
+                        print("var="+str(v))
+                        print("n="+str(n))
+                        print(len(rocs_bezier[name][v][0]))
+                        print(len(rocs_bezier[name][v][1]))
+                        for a in range(n):
+                            print(rocs_bezier[name][v][0][a], rocs_bezier[name][v][1][a])
+                        raise Exception("Cagandó")
                 else:
                     listline.append(rocs_bezier[name][v][n])
                     pic.lineout(listline, froc)
