@@ -282,10 +282,7 @@ def main():
                 listline.append("")
                 listline.append("")
             else:
-                if p == 0:
-                    listline.append(wholescores[name][0][0])
-                else:
-                    listline.append(wholescores[name][0][p-1])
+                listline.append(rocs_scores[name][p])
                 listline.append(rocs[name][0][p])
                 listline.append(rocs[name][1][p])
                 if len(rocs[name][0]) == p + 1:
