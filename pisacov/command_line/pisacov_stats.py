@@ -203,7 +203,7 @@ def main():
             isconvex = True if auc < 0.5 else False
             rocs_bezier[name] = pcs.bezier_parametrization([rocs[name][0],
                                                             rocs[name][1]],
-                                                           scores=scores_dict([name[:-3][0]]+scores_dict[name[:-3]]),
+                                                           scores=[scores_dict[name[:-3]][0]]+scores_dict[name[:-3]],
                                                            convex=isconvex)
 
     # Calculate correlation matrices
@@ -342,7 +342,7 @@ def main():
                                          area_for_color=areas_dict_best[name],
                                          plot_type=imtype,
                                          roc_type='probvsscore',
-                                         scores=([scores_dict[name[:-3]][0]]+scores_dict[name[:-3]]))
+                                         scores=[scores_dict[name[:-3]][0]]+scores_dict[name[:-3]])
         # TOC CURVES
         #for name in names2:
         #    fout = os.path.join(pdir, fname + '.' + name + '.toc.' + imtype)
