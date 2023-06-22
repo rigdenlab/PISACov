@@ -304,10 +304,10 @@ def main():
                 if v == "area" and n > 0:
                     listline.append("")
                 elif v.startswith("bezier"):
-                    listline.append(rocs_bezier[name][v][0])
-                    listline.append(rocs_bezier[name][v][1])
+                    listline.append(rocs_bezier[name][v][0][n])
+                    listline.append(rocs_bezier[name][v][1][n])
                 else:
-                    listline.append(rocs_bezier[name][v][0])
+                    listline.append(rocs_bezier[name][v][n])
                     pic.lineout(listline, froc)
         pic.lineout(listline, froc)
 
