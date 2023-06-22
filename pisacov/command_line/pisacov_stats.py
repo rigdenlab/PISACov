@@ -296,7 +296,7 @@ def main():
     var = ["param", "bezier", "bezier_der1", "bezier_der2", "bezier_der3",
            "curvature", "LR", "scores", "probability", "lambda", "Youden",
            "area"]
-    for name in areas_dict_best.items():
+    for name in areas_dict_best:
         froc = fcurvesB.replace("replaceme", name)
         for n in range(len(rocs_bezier[name]["param"])):
             listline = []
