@@ -278,7 +278,7 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
     LR = [] # SLOPE OF TANGENT VECTORS (LIKELIHOOD RATE)
     l = [] # 1 / 1 + LR
     Y = [] # YOUDEN INDICES
-    P = [] # PROBABILITY
+    Prob = [] # PROBABILITY
     area = 0.0
     tparam=[]
     jx = -6.0*P[0][0] + 18.0*P[1][0] - 18.0*P[2][0] + 6.0*P[3][0]
@@ -339,11 +339,11 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
         if V[0][-1] == 0.0:
             LR.append(float('inf'))
             l.append(0.0)
-            P.append(1.0)
+            Prob.append(1.0)
         else:
             LR.append(V[1][-1]/V[0][-1])
             l.append(1.0/(1.0+LR[-1]))
-            P.append(l[-1]*LR[-1])
+            Prob.append(l[-1]*LR[-1])
         Y.append(2.0*(l[-1]*By[-1]+(1.0-l)*(1.0-Bx))-1.0)
 
         if tpoints > 0:
@@ -362,7 +362,7 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
     results["Youden"] = Y
     results["lambda"] = l
     results["area"] = area
-    results["probability"] = P
+    results["probability"] = Prob
     results["scores"] = SCt
 
     return results
