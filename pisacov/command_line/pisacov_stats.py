@@ -171,6 +171,7 @@ def main():
     scores_dict = {names[i]: scores[i][0] for i in range(len(names))}
     #print(names)
     rocs = {}
+    rocs_scores = {}
     rocs_bezier = {}
     tocs = {}
     unsrtdareas = []  # 0.5*(TPR[n]-TPR[n-1])*(FPR[n]+FPR[n-1])
@@ -185,11 +186,8 @@ def main():
             names2.append(names[n] + '_' + pindex[p])
             area = 0
             rocs[names2[L*p+n]] = [[], []]  # FPR, TPR
-            rocs[names2[L*p+n]][0], rocs[names2[L*p+n]][1], area = (
+            rocs[names2[L*p+n]][0], rocs[names2[L*p+n]][1], rocs_scores[names2[L*p+n]], area = (
                 pcs.tpr_vs_fpr(scores[n][0], scores[n][1], noneisfalse=pbool[p]))
-            print(names2[L*p+n])
-            print(str(rocs[names2[L*p+n]][0]))
-            print(len(rocs[names2[L*p+n]][0]))
             unsrtdareas.append(area)
 
             #tocs[names2[L*p+n]] = [[], []]  # Tots, Hits
@@ -206,7 +204,7 @@ def main():
             isconvex = True if auc < 0.5 else False
             rocs_bezier[name] = pcs.bezier_parametrization([rocs[name][0],
                                                             rocs[name][1]],
-                                                           scores=[scores_dict[name[:-3]][0]]+scores_dict[name[:-3]],
+                                                           scores=rocs_scores[name],
                                                            convex=isconvex)
 
     # Calculate correlation matrices
@@ -345,7 +343,7 @@ def main():
                                          area_for_color=areas_dict_best[name],
                                          plot_type=imtype,
                                          roc_type='probvsscore',
-                                         scores=[scores_dict[name[:-3]][0]]+scores_dict[name[:-3]])
+                                         scores=rocs_scores[name])
         # TOC CURVES
         #for name in names2:
         #    fout = os.path.join(pdir, fname + '.' + name + '.toc.' + imtype)

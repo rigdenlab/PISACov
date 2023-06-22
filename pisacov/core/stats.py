@@ -50,8 +50,10 @@ def tpr_vs_fpr(scores, against, noneisfalse=True):
     tlist = sorted(thr, reverse=True)
     tpr = []
     fpr = []
+    sc = []
     fpr.append(0)
     tpr.append(0)
+    sc.append(tlist[0])
     area = 0
     for t in tlist:
         FP = 0
@@ -83,6 +85,7 @@ def tpr_vs_fpr(scores, against, noneisfalse=True):
         else:
             fpr.append(FP/(FP+TN))
             tpr.append(TP/(TP+FN))
+            sc.append(t)
             p = -1
             cont = False
             while True:
@@ -98,7 +101,8 @@ def tpr_vs_fpr(scores, against, noneisfalse=True):
             else:
                 area += 0.5*(tpr[-1]+tpr[p-1])*(fpr[-1]-fpr[p-1])
 
-    return fpr, tpr, area
+    print(str(len(fpr)), +", "+str(len(sc)))
+    return fpr, tpr, sc, area
 
 
 def hits_vs_total(scores, against, noneisfalse=True):
