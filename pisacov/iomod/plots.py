@@ -585,8 +585,7 @@ def plot_correlation_sns(data, outpath, labels=None, plot_type='png',
         cg = sns.clustermap(df, vmin=-1, vmax=1, cmap=cmap.cmap, annot=False,
                             cbar_pos=(1.05, 0, 0.08, 0.8),
                             xticklabels=True, yticklabels=True,
-                            linewidths=0.1,
-                            row_colors=row_coloring)
+                            linewidths=0.1) #, row_colors=row_coloring)
 
         #cg.ax_row_dendrogram.set_visible(False)
         #cg.ax_row_dendrogram.set_xlim([0,0])
