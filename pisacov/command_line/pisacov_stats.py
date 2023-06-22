@@ -200,7 +200,9 @@ def main():
         if auc >= 0.7 or auc <= 0.3:
             areas_dict_best[name] = auc
             isconvex = True if auc < 0.5 else False
-            rocs_bezier[name] = pcs.bezier_parametrization([rocs[name][0], rocs[name][1]],
+            rocs_bezier[name] = pcs.bezier_parametrization([rocs[name][0],
+                                                            rocs[name][1]],
+                                                           scores=scores,
                                                            convex=isconvex)
 
     # Calculate correlation matrices

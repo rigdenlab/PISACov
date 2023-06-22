@@ -199,6 +199,8 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
 
     :param data: False and True Positive Rate data.
     :type data: list [list [float], list [float]] or list [set [float], set [float]]
+    :param scores: Empirical scores.
+    :type scores: list [float]
     :param npoints: Number of regular interval points of brezier curve returned, defaults to 101.
     :type npoints: int, optional
     :param convex: Is the curve convex? (i.e. is the slope decreasing for all the curve?), defaults to True.
@@ -206,7 +208,7 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
     :param emp_tangent: Use empirical tangent at (1,1), instead of ROC ideal, defaults to False.
     :type emp_tangent: bool, optional
 
-    :return results: A dictionary with: t parameter, Bézier curve, first and second derivatives, likelihood ratio, lambda value, Younder index, curvature and area.
+    :return results: A dictionary with: t parameter, Bézier curve, first and second derivatives, likelihood ratio, probability, scores, lambda value, Younden index, curvature and area.
     :rtype results: dict [list [float], list [list [float]], float]
     """
     # Fierz W (2018) PLoS ONE 13(2): e0192420. https://doi.org/10.1371/journal.pone.0192420
@@ -253,7 +255,7 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
     a = (1.0-txy[u])*(1.0-txy[u])*(1.0+2.0*txy[u])
     b = txy[u]*txy[u]*(3.0-2.0*txy[u])
     D = (T[0][0]*T[3][1])-(T[3][0]*T[0][1])
-    
+
     tu = txy[u]
     xu = data[0][u]
     yu = data[1][u]
@@ -296,12 +298,12 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
 
         B[0].append(Bx)
         B[1].append(By)
-        
+
         c[0] = -3.0*(1.0-t)*(1.0-t)
         c[1] = 3.0*(1.0-t)*(1.0-3.0*t)
         c[2] = 3.0*t*(2.0-3.0*t)
         c[3] = 3.0*t*t
-        
+
         Bx = 0.0
         By = 0.0
         for n in range(len(c)):
@@ -309,12 +311,12 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
             By += c[n]*P[n][1]
         V[0].append(Bx)
         V[1].append(By)
-        
+
         c[0] = 6.0*(1.0-t)
         c[1] = -12.0 + 18.0*t
         c[2] = 6.0 - 18.0*t
         c[3] = 6.0*t
-        
+
         Bx = 0.0
         By = 0.0
         for n in range(len(c)):
@@ -322,18 +324,18 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
             By += c[n]*P[n][1]
         A[0].append(Bx)
         A[1].append(By)
-        
+
         J[0].append(jx)
         J[1].append(jy)
-        
+
         num = V[0][-1]*A[1][-1] - V[1][-1]*A[0][-1]
         den = (V[0][-1]*V[0][-1] + V[1][-1]*V[1][-1])**1.5
-        
+
         if den == 0.0:
             K.append(float('inf'))
         else:
             K.append(num/den)
-            
+
         if V[0][-1] == 0.0:
             LR.append(float('inf'))
             l.append(0.0)
@@ -346,7 +348,7 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
 
         if tpoints > 0:
             area += 0.5*(B[1][-1]+B[1][-2])*(B[0][-1]-B[0][-2])
-            
+
     SCt = list(np.interp(tparam, txy, scores))
 
     results = {}
@@ -354,7 +356,7 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
     results["bezier"] = [B[0], B[1]]
     results["bezier_der1"] = [[V[0], V[1]]]
     results["bezier_der2"] = [[A[0], A[1]]]
-    results["bezier_der3"] = [[J[0], J[1]]]        
+    results["bezier_der3"] = [[J[0], J[1]]]
     results["LR"] = LR
     results["curvature"] = K
     results["Youden"] = Y
@@ -362,7 +364,7 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
     results["area"] = area
     results["probability"] = P
     results["scores"] = SCt
-        
+
     return results
 
 
