@@ -330,7 +330,7 @@ def main():
         fout = os.path.join(pdir, fname + '.norandom.rocs.' + imtype)
         pip.plot_rocs(data=rocs, outpath=fout, areas_for_color=areas_dict, plot_type=imtype, norand=True)
         # ROC CURVES with BÉZIER APPROXIMATION
-        for name in areas_dict_best.items():
+        for name in areas_dict_best:
             fout = os.path.join(pdir, fname + '.' + name + '.bezier.roc.' + imtype)
             pip.plot_roc_parametrization(data=rocs[name], bezier=rocs_bezier[name],
                                          outpath=fout, datatag=name,
