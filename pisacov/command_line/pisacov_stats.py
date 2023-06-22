@@ -187,9 +187,9 @@ def main():
             rocs[names2[L*p+n]] = [[], []]  # FPR, TPR
             rocs[names2[L*p+n]][0], rocs[names2[L*p+n]][1], area = (
                 pcs.tpr_vs_fpr(scores[n][0], scores[n][1], noneisfalse=pbool[p]))
-            if n==0:
-                print(str(rocs[names2[L*p+n]][0]))
-                print(len(rocs[names2[L*p+n]][0]))
+            print(names2[L*p+n])
+            print(str(rocs[names2[L*p+n]][0]))
+            print(len(rocs[names2[L*p+n]][0]))
             unsrtdareas.append(area)
 
             #tocs[names2[L*p+n]] = [[], []]  # Tots, Hits
