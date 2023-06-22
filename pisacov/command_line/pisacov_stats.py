@@ -303,6 +303,8 @@ def main():
             for v in var:
                 if v == "area" and n > 0:
                     listline.append("")
+                elif v == "area" and n == 0:
+                    listline.append(rocs_bezier[name][v])
                 elif v.startswith("bezier"):
                     listline.append(rocs_bezier[name][v][0][n])
                     listline.append(rocs_bezier[name][v][1][n])
