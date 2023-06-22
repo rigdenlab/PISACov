@@ -101,7 +101,7 @@ def tpr_vs_fpr(scores, against, noneisfalse=True):
             else:
                 area += 0.5*(tpr[-1]+tpr[p-1])*(fpr[-1]-fpr[p-1])
 
-    print(str(len(fpr)), +", "+str(len(sc)))
+    print(str(len(fpr)) +", "+str(len(sc)))
     return fpr, tpr, sc, area
 
 
