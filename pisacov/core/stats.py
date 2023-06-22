@@ -226,6 +226,7 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
     P = [(data[0][0], data[1][0]), "P1", "P2", (data[0][-1], data[1][-1])]
     txy = []
     j = 0.0
+    print('nscores=' + str(len(scores)) + " nfpr=" + str(len(data[0])))
     for n in range(len(data[0])):
         if P[0] == (0.0, 0.0) and P[3] == (1.0, 1.0):
             x = data[0][n]
