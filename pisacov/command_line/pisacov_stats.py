@@ -209,7 +209,7 @@ def main():
 
     # Calculate correlation matrices
     names_best = []
-    for key in areas_dict_best:
+    for key, auc in areas_dict.items():
         for name in names:
             if key.startswith(name):
                 if auc >= 0.7 or auc <= 0.3:
@@ -296,7 +296,7 @@ def main():
     var = ["param", "bezier", "bezier_der1", "bezier_der2", "bezier_der3",
            "curvature", "LR", "scores", "probability", "lambda", "Youden",
            "area"]
-    for name in names_best:
+    for name in areas_dict_best.items():
         froc = fcurvesB.replace("replaceme", name)
         for n in range(len(rocs_bezier[name]["param"])):
             listline = []
@@ -328,7 +328,7 @@ def main():
         fout = os.path.join(pdir, fname + '.norandom.rocs.' + imtype)
         pip.plot_rocs(data=rocs, outpath=fout, areas_for_color=areas_dict, plot_type=imtype, norand=True)
         # ROC CURVES with BÉZIER APPROXIMATION
-        for name in names_best:
+        for name in areas_dict_best.items():
             fout = os.path.join(pdir, fname + '.' + name + '.bezier.roc.' + imtype)
             pip.plot_roc_parametrization(data=rocs[name], bezier=rocs_bezier[name],
                                          outpath=fout, datatag=name,
