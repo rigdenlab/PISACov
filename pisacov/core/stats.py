@@ -357,9 +357,9 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
     results = {}
     results["param"] = tparam
     results["bezier"] = [B[0], B[1]]
-    results["bezier_der1"] = [[V[0], V[1]]]
-    results["bezier_der2"] = [[A[0], A[1]]]
-    results["bezier_der3"] = [[J[0], J[1]]]
+    results["bezier_der1"] = [V[0], V[1]]
+    results["bezier_der2"] = [A[0], A[1]]
+    results["bezier_der3"] = [J[0], J[1]]
     results["LR"] = LR
     results["curvature"] = K
     results["Youden"] = Y
