@@ -341,7 +341,7 @@ def main():
                                          area_for_color=areas_dict_best[name],
                                          plot_type=imtype,
                                          roc_type='probvsscore',
-                                         scores=([wholescores[name][0]+wholescores[name])
+                                         scores=([wholescores[name][0]]+wholescores[name])
         # TOC CURVES
         #for name in names2:
         #    fout = os.path.join(pdir, fname + '.' + name + '.toc.' + imtype)
