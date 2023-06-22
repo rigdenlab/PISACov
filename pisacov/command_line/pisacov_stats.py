@@ -202,7 +202,7 @@ def main():
             isconvex = True if auc < 0.5 else False
             rocs_bezier[name] = pcs.bezier_parametrization([rocs[name][0],
                                                             rocs[name][1]],
-                                                           scores=scores,
+                                                           scores=scores[name][0],
                                                            convex=isconvex)
 
     # Calculate correlation matrices
