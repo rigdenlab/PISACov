@@ -22,7 +22,7 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
 
     :param outpath: CSV filepath.
     :type outpath: str
-    :param csvtype: 'scores' or 'rocs' or 'tocs' or 'rocareas', defaults to 'scores'.
+    :param csvtype: 'scores' or 'rocs' or 'tocs' or 'rocareas' or 'rocs_bezier', defaults to 'scores'.
     :type csvtype: str, optional
     :param cropped: True when results have been obtained from crops_cropstr inputs, defaults to False.
     :type cropped: bool, optional
@@ -66,6 +66,11 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
         csvline = "# PISACov stats: TPR vs FPR Receiver operating characteristic curves (ROCs). Sorted by area." + tzbegin + "."
     elif csvtype == 'tocs':
         csvline = "# PISACov stats: Hits (TPs) vs total (TPs+FPs) Total operating characteristic curves (TOCs)." + tzbegin + "."
+    elif csvtype == 'rocs_bezier':
+        csvline = "# PISACov stats: TPR vs FPR Receiver operating characteristic curves (ROCs) data obtained from Bézier curve (B(t)). " + sID + tzbegin + "."
+        csvline += os.linesep
+        csvline += "# t_param [0,1], Bx(t), By(t), Bx'(t), By'(t), Bx''(t), By''(t), Bx'''(t), By'''(t), "
+        csvline += "K(t), LR(t), Scores(t), P(t), lambda(t), Youden(t), AUC"
     elif csvtype == 'rocareas':
         csvline = "# PISACov stats: Areas under TPR vs FPR Receiver operating characteristic curves (ROC areas). Sorted by area." + tzbegin + "."
         csvline += os.linesep
@@ -94,7 +99,7 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
             for score in scnames[source]:
                 csvline += score + ', '
                 if csvtype == 'rocs' or csvtype == 'tocs':
-                    csvline += ', '
+                    csvline += ', , '
 
         csvline = csvline[:-2]
 
@@ -106,7 +111,10 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
             csvline += '#'
             for source in names:
                 for score in scnames[source]:
-                    csvline += "FPR, TPR, "
+                    if csvline == 'rocs':
+                        csvline += "score, FPR, TPR, "
+                    elif csvline == 'tocs':
+                        csvline += "score, FP, TP+FP, "
             csvline = csvline[:-2]
             csvline += os.linesep
 

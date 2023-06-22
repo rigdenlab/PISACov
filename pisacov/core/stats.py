@@ -31,7 +31,7 @@ def tpr_vs_fpr(scores, against, noneisfalse=True):
     if len(scores)==0:
         fpr = None
         tpr = None
-        area = 0
+        area = 0.5
         return fpr, tpr, area
 
     numagainst = []
@@ -193,55 +193,46 @@ def hits_vs_total(scores, against, noneisfalse=True):
     return ntot, hits  # , area
 
 
-def bezier_fit(data, area_scattered, npoints=101):
+def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=False):
     """
     Calculate a Bézier curve that fits the ROC curve input data.
 
     :param data: False and True Positive Rate data.
     :type data: list [list [float], list [float]] or list [set [float], set [float]]
-    :param area_scattered: The area computed for the scattered data set to use as a concavity indicator.
-    :type area_scattered: float
     :param npoints: Number of regular interval points of brezier curve returned, defaults to 101.
     :type npoints: int, optional
+    :param convex: Is the curve convex? (i.e. is the slope decreasing for all the curve?), defaults to True.
+    :type convex: bool, optional
+    :param emp_tangent: Use empirical tangent at (1,1), instead of ROC ideal, defaults to False.
+    :type emp_tangent: bool, optional
 
-    :return fpr: False Positive Rate in brezier curve fitting.
-    :rtype fpr: set [float]
-    :return tpr: True Positive Rate data.
-    :rtype tpr: set [float]
-    :return area: Area under the ROC curve.
-    :rtype area: float
-
+    :return results: A dictionary with: t parameter, Bézier curve, first and second derivatives, likelihood ratio, lambda value, Younder index, curvature and area.
+    :rtype results: dict [list [float], list [list [float]], float]
     """
     # Fierz W (2018) PLoS ONE 13(2): e0192420. https://doi.org/10.1371/journal.pone.0192420
     # Fierz W. MethodsX 7 (2020) 100915. https://doi.org/10.1016/j.mex.2020.100915
     # Hermes, (2017). Journal of Open Source Software, 2(16), 267, https://doi.org/10.21105/joss.00267
     # Yang SN, Huang ML. A New Shape Control and Classification for Cubic Bezier Curves. N. M. Thalmann et al. (eds.), Communicating with Virtual Worlds. © Springer-Verlag Tokyo 1993
     # Zhang, Z, Chen, M, Zhang, X, Wang, Z. IEEE (2009), pp 1-4, https://doi.org/10.1109/CISE.2009.5366218.
-    # Cubic Bézier curves: B(t) = (1-t)^3*P_0 + 3*t*(1-t^2)*P_1 + 3*t^2*(1-t))P_2 + t^3*P_3
+    # Cubic Bézier curves: B(t) = (1-t)^3*P_0 + 3*t*(1-t)^2*P_1 + 3*t^2*(1-t))P_2 + t^3*P_3
     # Endpoints: P_0 = (0.0, 0.0), P_3 = (1.0, 1.0)
     # Shape control point: B(t) = S(u) is the data point closest to the top-left vertex (0.0, 1.0) (if convex). Equivalent: Max Youden index (J = Se+Sp-1 = TPR - FPR)
     # Parameter t of the Bézier curve: t = (x+y)/2, with x, y the experimental data. For S(u): u = (x(u) + y(u))/2.
-    # End tangents: T_0 = (0.0, 1.0), T_3 = (1.0, 0.0) if convex, else T_0 = (1.0, 0.0), T_3 = (0.0, 1.0).
-    # Slopes of tangents with t: LR(t) = ( ( P[1][1]*(1.0-2.0*t) - (P[1][1]-P[2][1])*(2.0*t-3.0*t**2) + P[3][1]*t**2 - P[0][1]*(1-t)**2 ) /
-    #                                      ( P[1][0]*(1.0-2.0*t) - (P[1][0]-P[2][0])*(2.0*t-3.0*t**2) + P[3][0]*t**2 - P[0][0]*(1-t)**2 ) )
+    # End tangents: T_0 def= T_1 = (0.0, 1.0), T_3 = (1.0, 0.0) if convex, else T_0 = (1.0, 0.0), T_3 = (0.0, 1.0).
 
 
     P = [(data[0][0], data[1][0]), "P1", "P2", (data[0][-1], data[1][-1])]
-    t = []
+    txy = []
     j = 0.0
-    if area_scattered < 0.5:
-        convex = False
-    else:
-        convex = True
-    for n in len(data[0]):
+    for n in range(len(data[0])):
         if P[0] == (0.0, 0.0) and P[3] == (1.0, 1.0):
-            normx = data[0][n]
-            normy = data[1][n]
+            x = data[0][n]
+            y = data[1][n]
         else:
-            normx = (data[0][n]-P[0][0])/(P[3][0]-P[0][0])
-            normy = (data[1][n]-P[0][1])/(P[3][1]-P[0][1])
-        t.append((normx+normy)/2.0)
-        jn = np.abs(normy - normx)
+            x = (data[0][n]-P[0][0])/(P[3][0]-P[0][0])
+            y = (data[1][n]-P[0][1])/(P[3][1]-P[0][1])
+        txy.append((x+y)/2.0)
+        jn = np.abs(y - x)
         if jn > j and convex:
             u = n
             j = jn
@@ -250,28 +241,49 @@ def bezier_fit(data, area_scattered, npoints=101):
             j = jn
 
     if convex:
-        T = [(0.0, 1.0), "T1", "T2", (1.0, 0.0)]
+        T = [(0.0, 1.0), (0.0, 1.0), "T2", (1.0, 0.0), "T4", "T5" ]
     else:
-        T = [(1.0, 0.0), "T1", "T2", (0.0, 1.0)]
+        T = [(1.0, 0.0), (1.0, 1.0), "T2", (0.0, 1.0), "T4", "T5"]
+    if emp_tangent:
+        x = data[0][-1]-data[0][-2]
+        y = data[1][-1]-data[1][-2]
+        norm = np.sqrt(x*x+y*y)
+        T[3] = [x/norm, y/norm]
 
-    a = (1.0-t[u])*(1.0-t[u])*(1.0+2.0*t[u])
-    b = t[u]*t[u]*(3.0-2.0*t[u])
+    a = (1.0-txy[u])*(1.0-txy[u])*(1.0+2.0*txy[u])
+    b = txy[u]*txy[u]*(3.0-2.0*txy[u])
     D = (T[0][0]*T[3][1])-(T[3][0]*T[0][1])
+    
+    tu = txy[u]
+    xu = data[0][u]
+    yu = data[1][u]
 
-    alpha = (normx[u]-a*P[0][0]-b*P[3][0])*T[3][1] - (normy[u]-a*P[0][1]-b*P[3][1])*T[3][0]
-    alpha = alpha / (t[u]*(1.0-t[u])*(1.0-t[u])*D)
+    alpha = (xu-a*P[0][0]-b*P[3][0])*T[3][1] - (yu-a*P[0][1]-b*P[3][1])*T[3][0]
+    alpha = alpha / (tu*(1.0-tu)*(1.0-tu)*D)
 
-    beta = (normx[u]-a*P[0][0]-b*P[3][0])*T[0][1] - (normy[u]-a*P[0][1]-b*P[3][1])*T[0][0]
-    beta = alpha / (t[u]*t[u]*(1.0-t[u])*D)
+    beta = (xu-a*P[0][0]-b*P[3][0])*T[0][1] - (yu-a*P[0][1]-b*P[3][1])*T[0][0]
+    beta = beta / (tu*tu*(1.0-tu)*D)
 
     P[1] = ((alpha/3.0)*T[0][0]+P[0][0], (alpha/3.0)*T[0][1]+P[0][1])
-    P[2] = ((beta/3.0)*T[3][0]+P[3][0], (beta/3.0)*T[3][1]+P[3][1])
+    P[2] = ((-beta/3.0)*T[3][0]+P[3][0], (-beta/3.0)*T[3][1]+P[3][1])
 
-    B = [[], []]
-    c = [0,0,0,0]
+    B = [[], []] # BÉZIER CURVE'S POINTS
+    V = [[], []] # BÉZIER CURVE'S VELOCITY (1st DERIVATIVE)
+    A = [[], []] # BÉZIER CURVE'S ACCELERATION (2nd DERIVATIVE)
+    J = [[], []] # BÉZIER CURVE'S JERK (3rd DERIVATIVE)
+    K = []       # BÉZIER CURVE'S CURVATURE
+    c = [0, 0, 0, 0]
+    LR = [] # SLOPE OF TANGENT VECTORS (LIKELIHOOD RATE)
+    l = [] # 1 / 1 + LR
+    Y = [] # YOUDEN INDICES
+    P = [] # PROBABILITY
     area = 0.0
+    tparam=[]
+    jx = -6.0*P[0][0] + 18.0*P[1][0] - 18.0*P[2][0] + 6.0*P[3][0]
+    jy = -6.0*P[0][1] + 18.0*P[1][1] - 18.0*P[2][1] + 6.0*P[3][1]
     for tpoints in range(npoints):
-        t=float(tpoints)/float(npoints)
+        t = float(tpoints) / float(npoints-1)
+        tparam.append(t)
         c[0] = (1.0-t)*(1.0-t)*(1.0-t)
         c[1] = 3.0*t*(1.0-t)*(1.0-t)
         c[2] = 3.0*t*t*(1.0-t)
@@ -284,14 +296,74 @@ def bezier_fit(data, area_scattered, npoints=101):
 
         B[0].append(Bx)
         B[1].append(By)
+        
+        c[0] = -3.0*(1.0-t)*(1.0-t)
+        c[1] = 3.0*(1.0-t)*(1.0-3.0*t)
+        c[2] = 3.0*t*(2.0-3.0*t)
+        c[3] = 3.0*t*t
+        
+        Bx = 0.0
+        By = 0.0
+        for n in range(len(c)):
+            Bx += c[n]*P[n][0]
+            By += c[n]*P[n][1]
+        V[0].append(Bx)
+        V[1].append(By)
+        
+        c[0] = 6.0*(1.0-t)
+        c[1] = -12.0 + 18.0*t
+        c[2] = 6.0 - 18.0*t
+        c[3] = 6.0*t
+        
+        Bx = 0.0
+        By = 0.0
+        for n in range(len(c)):
+            Bx += c[n]*P[n][0]
+            By += c[n]*P[n][1]
+        A[0].append(Bx)
+        A[1].append(By)
+        
+        J[0].append(jx)
+        J[1].append(jy)
+        
+        num = V[0][-1]*A[1][-1] - V[1][-1]*A[0][-1]
+        den = (V[0][-1]*V[0][-1] + V[1][-1]*V[1][-1])**1.5
+        
+        if den == 0.0:
+            K.append(float('inf'))
+        else:
+            K.append(num/den)
+            
+        if V[0][-1] == 0.0:
+            LR.append(float('inf'))
+            l.append(0.0)
+            P.append(1.0)
+        else:
+            LR.append(V[1][-1]/V[0][-1])
+            l.append(1.0/(1.0+LR[-1]))
+            P.append(l[-1]*LR[-1])
+        Y.append(2.0*(l[-1]*By[-1]+(1.0-l)*(1.0-Bx))-1.0)
 
         if tpoints > 0:
             area += 0.5*(B[1][-1]+B[1][-2])*(B[0][-1]-B[0][-2])
+            
+    SCt = list(np.interp(tparam, txy, scores))
 
-    fpr = B[0]
-    tpr = B[1]
-
-    return fpr, tpr, area
+    results = {}
+    results["param"] = tparam
+    results["bezier"] = [B[0], B[1]]
+    results["bezier_der1"] = [[V[0], V[1]]]
+    results["bezier_der2"] = [[A[0], A[1]]]
+    results["bezier_der3"] = [[J[0], J[1]]]        
+    results["LR"] = LR
+    results["curvature"] = K
+    results["Youden"] = Y
+    results["lambda"] = l
+    results["area"] = area
+    results["probability"] = P
+    results["scores"] = SCt
+        
+    return results
 
 
 def correl_matrix(set1, set2, setref=None):

@@ -72,8 +72,10 @@ def main():
 
     fcurves = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.rocs.csv"
     fcurves = os.path.join(outdir, fcurves)
-    fcurves2 = os.path.splitext(os.path.basename(csvfile))[0] + ".HitsvTotal.tocs.csv"
-    fcurves2 = os.path.join(outdir, fcurves2)
+    #fcurves2 = os.path.splitext(os.path.basename(csvfile))[0] + ".HitsvTotal.tocs.csv"
+    #fcurves2 = os.path.join(outdir, fcurves2)
+    fcurvesB = "replaceme." + os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.rocs_bezier.csv"
+    fcurvesB = os.path.join(outdir, fcurvesB)
     fareas = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.roc_areas.csv"
     fareas = os.path.join(outdir, fareas)
     #fareas2 = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.roc_areas.unsorted.csv"
@@ -105,7 +107,8 @@ def main():
         crp = None
 
     pic.csvheader(fcurves, cropped=crp, csvtype='rocs')
-    pic.csvheader(fcurves, cropped=crp, csvtype='tocs')
+    pic.csvheader(fcurvesB, cropped=crp, csvtype='rocs_bezier')
+    #pic.csvheader(fcurves, cropped=crp, csvtype='tocs')
     pic.csvheader(fareas, cropped=crp, csvtype='rocareas')
     #pic.csvheader(fareas2, cropped=crp, csvtype='rocareas')
 
@@ -166,7 +169,8 @@ def main():
     # Calculate ROCs, TOCs areas and correlations
     L = len(names)
     #print(names)
-    rates = {}
+    rocs = {}
+    rocs_bezier = {}
     tocs = {}
     unsrtdareas = []  # 0.5*(TPR[n]-TPR[n-1])*(FPR[n]+FPR[n-1])
 
@@ -179,28 +183,50 @@ def main():
         for n in range(L):
             names2.append(names[n] + '_' + pindex[p])
             area = 0
-            rates[names2[L*p+n]] = [[], []]  # FPR, TPR
-            rates[names2[L*p+n]][0], rates[names2[L*p+n]][1], area = (
+            rocs[names2[L*p+n]] = [[], []]  # FPR, TPR
+            rocs[names2[L*p+n]][0], rocs[names2[L*p+n]][1], area = (
                 pcs.tpr_vs_fpr(scores[n][0], scores[n][1], noneisfalse=pbool[p]))
             unsrtdareas.append(area)
 
-            tocs[names2[L*p+n]] = [[], []]  # Tots, Hits
-            tocs[names2[L*p+n]][0], tocs[names2[L*p+n]][1] = (
-                pcs.hits_vs_total(scores[n][0], scores[n][1], noneisfalse=pbool[p]))
+            #tocs[names2[L*p+n]] = [[], []]  # Tots, Hits
+            #tocs[names2[L*p+n]][0], tocs[names2[L*p+n]][1] = (
+            #    pcs.hits_vs_total(scores[n][0], scores[n][1], noneisfalse=pbool[p]))
 
     unsrtdnames = copy.deepcopy(names2)
     areas, names2 = zip(*sorted(zip(unsrtdareas, names2), reverse=True))
     areas_dict = {names2[i]: areas[i] for i in range(len(names2))}
+    areas_dict_best = {}
+    for name, auc in areas_dict.items():
+        if auc >= 0.7 or auc <= 0.3:
+            areas_dict_best[name] = auc
+            isconvex = True if auc < 0.5 else False
+            rocs_bezier[name] = pcs.bezier_parametrization([rocs[name][0], rocs[name][1]],
+                                                           convex=isconvex)
 
     # Calculate correlation matrices
+    names_best = []
+    for key in areas_dict_best:
+        for name in names:
+            if key.startswith(name):
+                if auc >= 0.7 or auc <= 0.3:
+                    if name not in names_best:
+                        names_best.append(name)
+
+    Lbest = len(names_best)
     if args.none_is_false_pisa is True:
         correl_matrix = np.identity(L+2)
         correl_matrix[0][1] = 1.
         correl_matrix[1][0] = 1.
         namex = tuple(['PISAscore_NN', 'PISAscore_NF'] + list(names))
+        correl_matrix_best = np.identity(Lbest+2)
+        correl_matrix_best[0][1] = 1.
+        correl_matrix_best[1][0] = 1.
+        namex_best = tuple(['PISAscore_NN', 'PISAscore_NF'] + list(names_best))
     else:
         correl_matrix = np.identity(L+1)
         namex = tuple(['PISAscore_NN'] + list(names))
+        correl_matrix_best = np.identity(Lbest+1)
+        namex_best = tuple(['PISAscore_NN'] + list(names_best))
 
     for n in range(len(namex)-1):
         for m in range(n+1, len(namex)):
@@ -223,38 +249,67 @@ def main():
                 correlation = pcs.correl_matrix(set1, set2, setref=setr)
                 correl_matrix[n][m] = correlation[0][1]
                 correl_matrix[m][n] = correlation[1][0]
+                if namex[m] in namex_best and namex[n] in namex_best:
+                    nb = namex_best.index(namex[n])
+                    mb = namex_best.index(namex[m])
+                    correl_matrix_best[nb][mb] = correlation[0][1]
+                    correl_matrix_best[mb][nb] = correlation[1][0]
             else:
-                correl_matrix[n][m] = 0
-
+                correl_matrix[n][m] = 0.
+                if namex[m] in namex_best and namex[n] in namex_best:
+                    nb = namex_best.index(namex[n])
+                    mb = namex_best.index(namex[m])
+                    correl_matrix_best[nb][mb] = 0.
 
     # Print out results
     for n in range(len(names2)):
-        f2 = fcurves2.replace("replaceme", names2[n])
-        pic.csvheader(f2, cropped=crp, csvtype='tocs') # MUST BE ONE BY ONE AND HAVE OWN HEADER
-
         pic.lineout([names2[n], areas[n]], fareas)
-        #pic.lineout([unsrtdnames[n], unsrtdareas[n]], fareas2)
+        # pic.lineout([unsrtdnames[n], unsrtdareas[n]], fareas2)
+        # f2 = fcurves2.replace("replaceme", names2[n])
+        # pic.csvheader(f2, cropped=crp, csvtype='tocs') # MUST BE ONE BY ONE AND HAVE OWN HEADER
 
     ignore = []
     p = 0
     while True:
         listline = []
         for name in names2:
-            f2 = fcurves2.replace("replaceme", name)
             if name in ignore:
                 listline.append("")
                 listline.append("")
+                listline.append("")
             else:
-                listline.append(rates[name][0][p])
-                listline.append(rates[name][1][p])
-                if len(rates[name][0]) == p + 1:
+                if p == 0:
+                    listline.append(scores[name][0][0])
+                else:
+                    listline.append(scores[name][0][p-1])
+                listline.append(rocs[name][0][p])
+                listline.append(rocs[name][1][p])
+                if len(rocs[name][0]) == p + 1:
                     ignore.append(name)
 
-            pic.lineout(listline, f2)
         pic.lineout(listline, fcurves)
         p += 1
         if len(ignore) == len(names2):
             break
+
+    var = ["param", "bezier", "bezier_der1", "bezier_der2", "bezier_der3",
+           "curvature", "LR", "scores", "probability", "lambda", "Youden",
+           "area"]
+    for name in names_best:
+        froc = fcurvesB.replace("replaceme", name)
+        for n in range(len(rocs_bezier["param"])):
+            listline = []
+            for v in var:
+                if v == "area" and n > 0:
+                    listline.append("")
+                elif v.startswith("bezier"):
+                    listline.append(rocs_bezier[v][0])
+                    listline.append(rocs_bezier[v][1])
+                else:
+                    listline.append(rocs_bezier[v][0])
+                    pic.lineout(listline, froc)
+        pic.lineout(listline, froc)
+
 
     fname = os.path.splitext(os.path.basename(csvfile))[0]
     fout = os.path.join(outdir, fname + '.correlations.csv')
@@ -265,21 +320,38 @@ def main():
         ppaths.mdir(pdir)
         # ROC AREAS - HISTOGRAM
         fout = os.path.join(pdir, fname + '.roc_areas.' + imtype)
-        pip.area_histogram(data=areas_dict, outpath=fout, plot_type=imtype)
-        # RO CURVES
+        pip.plot_area_histogram(data=areas_dict, outpath=fout, plot_type=imtype)
+        # ROC CURVES
         fout = os.path.join(pdir, fname + '.rocs.' + imtype)
-        pip.plot_rocs(data=rates, outpath=fout, areas_for_color=areas_dict, plot_type=imtype)
+        pip.plot_rocs(data=rocs, outpath=fout, areas_for_color=areas_dict, plot_type=imtype)
         fout = os.path.join(pdir, fname + '.norandom.rocs.' + imtype)
-        pip.plot_rocs(data=rates, outpath=fout, areas_for_color=areas_dict, plot_type=imtype, rand=False)
-        # TO CURVES
-        for name in names2:
-            fout = os.path.join(pdir, fname + '.' + name + '.toc.' + imtype)
-            pip.plot_toc(data=tocs[name], datatag=name, outpath=fout,
-                         area_for_color=areas_dict[name], plot_type=imtype)
+        pip.plot_rocs(data=rocs, outpath=fout, areas_for_color=areas_dict, plot_type=imtype, norand=True)
+        # ROC CURVES with BÉZIER APPROXIMATION
+        for name in names_best:
+            fout = os.path.join(pdir, fname + '.' + name + '.bezier.roc.' + imtype)
+            pip.plot_roc_parametrization(data=rocs[name], bezier=rocs_bezier[name],
+                                         outpath=fout, datatag=name,
+                                         area_for_color=areas_dict_best[name],
+                                         plot_type=imtype)
+            fout = os.path.join(pdir, fname + '.' + name + '.bezier.probvsscore.' + imtype)
+            pip.plot_roc_parametrization(data=rocs[name], bezier=rocs_bezier[name],
+                                         outpath=fout, datatag=name,
+                                         area_for_color=areas_dict_best[name],
+                                         plot_type=imtype,
+                                         roc_type='probvsscore',
+                                         scores=([scores[name][0][0]]+scores[name][0]))
+        # TOC CURVES
+        #for name in names2:
+        #    fout = os.path.join(pdir, fname + '.' + name + '.toc.' + imtype)
+        #    pip.plot_toc(data=tocs[name], datatag=name, outpath=fout,
+        #                 area_for_color=areas_dict[name], plot_type=imtype)
         # CORRELATION HEATMAP
         fout = os.path.join(pdir, fname + '.correlations.' + imtype)
         pip.plot_correlation_heatmap(data=correl_matrix, outpath=fout,
                                      labels=namex, plot_type=imtype, light0=True)
+        fout = os.path.join(pdir, fname + '.norandom.correlations.' + imtype)
+        pip.plot_correlation_heatmap(data=correl_matrix_best, outpath=fout,
+                                     labels=namex_best, plot_type=imtype, light0=True)
         #fout = os.path.join(pdir, fname + '.correlations2.' + imtype)
         #pip.plot_correlation_sns(data=correl_matrix, outpath=fout,
         #                         labels=namex, plot_type=imtype, light0=True,
