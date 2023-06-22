@@ -344,7 +344,7 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
             LR.append(V[1][-1]/V[0][-1])
             l.append(1.0/(1.0+LR[-1]))
             Prob.append(l[-1]*LR[-1])
-        Y.append(2.0*(l[-1]*By[-1]+(1.0-l)*(1.0-Bx))-1.0)
+        Y.append(2.0*(l[-1]*By+(1.0-l[-1])*(1.0-Bx))-1.0)
 
         if tpoints > 0:
             area += 0.5*(B[1][-1]+B[1][-2])*(B[0][-1]-B[0][-2])
