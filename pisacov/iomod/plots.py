@@ -483,9 +483,9 @@ def plot_toc(data, datatag, outpath, area_for_color=None, plot_type='png'):
 
     ax.set_title(title, y=1.08)
 
-    ax.axis([0, xmax, 0, ymax])
-    ax.set_xlim(0, xmax)
-    ax.set_ylim(0, ymax)
+    ax.axis([-0.01, xmax+0.01, -0.01, ymax+0.01])
+    ax.set_xlim(-0.01, xmax+0.01)
+    ax.set_ylim(-0.01, ymax+0.01)
 
     ax.set_xlabel(xaxis)
     ax.set_ylabel(yaxis)
