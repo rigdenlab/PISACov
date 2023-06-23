@@ -200,7 +200,7 @@ def main():
     for name, auc in areas_dict.items():
         if auc >= 0.7 or auc <= 0.3:
             areas_dict_best[name] = auc
-            isconvex = True if auc < 0.5 else False
+            isconvex = True if auc > 0.5 else False
             rocs_bezier[name] = pcs.bezier_parametrization([rocs[name][0],
                                                             rocs[name][1]],
                                                            scores=rocs_scores[name],
