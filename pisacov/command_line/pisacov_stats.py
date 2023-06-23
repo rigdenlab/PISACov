@@ -276,7 +276,7 @@ def main():
     listline = []
     listline2 = []
     for name in names2:
-        listline.append[name]
+        listline.append(name)
         listline.append("")
         listline.append("")
         listline2.append("score")
