@@ -74,7 +74,7 @@ def main():
     fcurves = os.path.join(outdir, fcurves)
     #fcurves2 = os.path.splitext(os.path.basename(csvfile))[0] + ".HitsvTotal.tocs.csv"
     #fcurves2 = os.path.join(outdir, fcurves2)
-    fcurvesB = "replaceme." + os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.rocs_bezier.csv"
+    fcurvesB = os.path.splitext(os.path.basename(csvfile))[0] + ".replaceme.TPRvFPR.rocs_bezier.csv"
     fcurvesB = os.path.join(outdir, fcurvesB)
     fareas = os.path.splitext(os.path.basename(csvfile))[0] + ".TPRvFPR.roc_areas.csv"
     fareas = os.path.join(outdir, fareas)
