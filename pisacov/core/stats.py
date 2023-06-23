@@ -80,8 +80,9 @@ def tpr_vs_fpr(scores, against, noneisfalse=True):
                 else:
                     pass
         if (FP+TN) == 0 or (TP+FN) == 0:
-            fpr.append(None)
-            tpr.append(None)
+            pass
+            #fpr.append(None)
+            #tpr.append(None)
         else:
             fpr.append(FP/(FP+TN))
             tpr.append(TP/(TP+FN))
@@ -173,8 +174,9 @@ def hits_vs_total(scores, against, noneisfalse=True):
                 else:
                     pass
         if (FP+TN) == 0 or (TP+FN) == 0:
-            ntot.append(None)
-            hits.append(None)
+            #ntot.append(None)
+            #hits.append(None)
+            pass
         else:
             ntot.append(FP+TP)
             hits.append(TP)
