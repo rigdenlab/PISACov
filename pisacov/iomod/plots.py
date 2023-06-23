@@ -384,7 +384,9 @@ def plot_roc_parametrization(data, bezier, outpath, datatag,
         fig, ax = _set_dpi(ptype=plot_type)
         cmap = colour_scheme('rocs')
 
-    ax.plot([0, 1], [0, 1], linestyle=":", color="dimgray")
+    if roc_type=="tprvsfpr":
+        ax.plot([0, 1], [0, 1], linestyle=":", color="dimgray")
+
     if area_for_color is None:
         clr = 'k'
     else:
@@ -408,8 +410,8 @@ def plot_roc_parametrization(data, bezier, outpath, datatag,
         xaxis = 'False Positive Rate (FPR)'
         yaxis = 'True Positive Rate (TPR), Probability (P)'
         title = ('Bézier approximation to ROC curve. ' + datatag + ".")
-        xmin = 0
-        xmax = 1
+        xmin = -0.05
+        xmax = 1.05
         xcont = bezier["bezier"][0]
         xdisc = data[0]
     ax.plot(xdisc, data[1], linestyle=" ", marker=".", label="TPR (emp)", color=clr)
@@ -419,8 +421,8 @@ def plot_roc_parametrization(data, bezier, outpath, datatag,
 
     ax.set_title(title, y=1.08)
 
-    ymin = 0
-    ymax = 1
+    ymin = -0.05
+    ymax = 1.05
     ax.axis([xmin, xmax, ymin, ymax])
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
