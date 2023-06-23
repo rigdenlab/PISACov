@@ -321,7 +321,7 @@ def main():
                     listline.append(rocs_bezier[name][v][1][n])
                 else:
                     listline.append(rocs_bezier[name][v][n])
-        pic.lineout(listline, froc)
+            pic.lineout(listline, froc)
 
 
     fname = os.path.splitext(os.path.basename(csvfile))[0]
