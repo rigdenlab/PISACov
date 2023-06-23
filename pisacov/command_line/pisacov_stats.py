@@ -107,7 +107,6 @@ def main():
         crp = None
 
     pic.csvheader(fcurves, cropped=crp, csvtype='rocs')
-    pic.csvheader(fcurvesB, cropped=crp, csvtype='rocs_bezier')
     #pic.csvheader(fcurves, cropped=crp, csvtype='tocs')
     pic.csvheader(fareas, cropped=crp, csvtype='rocareas')
     #pic.csvheader(fareas2, cropped=crp, csvtype='rocareas')
@@ -274,6 +273,17 @@ def main():
 
     ignore = []
     p = 0
+    listline = []
+    listline2 = []
+    for name in names2:
+        listline.append[name]
+        listline.append("")
+        listline.append("")
+        listline2.append("score")
+        listline2.append("FPR")
+        listline2.append("TPR")
+    pic.lineout(listline, fcurves)
+    pic.lineout(listline2, fcurves)
     while True:
         listline = []
         for name in names2:
@@ -298,6 +308,7 @@ def main():
            "area"]
     for name in areas_dict_best:
         froc = fcurvesB.replace("replaceme", name)
+        pic.csvheader(froc, cropped=crp, csvtype='rocs_bezier')
         for n in range(len(rocs_bezier[name]["param"])):
             listline = []
             for v in var:
@@ -310,7 +321,6 @@ def main():
                     listline.append(rocs_bezier[name][v][1][n])
                 else:
                     listline.append(rocs_bezier[name][v][n])
-                    pic.lineout(listline, froc)
         pic.lineout(listline, froc)
 
 

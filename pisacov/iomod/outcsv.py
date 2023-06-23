@@ -16,7 +16,7 @@ import logging
 
 
 def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
-              upth=False, scoreth=False, singularID=None):
+              upth=False, scoreth=None, singularID=None):
     """
     Create a new CSV file with only the header.
 
@@ -55,7 +55,7 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
         if upth > 0.0:
             csvline += "UniProt single sequence proportion threshold = " + str(upth)
         csvline += ". "
-        if scoreth is False:
+        if scoreth is None:
             csvline += "No predicted contacts filtered out according to score."
         else:
             csvline += "Predicted contacts filtered out when score: "
@@ -63,13 +63,13 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
             csvline += "; CCMPred < " + str(scoreth[1])
             csvline += "; DeepMetaPSICOV < " + str(scoreth[2]) +"."
     elif csvtype == 'rocs':
-        csvline = "# PISACov stats: TPR vs FPR Receiver operating characteristic curves (ROCs). Sorted by area." + tzbegin + "."
+        csvline = "# PISACov stats: TPR vs FPR Receiver operating characteristic curves (ROCs)." + tzbegin + "."
     elif csvtype == 'tocs':
         csvline = "# PISACov stats: Hits (TPs) vs total (TPs+FPs) Total operating characteristic curves (TOCs)." + tzbegin + "."
     elif csvtype == 'rocs_bezier':
         csvline = "# PISACov stats: TPR vs FPR Receiver operating characteristic curves (ROCs) data obtained from Bézier curve (B(t)). " + sID + tzbegin + "."
         csvline += os.linesep
-        csvline += "# t_param [0,1], Bx(t), By(t), Bx'(t), By'(t), Bx''(t), By''(t), Bx'''(t), By'''(t), "
+        csvline += "# t_param, Bx(t), By(t), Bx'(t), By'(t), Bx''(t), By''(t), Bx'''(t), By'''(t), "
         csvline += "K(t), LR(t), Scores(t), P(t), lambda(t), Youden(t), AUC"
     elif csvtype == 'rocareas':
         csvline = "# PISACov stats: Areas under TPR vs FPR Receiver operating characteristic curves (ROC areas). Sorted by area." + tzbegin + "."
@@ -81,25 +81,20 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
 
     csvline += os.linesep
 
-    scnames = psc._scorenames(crop=cropped)
-    croptag = 'cropseq' if cropped is True else 'fullseq'
-    names = pco._sourcenames(short=True)
-
     if csvtype == 'scores':
+        scnames = psc._scorenames(crop=cropped)
+        croptag = 'cropseq' if cropped is True else 'fullseq'
+        names = pco._sourcenames(short=True)
+
         csvline += ('#PDB_id, Interface, Chain1, Chain2, Sequence, ' +
                    'L' + croptag + ', ' + 'Neff_' + croptag + ', ' +
                    'Ncrops, ' + 'Lfullseq, ' + 'Neff_fullseq, ' +
                    'N' + croptag + '_IFcontacts, ' +
                    'N' + croptag + '_IFcontacts_used, ')
-    elif csvtype == 'rocs' or csvtype == 'tocs':
-        csvline += '#'
 
-    if csvtype == 'scores' or csvtype == 'rocs' or csvtype == 'tocs':
         for source in names:
             for score in scnames[source]:
                 csvline += score + ', '
-                if csvtype == 'rocs' or csvtype == 'tocs':
-                    csvline += ', , '
 
         csvline = csvline[:-2]
 
@@ -107,16 +102,6 @@ def csvheader(outpath, csvtype='scores', cropped=False, pisascore=False,
             csvline += ', PISAscore'
 
         csvline += os.linesep
-        if csvtype == 'rocs' or csvtype == 'tocs':
-            csvline += '#'
-            for source in names:
-                for score in scnames[source]:
-                    if csvline == 'rocs':
-                        csvline += "score, FPR, TPR, "
-                    elif csvline == 'tocs':
-                        csvline += "score, FP, TP+FP, "
-            csvline = csvline[:-2]
-            csvline += os.linesep
 
     with open(outpath, "w") as outcsv:
         outcsv.write(csvline)
