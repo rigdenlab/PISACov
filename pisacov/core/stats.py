@@ -8,6 +8,7 @@ from pisacov import __author__, __date__, __copyright__
 
 import numpy as np
 import copy
+import operator
 
 def tpr_vs_fpr(scores, against, noneisfalse=True):
     """
@@ -48,6 +49,112 @@ def tpr_vs_fpr(scores, against, noneisfalse=True):
     thr = (list(set(scores)))
 
     tlist = sorted(thr, reverse=True)
+    tpr = []
+    fpr = []
+    sc = []
+    fpr.append(0)
+    tpr.append(0)
+    sc.append(tlist[0])
+    area = 0
+    for t in tlist:
+        FP = 0
+        TP = 0
+        FN = 0
+        TN = 0
+        for s in range(len(scores)):
+            if scores[s] < t:
+                if against[s] == 1:
+                    FN += 1
+                elif against[s] == 0:
+                    TN += 1
+                elif against[s] == -1 and noneisfalse is True:
+                    TN += 1
+                else:
+                    pass
+            else:
+                if against[s] == 1:
+                    TP += 1
+                elif against[s] == 0:
+                    FP += 1
+                elif against[s] == -1 and noneisfalse is True:
+                    FP += 1
+                else:
+                    pass
+        if (FP+TN) == 0 or (TP+FN) == 0:
+            pass
+            #fpr.append(None)
+            #tpr.append(None)
+        else:
+            fpr.append(FP/(FP+TN))
+            tpr.append(TP/(TP+FN))
+            sc.append(t)
+            p = -1
+            cont = False
+            while True:
+                if fpr[p-1] is None:
+                    p -= 1
+                else:
+                    break
+                if p-1 == -len(tpr):
+                    cont = True
+                    break
+            if cont:
+                continue
+            else:
+                area += 0.5*(tpr[-1]+tpr[p-1])*(fpr[-1]-fpr[p-1])
+
+    return fpr, tpr, sc, area
+
+def tpr_vs_fpr_pair(scores, against, scores2=None, op12=operator.__or__, noneisfalse=True):
+    """
+    Produce True Positive rate and False Positive rate data by comparing results against standard (ROCs).
+
+    :param scores: Numeric scores.
+    :type scores: list [float]
+    :param against: Standard for scores to be compared against.
+    :type against: list [bool]
+    :param scores2: Numeric scores for a pairwise ROC, defaults to None.
+    :type scores2: list [float], optional
+    :param op12: Operator function for pairwise classification (AND, OR), defaults to :func:`operator.__or__`.
+    :type op12: :func:`operator`, optional
+    :param noneisfalse: If True, when PISA score given is None, it is considered False, otherwise it is ignored, defaults to True.
+    :type noneisfalse: bool, optional
+
+    :return fpr: False Positive Rate data.
+    :rtype fpr: set [float]
+    :return tpr: True Positive Rate data.
+    :rtype tpr: set [float]
+    :return area: Area under the ROC curve.
+    :rtype area: float
+
+    """
+    if len(scores)==0:
+        coords = None
+        area = 0.5
+        return coords, area
+
+    numagainst = []
+    for b in against:
+        if b is True:
+            numagainst.append(1)
+        elif b is False:
+            numagainst.append(0)
+        elif b is None:
+            numagainst.append(-1)
+
+    coords = [[], []]
+    if scores2 is None:
+        scores, against = zip(*sorted(zip(scores, numagainst), reverse=True))
+    else:
+        scores, scores2, against = zip(*sorted(zip(scores, scores2, numagainst), reverse=True))
+        thr2 = (list(set(scores2)))
+
+    thr = (list(set(scores)))
+    tlist = sorted(thr, reverse=True)
+    coords[1].append([0.0, 0.0])
+    if scores2 is None:
+        coords[0].append(tlist(0))
+
     tpr = []
     fpr = []
     sc = []
