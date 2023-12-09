@@ -120,7 +120,7 @@ def main():
             logger.info('HHblits, UniProt threshold parameters given bypassed by --skip_conpred')
     else:
         skipexec = False
-    cropping = args.remove_insertions
+    cropping = False
     scoring = [cropping, not cropping]
 
     if args.outdir is None:
@@ -142,14 +142,8 @@ def main():
                                                         os.extsep + "pisacov" +
                                                         os.extsep + "csv"))))
     else:
-        if cropping is True:
-            invals['OUTCSVPATH'].append(ppaths.check_path(args.collection_file[0]))
-            invals['OUTCSVPATH'].append(ppaths.check_path(
-                os.path.splitext(args.collection_file[0])[0] + os.extsep +
-                'full' + os.extsep + os.path.splitext(args.collection_file[0])[1]))
-        else:
-            invals['OUTCSVPATH'].append(None)
-            invals['OUTCSVPATH'].append(ppaths.check_path(args.collection_file[0]))
+        invals['OUTCSVPATH'].append(None)
+        invals['OUTCSVPATH'].append(ppaths.check_path(args.collection_file[0]))
 
     if args.plot_formats is None:
         plotformats={'png'}
@@ -192,7 +186,6 @@ def main():
     seq = seqs[pdbid]
     #structure = strs[pdbid]
 
-    # CROPPING AND RENUMBERING
     outpdbdir = os.path.join(invals['OUTROOT'], pdbid, "")
     instrc = os.path.join(invals['OUTROOT'], pdbid,
                           os.path.basename(invals['INSTR']))
@@ -375,7 +368,7 @@ def main():
                                'version with no Distograms implemented.')
                 for m in range(len(inputmap)):
                     iflist[i].structure.append(inputmap[m])  # ConKit LEGACY.
-            #fs = fcropstr if cropping else fstr
+            #fs = fstr
             #fs = (os.path.splitext(os.path.basename(fs))[0] +
             #      os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "con")
             #spath = os.path.join(pisadir, fs)
@@ -390,8 +383,6 @@ def main():
                                             conpredmap=conpred[s][source],
                                             conpredtype=source,
                                             sequence=seq.imer[s])
-                if cropping is True:
-                    matches[i][source].set_cropmap()
                 matches[i][source].remove_neighbours(mindist=2)
                 matches[i][source].set_conpred_seq()
                 matches[i][source].remove_intra()
