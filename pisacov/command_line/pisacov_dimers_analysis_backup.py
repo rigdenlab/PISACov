@@ -5,7 +5,7 @@ of proteins from evolutionary covariance.
 
 from pisacov import __prog__, __description__, __version__
 from pisacov import __author__, __date__, __copyright__
-__script__ = 'PISACov Crystal Analysis script'
+__script__ = 'PISACov Dimers Analysis script'
 
 from pisacov import command_line as pcl
 
@@ -42,9 +42,9 @@ def create_argument_parser():
                                      epilog="Check pisacov.rtfd.io for more information.")
     parser.add_argument("seqpath", nargs=1, metavar=("Seqfile"),
                         help="Input original sequence filepath.")
-    parser.add_argument("crystalpath", nargs=1,
-                        metavar=("Crystal_structure"),
-                        help="Input original crystal structure filepath.")
+    parser.add_argument("dimerpath", nargs=1,
+                        metavar=("Dimer_structure"),
+                        help="Input original dimer structure filepath.")
 
     # HHBLITS modification
     parser.add_argument("-a", "--hhblits_arguments", nargs=5,
@@ -120,7 +120,7 @@ def main():
             logger.info('HHblits, UniProt threshold parameters given bypassed by --skip_conpred')
     else:
         skipexec = False
-    cropping = args.remove_insertions
+    cropping = False
     scoring = [cropping, not cropping]
 
     if args.outdir is None:
@@ -190,6 +190,12 @@ def main():
         raise Exception('More than one pdbid in sequence and/or structure set.')
 
     seq = seqs[pdbid]
+    if seq.imer['1'].source != "RCSB PDB" and seq.imer['1'].source != "CROPS":
+        seq.imer['1'].chains={'A', 'B'}
+        ninseq = os.path.join(invals['OUTROOT'], pdbid ,pdbid + '.ABchains.fasta')
+        seq.write(os.path.join(invals['OUTROOT'], pdbid), infix=".ABchains")
+    else:
+        ninseq = invals['INSEQ']
     #structure = strs[pdbid]
 
     # CROPPING AND RENUMBERING
@@ -199,9 +205,20 @@ def main():
 
     fseq = {}
     fmsa = {}
+    if skipexec is False:
+        logger.info('Renumbering structure ' +
+                    'according to position in sequence.')
+        logger.info(pcl.running('CROPS-renumber'))
+        itime = datetime.datetime.now()
+        psc.renumcrops(ninseq,
+                       invals['INSTR'],
+                       invals['OUTROOT'],
+                       needleman = True,
+                       noligs = args.no_ligands)
+        logger.info(pcl.running('CROPS-renumber', done=itime))
 
-    ppaths.mdir(outpdbdir)
-    copyfile(invals['INSTR'], instrc)
+        ppaths.mdir(outpdbdir)
+        copyfile(invals['INSTR'], instrc)
 
     for i, iseq in seq.imer.items():
         fiseq = pdbid + '_' + i + '.fasta'
@@ -304,6 +321,11 @@ def main():
     csvfile = []
     csvfile.append(os.path.join(resultdir,
                                 (pdbid + os.extsep + "evcovsignal" +
+                                 os.extsep + "cropped" +
+                                 os.extsep + "pisacov" +
+                                 os.extsep + "csv")))
+    csvfile.append(os.path.join(resultdir,
+                                (pdbid + os.extsep + "evcovsignal" +
                                  os.extsep + "full" +
                                  os.extsep + "pisacov" +
                                  os.extsep + "csv")))
@@ -375,12 +397,6 @@ def main():
                                'version with no Distograms implemented.')
                 for m in range(len(inputmap)):
                     iflist[i].structure.append(inputmap[m])  # ConKit LEGACY.
-            #fs = fcropstr if cropping else fstr
-            #fs = (os.path.splitext(os.path.basename(fs))[0] +
-            #      os.extsep + "interface" + os.extsep + str(i+1) + os.extsep + "con")
-            #spath = os.path.join(pisadir, fs)
-            #pio.write(spath, 'psicov', indata=iflist[i].structure[1])
-            #iflist[i].contactmap = pio.read(spath, 'array')
             iflist[i].contactmap = iflist[i].structure[1].deepcopy()
             matches.append({})
             for source, attribs in sources.items():
@@ -390,8 +406,7 @@ def main():
                                             conpredmap=conpred[s][source],
                                             conpredtype=source,
                                             sequence=seq.imer[s])
-                if cropping is True:
-                    matches[i][source].set_cropmap()
+
                 matches[i][source].remove_neighbours(mindist=2)
                 matches[i][source].set_conpred_seq()
                 matches[i][source].remove_intra()
@@ -413,9 +428,7 @@ def main():
                                                  outpath=plotpath,
                                                  mode = cmode,
                                                  plot_type = imtype)
-                            #matches[i][source].plot_map_alt(plotpath,
-                            #                                mode = cmode,
-                            #                                plot_type = imtype)
+
         else:
             iflist[i].structure = None
             iflist[i].contactmap = None
