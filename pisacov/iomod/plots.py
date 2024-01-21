@@ -397,10 +397,14 @@ def plot_roc_parametrization(data, bezier, outpath, datatag,
         t_emp = (data[0][n]+data[1][n])/2.0
         p_emp.append(np.interp(t_emp, bezier["param"], bezier["probability"]))
 
+    ac = bezier["anticorrelated"]
     if roc_type == 'probvsscore':
         xaxis = datatag
         yaxis = 'True Positive Rate (TPR), Probability (P)'
-        title = ('Probability and TPR vs score for ' + datatag + ".")
+        if not ac:
+            title = ('Probability and TPR vs score for ' + datatag + ".")
+        else:
+            title = ('Probability (anticorrelated function) and TPR vs score for ' + datatag + ".")
         xmin = scores[-1]
         xmax = scores[0]
         xcont = bezier["scores"]
@@ -409,7 +413,10 @@ def plot_roc_parametrization(data, bezier, outpath, datatag,
         ax.set_box_aspect(1)
         xaxis = 'False Positive Rate (FPR)'
         yaxis = 'True Positive Rate (TPR), Probability (P)'
-        title = ('Bézier approximation to ROC curve. ' + datatag + ".")
+        if not ac:
+            title = ('Bézier approximation to ROC curve. ' + datatag + ".")
+        else:
+            title = ('Bézier approximation to ROC curve (anticorrelated prob.). ' + datatag + ".")
         xmin = -0.03
         xmax = 1.03
         xcont = bezier["bezier"][0]

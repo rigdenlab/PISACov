@@ -305,7 +305,7 @@ def hits_vs_total(scores, against, noneisfalse=True):
     return ntot, hits  # , area
 
 
-def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=False):
+def bezier_parametrization(data, scores, npoints=101, convex=True):
     """
     Calculate a Bézier curve that fits the ROC curve input data.
 
@@ -315,10 +315,8 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
     :type scores: list [float]
     :param npoints: Number of regular interval points of brezier curve returned, defaults to 101.
     :type npoints: int, optional
-    :param convex: Is the curve convex? (i.e. is the slope decreasing for all the curve?), defaults to True.
+    :param convex: Is the curve convex? (i.e. is the slope monotonically decreasing for all the curve?). False if concave, defaults to True.
     :type convex: bool, optional
-    :param emp_tangent: Use empirical tangent at (1,1), instead of ROC ideal, defaults to False.
-    :type emp_tangent: bool, optional
 
     :return results: A dictionary with: t parameter, Bézier curve, first and second derivatives, likelihood ratio, probability, scores, lambda value, Younden index, curvature and area.
     :rtype results: dict [list [float], list [list [float]], float]
@@ -335,16 +333,22 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
     # End tangents: T_0 def= T_1 = (0.0, 1.0), T_3 = (1.0, 0.0) if convex, else T_0 = (1.0, 0.0), T_3 = (0.0, 1.0).
 
 
-    P = [(data[0][0], data[1][0]), "P1", "P2", (data[0][-1], data[1][-1])]
+    if convex:
+        xdat = data[0]
+        ydat = data[1]
+    else:
+        xdat = data[1]
+        ydat = data[0]
+    P = [(xdat[0], ydat[0]), "P1", "P2", (xdat[-1], ydat[-1])]
     txy = []
     j = 0.0
     for n in range(len(data[0])):
         if P[0] == (0.0, 0.0) and P[3] == (1.0, 1.0):
-            x = data[0][n]
-            y = data[1][n]
+            x = xdat[n]
+            y = ydat[n]
         else:
-            x = (data[0][n]-P[0][0])/(P[3][0]-P[0][0])
-            y = (data[1][n]-P[0][1])/(P[3][1]-P[0][1])
+            x = (xdat[n]-P[0][0])/(P[3][0]-P[0][0])
+            y = (ydat[n]-P[0][1])/(P[3][1]-P[0][1])
         txy.append((x+y)/2.0)
         jn = np.abs(y - x)
         if jn > j and convex:
@@ -354,23 +358,15 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
             u = n
             j = jn
 
-    if convex:
-        T = [(0.0, 1.0), (0.0, 1.0), "T2", (1.0, 0.0), "T4", "T5" ]
-    else:
-        T = [(1.0, 0.0), (1.0, 1.0), "T2", (0.0, 1.0), "T4", "T5"]
-    if emp_tangent:
-        x = data[0][-1]-data[0][-2]
-        y = data[1][-1]-data[1][-2]
-        norm = np.sqrt(x*x+y*y)
-        T[3] = [x/norm, y/norm]
+    T = [(0.0, 1.0), (0.0, 1.0), "T2", (1.0, 0.0), "T4", "T5" ]
 
     a = (1.0-txy[u])*(1.0-txy[u])*(1.0+2.0*txy[u])
     b = txy[u]*txy[u]*(3.0-2.0*txy[u])
     D = (T[0][0]*T[3][1])-(T[3][0]*T[0][1])
 
     tu = txy[u]
-    xu = data[0][u]
-    yu = data[1][u]
+    xu = xdat[u]
+    yu = ydat[u]
 
     alpha = (xu-a*P[0][0]-b*P[3][0])*T[3][1] - (yu-a*P[0][1]-b*P[3][1])*T[3][0]
     alpha = alpha / (tu*(1.0-tu)*(1.0-tu)*D)
@@ -407,9 +403,12 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
         for n in range(len(c)):
             Bx += c[n]*P[n][0]
             By += c[n]*P[n][1]
-
-        B[0].append(Bx)
-        B[1].append(By)
+        if convex:
+            B[0].append(Bx)
+            B[1].append(By)
+        else:
+            B[1].append(Bx)
+            B[0].append(By)
 
         c[0] = -3.0*(1.0-t)*(1.0-t)
         c[1] = 3.0*(1.0-t)*(1.0-3.0*t)
@@ -421,8 +420,12 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
         for n in range(len(c)):
             Bx += c[n]*P[n][0]
             By += c[n]*P[n][1]
-        V[0].append(Bx)
-        V[1].append(By)
+        if convex:
+            V[0].append(Bx)
+            V[1].append(By)
+        else:
+            V[1].append(Bx)
+            V[0].append(By)
 
         c[0] = 6.0*(1.0-t)
         c[1] = -12.0 + 18.0*t
@@ -434,11 +437,16 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
         for n in range(len(c)):
             Bx += c[n]*P[n][0]
             By += c[n]*P[n][1]
-        A[0].append(Bx)
-        A[1].append(By)
-
-        J[0].append(jx)
-        J[1].append(jy)
+        if convex:
+            A[0].append(Bx)
+            A[1].append(By)
+            J[0].append(jx)
+            J[1].append(jy)
+        else:
+            A[1].append(Bx)
+            A[0].append(By)
+            J[1].append(jx)
+            J[0].append(jy)
 
         num = V[0][-1]*A[1][-1] - V[1][-1]*A[0][-1]
         den = (V[0][-1]*V[0][-1] + V[1][-1]*V[1][-1])**1.5
@@ -451,11 +459,17 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
         if V[0][-1] == 0.0:
             LR.append(float('inf'))
             l.append(0.0)
-            Prob.append(1.0)
+            if convex:
+                Prob.append(1.0)
+            else:
+                Prob.append(0.0)
         else:
             LR.append(V[1][-1]/V[0][-1])
             l.append(1.0/(1.0+LR[-1]))
-            Prob.append(l[-1]*LR[-1])
+            if convex:
+                Prob.append(l[-1]*LR[-1])
+            else:
+                Prob.append(l[-1])
         Y.append(2.0*(l[-1]*By+(1.0-l[-1])*(1.0-Bx))-1.0)
 
         if tpoints > 0:
@@ -476,6 +490,7 @@ def bezier_parametrization(data, scores, npoints=101, convex=True, emp_tangent=F
     results["area"] = area
     results["probability"] = Prob
     results["scores"] = SCt
+    results["anticorrelation"] = not convex
 
     return results
 

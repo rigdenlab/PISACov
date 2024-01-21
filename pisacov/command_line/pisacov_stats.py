@@ -305,16 +305,16 @@ def main():
 
     var = ["param", "bezier", "bezier_der1", "bezier_der2", "bezier_der3",
            "curvature", "LR", "scores", "probability", "lambda", "Youden",
-           "area"]
+           "area", "anticorrelated"]
     for name in areas_dict_best:
         froc = fcurvesB.replace("replaceme", name)
         pic.csvheader(froc, cropped=crp, csvtype='rocs_bezier')
         for n in range(len(rocs_bezier[name]["param"])):
             listline = []
             for v in var:
-                if v == "area" and n > 0:
+                if (v == "area" or v == "anticorrelated") and n > 0:
                     listline.append("")
-                elif v == "area" and n == 0:
+                elif (v == "area" or v == "anticorrelated") and n == 0:
                     listline.append(rocs_bezier[name][v])
                 elif v.startswith("bezier"):
                     listline.append(rocs_bezier[name][v][0][n])
